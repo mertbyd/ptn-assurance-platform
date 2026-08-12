@@ -1,0 +1,7 @@
+{
+  "modules": {
+    "Ptn.TestModule": {
+      "path": "Ptn.TestModule.abpmdl"
+    }
+  }
+}

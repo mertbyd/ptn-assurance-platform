@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.TestModule</RootNamespace>
+    <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+  </PropertyGroup>
+
+  <!-- Ev paketleri: Authenticator kimlik sozlesmesini, Notifications bildirim sozlesmesini
+       getirir. Nexum.Abp.Foundation.Domain.Shared Authenticator uzerinden TRANSITIF gelir;
+       dogrudan referans YAZILMAZ (ADR-0012). -->
+  <ItemGroup>
+    <PackageReference Include="Authenticator.Domain.Shared" Version="$(AuthenticatorVersion)" />
+    <PackageReference Include="Pintern.SaaS.Notifications.Domain.Shared" Version="$(NotificationsVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Ddd.Domain.Shared" Version="$(AbpVersion)" />
+    <PackageReference Include="Volo.Abp.Validation" Version="$(AbpVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="$(MicrosoftExtensionsVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Localization\TestModule\*.json" />
+    <Content Remove="Localization\TestModule\*.json" />
+  </ItemGroup>
+
+</Project>

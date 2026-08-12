@@ -1,0 +1,49 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Version>0.1.0</Version>
+    <Authors>CheckNexus</Authors>
+    <Company>CheckNexus</Company>
+    <Copyright>Copyright © 2026 CheckNexus</Copyright>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <AbpProjectType>module</AbpProjectType>
+  </PropertyGroup>
+
+  <!-- Tek yerden yonetilen surumler. Katman csproj'lari yalniz bu degiskenleri kullanir;
+       surum yukseltmesi tek dosyada yapilir.
+       ABP tabani 10.6.0'dir cunku Authenticator 2.0.0 ailesi bu surume baglidir;
+       CheckNexus checker'lari ve SystemStandards 10.3.0 ile derlenmistir ve NuGet
+       grafigi 10.6.0'da birlesir. -->
+  <PropertyGroup>
+    <AbpVersion>10.6.0</AbpVersion>
+    <AuthenticatorVersion>2.0.0</AuthenticatorVersion>
+    <CheckNexusVersion>0.2.0-alpha.2</CheckNexusVersion>
+    <NotificationsVersion>0.1.0-alpha.1</NotificationsVersion>
+    <PitonEmailingVersion>1.5.0</PitonEmailingVersion>
+    <SystemStandardsCoreVersion>2.0.0</SystemStandardsCoreVersion>
+    <SystemStandardsAbpVersion>2.0.2</SystemStandardsAbpVersion>
+    <SystemStandardsAspNetCoreVersion>2.0.0</SystemStandardsAspNetCoreVersion>
+    <SystemStandardsValidationVersion>2.0.0</SystemStandardsValidationVersion>
+    <MicrosoftEntityFrameworkCoreVersion>10.0.10</MicrosoftEntityFrameworkCoreVersion>
+    <MicrosoftAspNetCoreVersion>10.0.9</MicrosoftAspNetCoreVersion>
+    <MicrosoftExtensionsVersion>10.0.10</MicrosoftExtensionsVersion>
+    <EfCoreNamingConventionsVersion>10.0.1</EfCoreNamingConventionsVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ConfigureAwait.Fody" Version="3.3.1" PrivateAssets="All" />
+    <PackageReference Include="Fody" Version="6.5.3">
+      <PrivateAssets>All</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <Target Name="NoWarnOnRazorViewImportedTypeConflicts" BeforeTargets="RazorCoreCompile">
+    <PropertyGroup>
+      <NoWarn>$(NoWarn);0436</NoWarn>
+    </PropertyGroup>
+  </Target>
+
+</Project>

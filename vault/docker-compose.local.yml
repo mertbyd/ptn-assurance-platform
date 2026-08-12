@@ -1,0 +1,22 @@
+name: pintern-saas-vault-local
+
+services:
+  vault:
+    image: hashicorp/vault:2.0.3
+    container_name: pintern-saas-vault-local
+    command: server
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8200:8200"
+    volumes:
+      - pintern_saas_vault_local_data:/vault/file
+      - ./config/local.hcl:/vault/config/local.hcl:ro
+      - ./policies:/vault/policies:ro
+    healthcheck:
+      test: ["CMD-SHELL", "vault status -address=http://127.0.0.1:8200 >/dev/null 2>&1 || [ $$? -eq 2 ]"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pintern_saas_vault_local_data:

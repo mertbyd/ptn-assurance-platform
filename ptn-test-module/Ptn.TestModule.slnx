@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/host/">
+    <Project Path="host/Ptn.TestModule.Host.Shared/Ptn.TestModule.Host.Shared.csproj" />
+    <Project Path="host/Ptn.TestModule.HttpApi.Host/Ptn.TestModule.HttpApi.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Ptn.TestModule.Domain.Shared/Ptn.TestModule.Domain.Shared.csproj" />
+    <Project Path="src/Ptn.TestModule.Domain/Ptn.TestModule.Domain.csproj" />
+    <Project Path="src/Ptn.TestModule.Application.Contracts/Ptn.TestModule.Application.Contracts.csproj" />
+    <Project Path="src/Ptn.TestModule.Application/Ptn.TestModule.Application.csproj" />
+    <Project Path="src/Ptn.TestModule.EntityFrameworkCore/Ptn.TestModule.EntityFrameworkCore.csproj" />
+    <Project Path="src/Ptn.TestModule.HttpApi/Ptn.TestModule.HttpApi.csproj" />
+    <Project Path="src/Ptn.TestModule.HttpApi.Client/Ptn.TestModule.HttpApi.Client.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Ptn.TestModule.TestBase/Ptn.TestModule.TestBase.csproj" />
+    <Project Path="test/Ptn.TestModule.Domain.Tests/Ptn.TestModule.Domain.Tests.csproj" />
+    <Project Path="test/Ptn.TestModule.Application.Tests/Ptn.TestModule.Application.Tests.csproj" />
+    <Project Path="test/Ptn.TestModule.EntityFrameworkCore.Tests/Ptn.TestModule.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="test/Ptn.TestModule.HttpApi.Client.ConsoleTestApp/Ptn.TestModule.HttpApi.Client.ConsoleTestApp.csproj" />
+  </Folder>
+</Solution>

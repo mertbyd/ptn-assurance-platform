@@ -1,0 +1,78 @@
+# Ptn.TestModule
+
+Test Module composition host'unun ve modul katmanlarinin kaynak agacidir. ABP CLI 10.6.0
+`module` sablonundan (`--no-ui --dbms postgresql`) uretildi, ardindan ev paketleriyle baglandi.
+
+## Yapi
+
+```text
+host/
+  Ptn.TestModule.Host.Shared        multi-tenancy sabiti gibi host-genelinde paylasilan degerler
+  Ptn.TestModule.HttpApi.Host       composition host: yetenekleri birlestirir, pipeline'i kurar
+src/
+  Ptn.TestModule.Domain.Shared      sabitler, sema adlari, hata kodlari, localization
+  Ptn.TestModule.Domain             entity, manager ve domain sozlesmeleri
+  Ptn.TestModule.Application.Contracts  DTO, AppService arayuzu, permission, FluentValidation
+  Ptn.TestModule.Application        use-case orkestrasyonu ve Mapperly eslemeleri
+  Ptn.TestModule.EntityFrameworkCore  DbContext, repository, migration ve checker adapter'lari
+  Ptn.TestModule.HttpApi            ince controller yuzeyi
+  Ptn.TestModule.HttpApi.Client     uzak tuketiciler icin ABP proxy istemcisi
+test/
+  Ptn.TestModule.TestBase                     ortak test altyapisi
+  Ptn.TestModule.Domain.Tests                 domain testleri
+  Ptn.TestModule.Application.Tests            uygulama testleri
+  Ptn.TestModule.EntityFrameworkCore.Tests    Sqlite uzerinde EF testleri
+  Ptn.TestModule.HttpApi.Client.ConsoleTestApp  elle HTTP dogrulama araci
+```
+
+## Baglanan ev paketleri
+
+| Katman | Paket |
+|---|---|
+| Domain.Shared | `Authenticator.Domain.Shared` 2.0.0 · `Pintern.SaaS.Notifications.Domain.Shared` |
+| Domain | `Authenticator.Domain` · `Pintern.SaaS.Notifications.Domain` |
+| Application.Contracts | `Authenticator.Application.Contracts` · `Pintern.SaaS.Notifications.Application.Contracts` · `SystemStandards.Core` · `SystemStandards.Validation` |
+| Application | `Authenticator.Application` · `Pintern.SaaS.Notifications.Application` |
+| EntityFrameworkCore | `Authenticator.EntityFrameworkCore` · `Pintern.SaaS.Notifications.EntityFrameworkCore` · `CheckNexus.ApiContracts.Application.Contracts` · `CheckNexus.DatabaseComparison.Application.Contracts` |
+| HttpApi | `SystemStandards.Abp` · `SystemStandards.Core` |
+| HttpApi.Host | `CheckNexus.ApiContracts` · `CheckNexus.DatabaseComparison` · `Pintern.SaaS.Notifications.HttpApi` · `Piton.Emailing.Application/HttpApi/Infrastructure` · `SystemStandards.AspNetCore` |
+
+`Nexum.Abp.Foundation.*` 1.0.0 **transitif** gelir; dogrudan `PackageReference` yazilmaz (ADR-0012).
+`CheckNexus.Vault` yayimlandiginda host'a eklenecektir.
+
+ABP tabani **10.6.0**'dir: Authenticator 2.0.0 ailesi bu surume baglidir. Checker'lar,
+SystemStandards ve Emailing 10.3.0 ile derlenmistir; NuGet grafigi 10.6.0'da birlesir.
+
+## Auth tuketim modeli
+
+`ptn-payment-management-api` ile ayni desen: Authenticator katman paketleri **tip** olarak alinir,
+`Authenticator.HttpApi` modulu compose **edilmez**. Kimlik uclari (login, refresh, logout,
+selected-context) ayri deploy edilen Authenticator host'unda kalir; bu host yalniz bearer token
+dogrular (`AuthServer:Authority` + `AuthServer:Audience`). Karar kaydi: ADR-0013.
+
+## Sema sahipligi
+
+`test_lookup`, `test_catalog`, `test_run` (ADR-0016 §A). Sema adlari
+`EntityFrameworkCore:Schemas` bolumunden ezilebilir. Bu modul yalniz kendi tablolarinin
+migration sahibidir; Auth, Notification, Emailing ve checker tablolari kendi paketlerinin
+migration assembly'lerine aittir (RULE-0002).
+
+## Calistirma
+
+```bash
+dotnet build Ptn.TestModule.slnx
+```
+
+Host'u ayaga kaldirmadan once PostgreSQL gerekir; `appsettings.json` icindeki
+`ConnectionStrings:Default` degerini ayarlayin. Gelistirmede `Redis:IsEnabled` `false`'tur;
+production'da Redis acilir ve data protection anahtarlari Redis'te saklanir.
+
+```bash
+dotnet run --project host/Ptn.TestModule.HttpApi.Host
+```
+
+## Bilinen acik
+
+`Pintern.SaaS.Notifications.Domain` paketi `SystemStandards.Abp.Authorization` 1.0.0'a bagimlidir
+ve o paket nuget.org'da yayimli degildir; restore su an yalniz yerel NuGet cache'i sayesinde
+calisir. Temiz klon ve CI icin o paketin yayimlanmasi gerekir.
