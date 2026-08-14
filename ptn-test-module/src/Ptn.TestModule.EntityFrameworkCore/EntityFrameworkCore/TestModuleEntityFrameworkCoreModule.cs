@@ -31,6 +31,10 @@ public class TestModuleEntityFrameworkCoreModule : AbpModule
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        context.Services.AddTransient<IApiOraclePort, ApiOracleAdapter>();
+        context.Services.AddTransient<IDatabaseOraclePort, DatabaseOracleAdapter>();
+        context.Services.AddTransient<IFailureDiagnosisPort, FailureDiagnosisAdapter>();
+        context.Services.AddTransient<ISchemaKnowledgePort, SchemaKnowledgeAdapter>();
         context.Services.AddTransient<IProfilePackProvider, ProfilePackFileProvider>();
 
         Configure<AbpDbContextOptions>(options =>
