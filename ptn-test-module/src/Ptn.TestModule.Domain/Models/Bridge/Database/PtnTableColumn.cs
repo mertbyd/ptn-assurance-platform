@@ -1,0 +1,11 @@
+namespace Ptn.TestModule.Models.Bridge;
+
+// islevi: Tek tablo kolonunun tip, nullability ve uretilme niteliklerini tasir.
+// sistemdeki gorevi: Assertion adaylarini ham provider tiplerinden bagimsiz aciklar.
+public sealed class PtnTableColumn
+{
+    public string Name { get; set; } = string.Empty;
+    public string DataTypeCode { get; set; } = string.Empty;
+    public bool IsNullable { get; set; }
+    public bool IsGenerated { get; set; }
+}

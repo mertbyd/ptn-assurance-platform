@@ -114,16 +114,16 @@ public class ApiOracleAdapter : IApiOraclePort
     }
 
     // Checker operasyon onerisi ve alan baglarini davranissiz kopru modeline cevirir.
-    private static PtnOperationBinding.PtnOperationSuggestion MapSuggestion(
+    private static PtnOperationSuggestion MapSuggestion(
         OperationBindingSuggestionDto suggestion)
     {
-        return new PtnOperationBinding.PtnOperationSuggestion
+        return new PtnOperationSuggestion
         {
             SourceOperationId = suggestion.SourceOperationId,
             SourceMethod = suggestion.SourceMethod,
             SourcePath = suggestion.SourcePath,
             Score = suggestion.Score,
-            Bindings = suggestion.Bindings.Select(binding => new PtnOperationBinding.PtnFieldBinding
+            Bindings = suggestion.Bindings.Select(binding => new PtnFieldBinding
             {
                 SourcePointer = binding.SourcePointer,
                 TargetPointer = binding.TargetPointer,
@@ -149,7 +149,7 @@ public class ApiOracleAdapter : IApiOraclePort
         return new PtnDerivabilityResult
         {
             IsTruncated = result.IsTruncated,
-            Assertions = result.Assertions.Select(item => new PtnDerivabilityResult.PtnDerivabilityItem
+            Assertions = result.Assertions.Select(item => new PtnDerivabilityItem
             {
                 JsonPointer = item.JsonPointer,
                 OutcomeCode = NormalizeOutcome(item.OutcomeCode)
@@ -163,7 +163,7 @@ public class ApiOracleAdapter : IApiOraclePort
         return new PtnConformanceResult
         {
             OutcomeCode = NormalizeOutcome(result.OutcomeCode),
-            Violations = result.Violations.Select(item => new PtnConformanceResult.PtnConformanceViolation
+            Violations = result.Violations.Select(item => new PtnConformanceViolation
             {
                 RuleCode = item.RuleCode,
                 JsonPointer = item.JsonPointer,

@@ -94,9 +94,9 @@ public class SchemaKnowledgeAdapter : ISchemaKnowledgePort
     }
 
     // Checker tablo kolonu ozetini provider-bagimsiz kopru kolonuna cevirir.
-    private static PtnTableDescription.PtnTableColumn MapColumn(TableDescriptionColumnDto column)
+    private static PtnTableColumn MapColumn(TableDescriptionColumnDto column)
     {
-        return new PtnTableDescription.PtnTableColumn
+        return new PtnTableColumn
         {
             Name = column.Name,
             DataTypeCode = column.CanonicalDataTypeCode,
@@ -105,9 +105,9 @@ public class SchemaKnowledgeAdapter : ISchemaKnowledgePort
     }
 
     // Checker PK veya unique index tanimini kapali anahtar turu ve kolon listesine cevirir.
-    private static PtnTableDescription.PtnTableKey MapKey(TableKeyDefinitionDto key, string kindCode)
+    private static PtnTableKey MapKey(TableKeyDefinitionDto key, string kindCode)
     {
-        return new PtnTableDescription.PtnTableKey
+        return new PtnTableKey
         {
             KindCode = kindCode,
             Columns = key.Columns
@@ -119,7 +119,7 @@ public class SchemaKnowledgeAdapter : ISchemaKnowledgePort
     {
         return new PtnSchemaSnapshot
         {
-            Tables = result.Tables.Select(table => new PtnSchemaSnapshot.PtnSchemaTable
+            Tables = result.Tables.Select(table => new PtnSchemaTable
             {
                 DbSchemaName = table.Schema,
                 TableName = table.Name,

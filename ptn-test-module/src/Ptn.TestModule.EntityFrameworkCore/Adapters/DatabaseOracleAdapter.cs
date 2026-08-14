@@ -98,7 +98,7 @@ public class DatabaseOracleAdapter : IDatabaseOraclePort
     }
 
     // Tek domain kolon beklentisini checker matcher DTO'suna cevirir.
-    private static ColumnExpectationDto MapExpectation(PtnAssertionRequest.PtnColumnExpectation expectation)
+    private static ColumnExpectationDto MapExpectation(PtnColumnExpectation expectation)
     {
         return new ColumnExpectationDto
         {
@@ -126,9 +126,9 @@ public class DatabaseOracleAdapter : IDatabaseOraclePort
     }
 
     // Basarisiz beklentinin kolon ve matcher adresini korurken degerlerini redakte eder.
-    private static PtnAssertionResult.PtnFailedExpectation MapFailure(FailedExpectationDto failure)
+    private static PtnFailedExpectation MapFailure(FailedExpectationDto failure)
     {
-        return new PtnAssertionResult.PtnFailedExpectation
+        return new PtnFailedExpectation
         {
             ColumnName = failure.ColumnName,
             MatcherKindCode = failure.MatcherKindCode,

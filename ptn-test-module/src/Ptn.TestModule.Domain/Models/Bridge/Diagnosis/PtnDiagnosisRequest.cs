@@ -19,6 +19,6 @@ public sealed class PtnDiagnosisRequest
     public string? SqlState { get; set; }
     public long? ObservedAtMs { get; set; }
     public Dictionary<string, string?> KeyValues { get; set; } = new(StringComparer.OrdinalIgnoreCase);
-    public List<PtnAssertionResult.PtnFailedExpectation> FailedExpectations { get; set; } = [];
+    public List<PtnFailedExpectation> FailedExpectations { get; set; } = [];
     public Dictionary<string, string?> ProviderFields { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }

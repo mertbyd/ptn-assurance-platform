@@ -133,13 +133,13 @@ public class FailureDiagnosisAdapter : IFailureDiagnosisPort
     }
 
     // API hipotezini tek gramer, kanit olgulari ve kaynakli fingerprint ile cevirir.
-    private static PtnDiagnosisReport.PtnDiagnosisHypothesis MapApiHypothesis(
+    private static PtnDiagnosisHypothesis MapApiHypothesis(
         Ptn.ApiContractChecker.Dtos.Diagnosis.HypothesisAssessmentDto hypothesis,
         PtnLocation location)
     {
         var code = NormalizeHypothesis(hypothesis.HypothesisKindCode, ApiHypothesisMap);
         var findingRef = CreateFindingRef(PtnSourceCheckerCodes.ApiContract, code, location, hypothesis.Evidence);
-        return new PtnDiagnosisReport.PtnDiagnosisHypothesis
+        return new PtnDiagnosisHypothesis
         {
             HypothesisCode = code,
             Priority = hypothesis.Priority,
@@ -161,13 +161,13 @@ public class FailureDiagnosisAdapter : IFailureDiagnosisPort
     }
 
     // Database hipotezini tek gramer, kanit olgulari ve kaynakli fingerprint ile cevirir.
-    private static PtnDiagnosisReport.PtnDiagnosisHypothesis MapDatabaseHypothesis(
+    private static PtnDiagnosisHypothesis MapDatabaseHypothesis(
         DatabaseDiagnosisReportDto.HypothesisDto hypothesis,
         PtnLocation location)
     {
         var code = NormalizeHypothesis(hypothesis.HypothesisKindCode, DatabaseHypothesisMap);
         var findingRef = CreateFindingRef(PtnSourceCheckerCodes.DatabaseComparison, code, location, hypothesis.Evidence);
-        return new PtnDiagnosisReport.PtnDiagnosisHypothesis
+        return new PtnDiagnosisHypothesis
         {
             HypothesisCode = code,
             Priority = hypothesis.Priority,
@@ -215,7 +215,7 @@ public class FailureDiagnosisAdapter : IFailureDiagnosisPort
 
     // Redaksiyonlu kopru failure modelini database checker teshis DTO'suna cevirir.
     private static FailedExpectationDto MapFailedExpectation(
-        PtnAssertionResult.PtnFailedExpectation expectation)
+        PtnFailedExpectation expectation)
     {
         return new FailedExpectationDto
         {

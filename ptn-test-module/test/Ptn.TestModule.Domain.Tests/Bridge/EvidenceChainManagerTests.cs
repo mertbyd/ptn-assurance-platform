@@ -117,7 +117,7 @@ public class EvidenceChainManagerTests
                 },
                 Hypotheses =
                 [
-                    new PtnDiagnosisReport.PtnDiagnosisHypothesis
+                    new PtnDiagnosisHypothesis
                     {
                         Ref = new PtnFindingRef
                         {
