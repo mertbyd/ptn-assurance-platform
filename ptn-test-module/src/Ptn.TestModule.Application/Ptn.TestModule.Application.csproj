@@ -12,6 +12,8 @@
     <PackageReference Include="Authenticator.Application" Version="$(AuthenticatorVersion)" />
     <PackageReference Include="CheckNexus.ApiContracts.Application.Contracts" Version="$(CheckNexusVersion)" />
     <PackageReference Include="CheckNexus.DatabaseComparison.Application.Contracts" Version="$(CheckNexusVersion)" />
+    <PackageReference Include="CheckNexus.DatabaseComparison.Domain" Version="$(CheckNexusVersion)" />
+    <PackageReference Include="Npgsql" Version="$(NpgsqlVersion)" />
     <PackageReference Include="Pintern.SaaS.Notifications.Application" Version="$(NotificationsVersion)" />
   </ItemGroup>
 

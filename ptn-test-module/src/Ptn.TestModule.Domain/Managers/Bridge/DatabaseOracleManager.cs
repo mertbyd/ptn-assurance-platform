@@ -7,13 +7,12 @@ using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.ExceptionCodes.Bridge;
 using Ptn.TestModule.Models.Bridge;
 using Volo.Abp;
-using Volo.Abp.Domain.Services;
 
 namespace Ptn.TestModule.Managers.Bridge;
 
 // islevi: Database checker sonucunu normalize eder ve ham kanit degerlerini redakte eder.
 // sistemdeki gorevi: Outcome karari ile veri sizintisi kuralini Application servisinden ayirir.
-public class DatabaseOracleManager : DomainService
+public class DatabaseOracleManager : TestModuleDomainService
 {
     // Checker projeksiyon capability'si olmadiginda kapali Unavailable sonucunu uretir.
     public PtnProjectionResult CreateUnavailableProjection() =>

@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.ExceptionCodes.Bridge;
-using Ptn.TestModule.Interface.Bridge;
 using Ptn.TestModule.Models.Bridge;
 using Volo.Abp;
 using Volo.Abp.Settings;
@@ -19,7 +18,7 @@ namespace Ptn.TestModule.Managers.Bridge.Profiles;
 
 // islevi: Profil paketini ayarli dosya kokunden guvenli bicimde okur ve SHA-256 ile muhurlar.
 // sistemdeki gorevi: Dosya, YAML, kok siniri ve fingerprint kurallarini tek Domain Manager'da tutar.
-public class ProfilePackFileManager : TestModuleDomainService, IProfilePackProvider
+public class ProfilePackFileManager : TestModuleDomainService
 {
     private readonly ISettingProvider _settingProvider;
     private readonly IHostEnvironment _hostEnvironment;
@@ -94,19 +93,19 @@ public class ProfilePackFileManager : TestModuleDomainService, IProfilePackProvi
                 .WithAttributeOverride(
                     typeof(PtnEvidencePathStep),
                     nameof(PtnEvidencePathStep.NodeKindCode),
-                    new YamlMemberAttribute { Alias = "nodeKind" })
+                    new YamlMemberAttribute { Alias = PtnProfilePackFieldNames.NodeKind })
                 .WithAttributeOverride(
                     typeof(PtnEvidencePathStep),
                     nameof(PtnEvidencePathStep.SourceCode),
-                    new YamlMemberAttribute { Alias = "source" })
+                    new YamlMemberAttribute { Alias = PtnProfilePackFieldNames.Source })
                 .WithAttributeOverride(
                     typeof(PtnEvidencePathStep),
                     nameof(PtnEvidencePathStep.ConceptCode),
-                    new YamlMemberAttribute { Alias = "concept" })
+                    new YamlMemberAttribute { Alias = PtnProfilePackFieldNames.Concept })
                 .WithAttributeOverride(
                     typeof(PtnEvidencePathStep),
                     nameof(PtnEvidencePathStep.JoinFromNodeKindCode),
-                    new YamlMemberAttribute { Alias = "joinFrom" })
+                    new YamlMemberAttribute { Alias = PtnProfilePackFieldNames.JoinFrom })
                 .Build();
             using var reader = new StreamReader(new MemoryStream(bytes));
             return deserializer.Deserialize<PtnProfilePack>(reader);

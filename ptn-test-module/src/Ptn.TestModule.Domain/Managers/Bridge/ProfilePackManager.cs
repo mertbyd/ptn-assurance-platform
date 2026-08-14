@@ -2,45 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.ExceptionCodes.Bridge;
-using Ptn.TestModule.Interface.Bridge;
 using Ptn.TestModule.Models.Bridge;
+using Ptn.TestModule.Models.Bridge.Agent;
 using Volo.Abp;
-using Volo.Abp.Domain.Services;
 
 namespace Ptn.TestModule.Managers.Bridge;
 
 // islevi: Profil paketini dogrular, sema muhru kaymasini uygular ve kavram kapsam karari verir.
 // sistemdeki gorevi: Baglama, kapsam ve sessiz sema drift'i kurallarinin tek domain sahibidir.
-public class ProfilePackManager : DomainService
+public class ProfilePackManager : TestModuleDomainService
 {
-    private readonly IProfilePackProvider _profilePackProvider;
-    private readonly ISchemaKnowledgePort _schemaKnowledgePort;
-
-    // Profil ve sema portlarini tek domain karar sahibine baglar.
-    public ProfilePackManager(
-        IProfilePackProvider profilePackProvider,
-        ISchemaKnowledgePort schemaKnowledgePort)
-    {
-        _profilePackProvider = profilePackProvider;
-        _schemaKnowledgePort = schemaKnowledgePort;
-    }
-
-    // Profili yukler, kapali sozlukleri dogrular ve sema kaymasinda onaylari geri alir.
-    public async Task<PtnProfilePack> GetValidatedAsync(
+    // Yuklenmis profili kapali sozluklerle dogrular ve sema kaymasinda onaylari geri alir.
+    public PtnProfilePack GetValidated(
+        PtnProfilePack pack,
         string profileKey,
-        Guid connectionId,
-        CancellationToken cancellationToken)
+        string currentFingerprint)
     {
-        var pack = await _profilePackProvider.LoadAsync(profileKey, cancellationToken);
         ValidatePack(pack, profileKey);
-        var currentFingerprint = await _schemaKnowledgePort.GetSchemaFingerprintAsync(
-            connectionId,
-            cancellationToken);
         DowngradeDriftedBindings(pack, currentFingerprint);
         return pack;
     }
@@ -72,6 +53,25 @@ public class ProfilePackManager : DomainService
         var bound = required.Where(approved.Contains).ToList();
         var unbound = required.Where(item => !approved.Contains(item)).ToList();
         return CreateCoverage(required, bound, unbound);
+    }
+
+    // Dogrulanmis profil paketinden istenen kapali kavramlar icin ozet-once knowledge sonucunu kurar.
+    public PtnKnowledgeResult GetKnowledge(
+        PtnKnowledgeRequest request,
+        PtnProfilePack pack,
+        string currentFingerprint)
+    {
+        GetValidated(pack, request.ProfileKey, currentFingerprint);
+        var concepts = request.ConceptCodes.Distinct(StringComparer.Ordinal).Order().ToList();
+        return new PtnKnowledgeResult
+        {
+            ResponseFormat = request.ResponseFormat,
+            Coverage = BuildCoverage(pack, concepts),
+            ConceptCodes = concepts,
+            ResourceLink = request.ResponseFormat == PtnResponseFormatCodes.Concise
+                ? PtnBridgeRoutes.Resource(PtnToolCodes.Knowledge)
+                : null
+        };
     }
 
     // Profil kimligini, kapali kodlarini ve sinirli hukum dilini dogrular.

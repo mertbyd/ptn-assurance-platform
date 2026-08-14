@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Pintern.Authenticator;
 using Pintern.Notifications;
-using Ptn.TestModule.Interface.Bridge;
+using Ptn.DatabaseChecker;
 using Ptn.TestModule.Services.Bridge;
 using Volo.Abp.Application;
 using Volo.Abp.BackgroundJobs;
@@ -19,16 +19,19 @@ namespace Ptn.TestModule;
     typeof(AbpMapperlyModule),
     typeof(AbpBackgroundJobsModule),
     typeof(AuthenticatorApplicationModule),
-    typeof(NotificationsApplicationModule)
+    typeof(NotificationsApplicationModule),
+    typeof(DatabaseCheckerDomainModule)
 )]
 public class TestModuleApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddMapperlyObjectMapper<TestModuleApplicationModule>();
-        context.Services.AddTransient<IApiOraclePort, ApiOracleAppService>();
-        context.Services.AddTransient<IDatabaseOraclePort, DatabaseOracleAppService>();
-        context.Services.AddTransient<IFailureDiagnosisPort, FailureDiagnosisAppService>();
-        context.Services.AddTransient<ISchemaKnowledgePort, SchemaKnowledgeAppService>();
+        context.Services.AddTransient<IApiOracleAppService, ApiOracleAppService>();
+        context.Services.AddTransient<IDatabaseOracleAppService, DatabaseOracleAppService>();
+        context.Services.AddTransient<IFailureDiagnosisAppService, FailureDiagnosisAppService>();
+        context.Services.AddTransient<ISchemaKnowledgeAppService, SchemaKnowledgeAppService>();
+        context.Services.AddTransient<IWriteSetCapabilityService, WriteSetCapabilityService>();
+        context.Services.AddTransient<IPtnBridgeAppService, PtnBridgeAppService>();
     }
 }

@@ -5,55 +5,33 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.ExceptionCodes.Bridge;
-using Ptn.TestModule.Interface.Bridge;
 using Ptn.TestModule.Models.Bridge;
+using Ptn.TestModule.Models.Bridge.Agent;
 using Volo.Abp;
-using Volo.Abp.Domain.Services;
 
 namespace Ptn.TestModule.Managers.Bridge;
 
-// islevi: Profil verisindeki kanit yolunu sirayla yurutur, destekli dugumleri kaydeder ve mekanik hukum verir.
+// islevi: Profil verisindeki kanit yoluyla sirali gozlemleri birlestirir ve mekanik hukum verir.
 // sistemdeki gorevi: Vaka-ozel if akislari veya ikinci bir akil yurutme motoru olmadan aciklama agaci uretir.
-public class EvidenceChainManager : DomainService
+public class EvidenceChainManager : TestModuleDomainService
 {
     private readonly ProfilePackManager _profilePackManager;
-    private readonly IApiOraclePort _apiOraclePort;
-    private readonly IDatabaseOraclePort _databaseOraclePort;
-    private readonly IFailureDiagnosisPort _failureDiagnosisPort;
-    private readonly ISchemaKnowledgePort _schemaKnowledgePort;
-    private readonly IReadOnlyDictionary<string, StepExecutor> _executors;
 
-    // Kanit kaynak portlarini kapali source-code resolver tablosunda birlestirir.
-    public EvidenceChainManager(
-        ProfilePackManager profilePackManager,
-        IApiOraclePort apiOraclePort,
-        IDatabaseOraclePort databaseOraclePort,
-        IFailureDiagnosisPort failureDiagnosisPort,
-        ISchemaKnowledgePort schemaKnowledgePort)
+    // Profil karar sahibini kanit zincirine baglar.
+    public EvidenceChainManager(ProfilePackManager profilePackManager)
     {
         _profilePackManager = profilePackManager;
-        _apiOraclePort = apiOraclePort;
-        _databaseOraclePort = databaseOraclePort;
-        _failureDiagnosisPort = failureDiagnosisPort;
-        _schemaKnowledgePort = schemaKnowledgePort;
-        _executors = CreateExecutors();
     }
 
-    // Tetikleyiciye uyan kanit yolunu yurutur ve zincirin yan urunu olan aciklama agacini dondurur.
-    public async Task<PtnChainResult> RunAsync(
+    // Application sinirinda toplanmis kanit dugumlerini profil yoluna gore mekanik hukumle birlestirir.
+    public PtnChainResult Run(
+        PtnProfilePack pack,
         PtnAccessTuple tuple,
-        string profileKey,
-        CancellationToken cancellationToken)
+        IReadOnlyCollection<PtnExplanationNode> observations)
     {
-        var pack = await _profilePackManager.GetValidatedAsync(
-            profileKey,
-            tuple.ConnectionId,
-            cancellationToken);
         var path = SelectPath(pack, tuple);
         var coverage = _profilePackManager.BuildCoverage(pack, GetRequiredConcepts(path));
         if (coverage.UnboundConcepts.Count > 0)
@@ -66,9 +44,38 @@ public class EvidenceChainManager : DomainService
             return BuildBudgetResult(path, coverage);
         }
 
-        var nodes = DropUnsupportedNodes(await WalkAsync(pack, path, tuple, cancellationToken));
+        var nodes = DropUnsupportedNodes(observations);
         return BuildResult(path, coverage, nodes);
     }
+
+    // Kapali operasyon referansi cozulemediginde tahmin yerine Inconclusive aciklama sonucu dondurur.
+    public PtnExplainResult Explain(
+        PtnExplainRequest request,
+        PtnProfilePack pack,
+        string currentFingerprint)
+    {
+        _profilePackManager.GetValidated(pack, request.ProfileKey, currentFingerprint);
+        return new PtnExplainResult
+        {
+            ResponseFormat = request.ResponseFormat,
+            Coverage = _profilePackManager.BuildCoverage(pack, PtnConceptCodes.All),
+            VerdictCode = PtnVerdictCodes.Inconclusive,
+            CriticalFactCode = TestModuleBridgeErrorCodes.EvidenceUnavailable,
+            Questions = [CreateOperationQuestion(request.OperationReferenceId)],
+            ResourceLink = request.ResponseFormat == PtnResponseFormatCodes.Concise
+                ? PtnBridgeRoutes.Resource(PtnToolCodes.Explain)
+                : null
+        };
+    }
+
+    // Cozulemeyen operasyon referansini kapali onay secenegine cevirir.
+    private static PtnClosedQuestion CreateOperationQuestion(Guid operationReferenceId) => new()
+    {
+        QuestionCode = PtnOpenQuestionCodes.OperationReferenceRequired,
+        Prompt = TestModuleBridgeErrorCodes.EvidenceUnavailable,
+        Options = [operationReferenceId.ToString(PtnBridgeConsts.ReferenceIdFormat)],
+        GapKindCode = PtnOpenQuestionCodes.OperationReferenceRequired
+    };
 
     // Status veya operasyon tetikleyicisine uyan tek profil yolunu secer.
     private static PtnEvidencePathDefinition SelectPath(PtnProfilePack pack, PtnAccessTuple tuple)
@@ -120,165 +127,8 @@ public class EvidenceChainManager : DomainService
         };
     }
 
-    // Yol adimlarini bagimli onceki dugumleri koruyarak sirayla ilgili portlara dagitir.
-    private async Task<List<PtnExplanationNode>> WalkAsync(
-        PtnProfilePack pack,
-        PtnEvidencePathDefinition path,
-        PtnAccessTuple tuple,
-        CancellationToken cancellationToken)
-    {
-        var nodes = new List<PtnExplanationNode>();
-        foreach (var step in path.Steps)
-        {
-            var context = new StepExecutionContext(pack, path, step, tuple, nodes);
-            nodes.Add(await ExecuteStepAsync(context, cancellationToken));
-        }
-
-        return nodes;
-    }
-
-    // Kapali source koduna kayitli executor'u cozer; bilinmeyen kaynak profil drift'idir.
-    private Task<PtnExplanationNode> ExecuteStepAsync(
-        StepExecutionContext context,
-        CancellationToken cancellationToken)
-    {
-        if (_executors.TryGetValue(context.Step.SourceCode, out var executor))
-        {
-            return executor(context, cancellationToken);
-        }
-
-        throw new BusinessException(TestModuleBridgeErrorCodes.ProfilePackInvalid);
-    }
-
-    // API failure identity raporundaki scope olgularini kaynakli kanit dugumune cevirir.
-    private async Task<PtnExplanationNode> ExecuteApiFailureIdentityAsync(
-        StepExecutionContext context,
-        CancellationToken cancellationToken)
-    {
-        var report = await _failureDiagnosisPort.DiagnoseApiAsync(
-            CreateDiagnosisRequest(context.Tuple),
-            cancellationToken);
-        var values = report.Facts.GetValueOrDefault(PtnDiagnosisFactCodes.ChallengeScopes) ?? [];
-        var findingRef = report.Hypotheses.FirstOrDefault()?.Ref ?? CreateBridgeRef(context);
-        var evidence = CreateValueEvidence(PtnProbeKindCodes.DiagnosisIdentity, values, findingRef);
-        return CreateNode(context, StateFor(values.Count), evidence, report.Location);
-    }
-
-    // API checker operasyon baglama adayini outcome ve en yuksek skorlu referansla kanitlar.
-    private async Task<PtnExplanationNode> ExecuteOperationBindingAsync(
-        StepExecutionContext context,
-        CancellationToken cancellationToken)
-    {
-        if (context.Tuple.SpecSnapshotId is null)
-        {
-            return CreateUnavailableNode(context);
-        }
-
-        var result = await _apiOraclePort.SuggestOperationBindingsAsync(
-            CreateOperationQuery(context.Tuple),
-            cancellationToken);
-        var values = result.Suggestions.Select(item => item.SourceOperationId ?? item.SourcePath).ToList();
-        var evidence = CreateValueEvidence(
-            PtnProbeKindCodes.OperationBinding,
-            values,
-            CreateBridgeRef(context),
-            result.OutcomeCode);
-        return CreateNode(context, StateFor(values.Count), evidence, CreateApiLocation(context.Tuple));
-    }
-
-    // API checker request ornegini tamamlik ve govde varligi olgulariyla kanitlar.
-    private async Task<PtnExplanationNode> ExecuteRequestExampleAsync(
-        StepExecutionContext context,
-        CancellationToken cancellationToken)
-    {
-        if (context.Tuple.SpecSnapshotId is null)
-        {
-            return CreateUnavailableNode(context);
-        }
-
-        var result = await _apiOraclePort.BuildRequestExampleAsync(
-            CreateOperationQuery(context.Tuple),
-            cancellationToken);
-        List<string> values = result.IsComplete
-            ? [result.Body?.ToJsonString() ?? result.ContentType ?? result.OutcomeCode]
-            : [];
-        var evidence = CreateValueEvidence(
-            PtnProbeKindCodes.RequestExample,
-            values,
-            CreateBridgeRef(context),
-            result.OutcomeCode);
-        return CreateNode(context, StateFor(values.Count), evidence, CreateApiLocation(context.Tuple));
-    }
-
-    // API checker turetilebilirlik sonucunu pointer outcome degerleriyle kanitlar.
-    private async Task<PtnExplanationNode> ExecuteAssertionDerivabilityAsync(
-        StepExecutionContext context,
-        CancellationToken cancellationToken)
-    {
-        if (context.Tuple.SpecSnapshotId is null)
-        {
-            return CreateUnavailableNode(context);
-        }
-
-        var result = await _apiOraclePort.ValidateScenarioAssertionsAsync(
-            CreateDerivabilityRequest(context.Tuple),
-            cancellationToken);
-        var values = result.Assertions.Select(item => $"{item.JsonPointer}:{item.OutcomeCode}").ToList();
-        var evidence = CreateValueEvidence(
-            PtnProbeKindCodes.AssertionDerivability,
-            values,
-            CreateBridgeRef(context));
-        return CreateNode(context, StateFor(values.Count), evidence, CreateApiLocation(context.Tuple));
-    }
-
-    // Profil baglamasindan tek tablo adresini cozer ve checker sema ozetini kanit dugumune cevirir.
-    private async Task<PtnExplanationNode> ExecuteTableDescriptionAsync(
-        StepExecutionContext context,
-        CancellationToken cancellationToken)
-    {
-        var binding = ResolveStepBinding(context);
-        var table = await _schemaKnowledgePort.DescribeTableAsync(new PtnTableQuery
-        {
-            ConnectionId = context.Tuple.ConnectionId,
-            DbSchemaName = binding.DbSchemaName,
-            TableName = binding.TableName
-        }, cancellationToken);
-        var values = table.Columns.Select(column => column.Name).ToList();
-        var evidence = CreateValueEvidence(
-            PtnProbeKindCodes.TableDescription,
-            values,
-            CreateBridgeRef(context));
-        return CreateNode(context, StateFor(values.Count), evidence, new PtnLocation
-        {
-            DbSchemaName = table.DbSchemaName,
-            DbTableName = table.TableName
-        });
-    }
-
-    // Profil baglamasi ve onceki dugum anahtariyla salt-okunur projeksiyon kaniti toplar.
-    private async Task<PtnExplanationNode> ExecuteProjectionAsync(
-        StepExecutionContext context,
-        CancellationToken cancellationToken)
-    {
-        var binding = ResolveStepBinding(context);
-        var result = await _databaseOraclePort.ProjectAsync(
-            CreateProjectionRequest(context, binding),
-            cancellationToken);
-        if (result.StateCode == PtnEvidenceStateCodes.Unavailable)
-        {
-            return CreateUnavailableNode(context, CreateDatabaseLocation(binding));
-        }
-
-        var values = ExtractProjectionValues(context.Step.ConceptCode, binding, result.Rows);
-        var evidence = CreateValueEvidence(
-            PtnProbeKindCodes.DatabaseProjection,
-            values,
-            CreateBridgeRef(context));
-        return CreateNode(context, StateFor(result.ObservedRowCount), evidence, CreateDatabaseLocation(binding));
-    }
-
     // Step concept kodunu onayli profil baglamasina cozer.
-    private PtnConceptBinding ResolveStepBinding(StepExecutionContext context)
+    private PtnConceptBinding ResolveStepBinding(PtnEvidenceStepExecutionContext context)
     {
         return _profilePackManager.ResolveConcept(
             context.Pack,
@@ -309,7 +159,7 @@ public class EvidenceChainManager : DomainService
 
     // Profil kolon rollerinden onceki dugum degerine bagli, SQL icermeyen projeksiyon istegi kurar.
     private static PtnProjectionRequest CreateProjectionRequest(
-        StepExecutionContext context,
+        PtnEvidenceStepExecutionContext context,
         PtnConceptBinding binding)
     {
         return new PtnProjectionRequest
@@ -325,7 +175,7 @@ public class EvidenceChainManager : DomainService
 
     // Ilk kavramda subject referansini, sonraki kavramlarda joinFrom dugum kanitini anahtara baglar.
     private static Dictionary<string, string?> CreateProjectionKeys(
-        StepExecutionContext context,
+        PtnEvidenceStepExecutionContext context,
         PtnConceptBinding binding)
     {
         var semanticKey = context.Step.JoinFromNodeKindCode is null
@@ -351,7 +201,7 @@ public class EvidenceChainManager : DomainService
     }
 
     // joinFrom ile adlandirilan onceki dugumun ilk gozlenen kanit degerini dondurur.
-    private static string? FindJoinValue(StepExecutionContext context)
+    private static string? FindJoinValue(PtnEvidenceStepExecutionContext context)
     {
         return context.Nodes
             .LastOrDefault(node => node.NodeKindCode == context.Step.JoinFromNodeKindCode)?
@@ -459,7 +309,7 @@ public class EvidenceChainManager : DomainService
 
     // Bir port cevabini state, alaka, konum ve butceli kanit listesiyle dugume cevirir.
     private static PtnExplanationNode CreateNode(
-        StepExecutionContext context,
+        PtnEvidenceStepExecutionContext context,
         string stateCode,
         List<PtnEvidence> evidence,
         PtnLocation location)
@@ -478,7 +328,7 @@ public class EvidenceChainManager : DomainService
 
     // Unavailable port cevabini kanitli ve Inconclusive'a zorlayan dugume cevirir.
     private static PtnExplanationNode CreateUnavailableNode(
-        StepExecutionContext context,
+        PtnEvidenceStepExecutionContext context,
         PtnLocation? location = null)
     {
         var evidence = new PtnEvidence
@@ -517,9 +367,13 @@ public class EvidenceChainManager : DomainService
     }
 
     // Yol ve dugum kimliginden Bridge kaynakli, kaynak-ayrik SHA-256 kanit referansi olusturur.
-    private static PtnFindingRef CreateBridgeRef(StepExecutionContext context)
+    private static PtnFindingRef CreateBridgeRef(PtnEvidenceStepExecutionContext context)
     {
-        var canonical = $"{context.Path.PathKey}:{context.Step.NodeKindCode}:{context.Step.SourceCode}";
+        var canonical = string.Join(
+            PtnBridgeConsts.EvidenceReferenceSeparator,
+            context.Path.PathKey,
+            context.Step.NodeKindCode,
+            context.Step.SourceCode);
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
         return new PtnFindingRef
         {
@@ -613,32 +467,4 @@ public class EvidenceChainManager : DomainService
             PtnNodeKindCodes.AssertionDerivable;
     }
 
-    // Kapali evidence source kodlarini ilgili port executor metotlarina kaydeder.
-    private IReadOnlyDictionary<string, StepExecutor> CreateExecutors()
-    {
-        return new Dictionary<string, StepExecutor>(StringComparer.Ordinal)
-        {
-            [PtnEvidenceSourceCodes.ApiFailureIdentity] = ExecuteApiFailureIdentityAsync,
-            [PtnEvidenceSourceCodes.ApiOperationBinding] = ExecuteOperationBindingAsync,
-            [PtnEvidenceSourceCodes.ApiRequestExample] = ExecuteRequestExampleAsync,
-            [PtnEvidenceSourceCodes.ApiAssertionDerivability] = ExecuteAssertionDerivabilityAsync,
-            [PtnEvidenceSourceCodes.DatabaseProjection] = ExecuteProjectionAsync,
-            [PtnEvidenceSourceCodes.DatabaseTableDescription] = ExecuteTableDescriptionAsync
-        };
-    }
-
-    // islevi: Tek kanit adiminin profil, tuple ve onceki dugum girdilerini adlandirilmis modelde tasir.
-    // sistemdeki gorevi: Executor imzalarinda bes iliskili degeri tuple veya gevsek sozlukle tasimayi engeller.
-    private sealed record StepExecutionContext(
-        PtnProfilePack Pack,
-        PtnEvidencePathDefinition Path,
-        PtnEvidencePathStep Step,
-        PtnAccessTuple Tuple,
-        IReadOnlyList<PtnExplanationNode> Nodes);
-
-    // islevi: Kapali evidence source kodunun tek async dugum executor imzasini tanimlar.
-    // sistemdeki gorevi: Kaynak varyasyonunu if/switch yerine resolver tablosuna baglar.
-    private delegate Task<PtnExplanationNode> StepExecutor(
-        StepExecutionContext context,
-        CancellationToken cancellationToken);
 }

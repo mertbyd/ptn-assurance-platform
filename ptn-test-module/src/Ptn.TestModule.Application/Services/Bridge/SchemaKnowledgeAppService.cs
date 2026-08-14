@@ -5,18 +5,16 @@ using System.Threading.Tasks;
 using FluentValidation;
 using Ptn.DatabaseChecker.Services.SchemaDiscovery;
 using Ptn.TestModule.Dtos.Bridge.Database;
-using Ptn.TestModule.Interface.Bridge;
 using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Mappers.Bridge;
-using Ptn.TestModule.Models.Bridge;
 using Volo.Abp;
 
 namespace Ptn.TestModule.Services.Bridge;
 
-// islevi: Database checker sema servisini Bridge bilgi portuna baglar.
+// islevi: Database checker sema servisini Bridge bilgi use-case'lerine baglar.
 // sistemdeki gorevi: Checker I/O'sunu Application'da tutup sema kararlarini Manager'a birakir.
 [RemoteService(IsEnabled = false)]
-public class SchemaKnowledgeAppService : TestModuleAppService, ISchemaKnowledgeAppService, ISchemaKnowledgePort
+public class SchemaKnowledgeAppService : TestModuleAppService, ISchemaKnowledgeAppService
 {
     private static readonly SchemaKnowledgeMapper Mapper = new();
     private readonly ISchemaDiscoveryAppService _appService;
@@ -40,7 +38,13 @@ public class SchemaKnowledgeAppService : TestModuleAppService, ISchemaKnowledgeA
         CancellationToken cancellationToken)
     {
         await _tableQueryValidator.ValidateAndThrowAsync(input, cancellationToken);
-        return Mapper.Map(await ((ISchemaKnowledgePort)this).DescribeTableAsync(Mapper.Map(input), cancellationToken));
+        var query = Mapper.Map(input);
+        var result = await _appService.DescribeTableAsync(
+            query.ConnectionId,
+            query.DbSchemaName,
+            query.TableName,
+            cancellationToken);
+        return Mapper.Map(_manager.CreateDescription(Mapper.Map(result)));
     }
 
     // Public snapshot istegini Domain sonucundan DTO'ya map eder.
@@ -48,30 +52,14 @@ public class SchemaKnowledgeAppService : TestModuleAppService, ISchemaKnowledgeA
         Guid connectionId,
         CancellationToken cancellationToken)
     {
-        return Mapper.Map(await ((ISchemaKnowledgePort)this).GetSnapshotAsync(connectionId, cancellationToken));
-    }
-
-    // Tek tablo adresini checker'a sorup Bridge tablo tanimina cevirir.
-    async Task<PtnTableDescription> ISchemaKnowledgePort.DescribeTableAsync(PtnTableQuery query, CancellationToken cancellationToken)
-    {
-        var result = await _appService.DescribeTableAsync(
-            query.ConnectionId,
-            query.DbSchemaName,
-            query.TableName,
-            cancellationToken);
-        return _manager.CreateDescription(Mapper.Map(result));
-    }
-
-    // Tum kullanici semalarini kanonik Bridge snapshot'ina cevirir.
-    async Task<PtnSchemaSnapshot> ISchemaKnowledgePort.GetSnapshotAsync(Guid connectionId, CancellationToken cancellationToken)
-    {
         var result = await _appService.GetSnapshotAsync(connectionId, new List<string>(), cancellationToken);
-        return Mapper.Map(result);
+        return Mapper.Map(Mapper.Map(result));
     }
 
     // Siralanmis sema fotografini JSON'a cevirip sha256 fingerprint dondurur.
     public async Task<string> GetSchemaFingerprintAsync(Guid connectionId, CancellationToken cancellationToken)
     {
-        return _manager.GetFingerprint(await ((ISchemaKnowledgePort)this).GetSnapshotAsync(connectionId, cancellationToken));
+        var result = await _appService.GetSnapshotAsync(connectionId, new List<string>(), cancellationToken);
+        return _manager.GetFingerprint(Mapper.Map(result));
     }
 }
