@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -95,6 +96,14 @@ public class FailureDiagnosisAdapter : IFailureDiagnosisPort
             Detail = report.Detail,
             Instance = report.Instance,
             Location = location,
+            Facts = new Dictionary<string, List<string>>(StringComparer.Ordinal)
+            {
+                [PtnDiagnosisFactCodes.ChallengeScopes] = report.Identity.ChallengeScopes,
+                [PtnDiagnosisFactCodes.AllowedMethods] = report.Identity.AllowedMethods,
+                [PtnDiagnosisFactCodes.StatusCode] = report.Identity.StatusCode is null
+                    ? []
+                    : [report.Identity.StatusCode.Value.ToString(CultureInfo.InvariantCulture)]
+            },
             Hypotheses = report.Hypotheses.Select(item => MapApiHypothesis(item, location)).ToList(),
             NextChecks = report.NextChecks
         };

@@ -16,7 +16,8 @@ public static class PtnFactCodes
     public const string Found = nameof(Found);
     public const string Missing = nameof(Missing);
     public const string Catalog = nameof(Catalog);
+    public const string Unavailable = nameof(Unavailable);
 
     public static IReadOnlyCollection<string> All { get; } =
-        [Present, Absent, Match, Mismatch, Reachable, Unreachable, TimedOut, Found, Missing, Catalog];
+        [Present, Absent, Match, Mismatch, Reachable, Unreachable, TimedOut, Found, Missing, Catalog, Unavailable];
 }

@@ -13,6 +13,7 @@ public sealed class PtnDiagnosisReport
     public string Detail { get; set; } = string.Empty;
     public string Instance { get; set; } = string.Empty;
     public PtnLocation Location { get; set; } = new();
+    public Dictionary<string, List<string>> Facts { get; set; } = [];
     public List<PtnDiagnosisHypothesis> Hypotheses { get; set; } = [];
     public List<string> NextChecks { get; set; } = [];
 
