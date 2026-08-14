@@ -27,7 +27,9 @@ namespace Ptn.TestModule.Mappers.Bridge;
 public partial class FailureDiagnosisMapper
 {
     public partial DiagnosisRequest Map(BridgeDiagnosisRequestDto input);
+    public partial BridgeDiagnosisRequestDto MapToDto(DiagnosisRequest input);
     public partial BridgeDiagnosisReportDto Map(DiagnosisReport input);
+    public partial DiagnosisReport MapReport(BridgeDiagnosisReportDto input);
     public partial ApiDiagnoseRequestDto Map(ApiDiagnosisRequest input);
     public partial DatabaseDiagnoseRequestDto Map(DatabaseDiagnosisRequest input);
     public partial ApiDiagnosisReportSource Map(ApiDiagnosisReportDto input);

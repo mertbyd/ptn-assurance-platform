@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Ptn.TestModule.Constants.Runs.Lookups;
 
 namespace Ptn.TestModule.Models.Runs;
 
@@ -11,6 +12,9 @@ public class TestRunTerminalModel
 {
     /// <summary>Passed, Failed, Broken, Skipped veya Inconclusive hukum kodudur.</summary>
     public string OutcomeCode { get; set; } = string.Empty;
+
+    /// <summary>Kosum motorunun terminal durum kodudur; varsayilani Completed'dir.</summary>
+    public string RunStatusCode { get; set; } = TestRunStatusCodes.Completed;
 
     /// <summary>Hangi hakemin hayir dedigini belirleyen opsiyonel lookup kodudur.</summary>
     public string? FailureCategoryCode { get; set; }

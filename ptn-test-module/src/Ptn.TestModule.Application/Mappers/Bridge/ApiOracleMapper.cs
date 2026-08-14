@@ -29,7 +29,9 @@ public partial class ApiOracleMapper
     public partial DerivabilityRequest Map(DerivabilityRequestDto input);
     public partial DerivabilityResultDto Map(DerivabilityResult input);
     public partial ResponseObservation Map(ResponseObservationDto input);
+    public partial ResponseObservationDto MapToDto(ResponseObservation input);
     public partial ConformanceResultDto Map(ConformanceResult input);
+    public partial ConformanceResult MapResult(ConformanceResultDto input);
     public partial CheckerOperationQueryDto Map(ApiOperationRequest input);
     public partial CheckerDerivabilityRequestDto Map(DerivabilityRequest input);
     public partial CheckerResponseObservationDto Map(ApiResponseRequest input);

@@ -92,7 +92,7 @@ public class TestRunResultManager : FoundationManager<TestRunResult, Guid>
 
         await _testRunManager.CompleteAsync(
             testRun,
-            TestRunStatusCodes.Completed,
+            normalized.RunStatusCode,
             completedAt,
             harBlobName,
             cancellationToken);
@@ -146,6 +146,10 @@ public class TestRunResultManager : FoundationManager<TestRunResult, Guid>
             OutcomeCode = NormalizeRequiredText(
                 model.OutcomeCode,
                 nameof(model.OutcomeCode),
+                TestResultFindingConsts.MaxKindCodeLength),
+            RunStatusCode = NormalizeRequiredText(
+                model.RunStatusCode,
+                nameof(model.RunStatusCode),
                 TestResultFindingConsts.MaxKindCodeLength),
             FailureCategoryCode = NormalizeOptionalText(
                 model.FailureCategoryCode,
