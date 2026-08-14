@@ -26,7 +26,7 @@ public class LookupSeedTests : TestModuleEntityFrameworkCoreTestBase
         await RunSeedAsync();
         var afterSecondRun = await GetAllCodesAsync();
 
-        afterSecondRun.ShouldBe(afterFirstRun);
+        Flatten(afterSecondRun).ShouldBe(Flatten(afterFirstRun));
     }
 
     // Bes lookup'in seed edilen kod kumesi ilgili *Codes.All ile birebir eslesmelidir.
@@ -75,5 +75,11 @@ public class LookupSeedTests : TestModuleEntityFrameworkCoreTestBase
     private static IReadOnlyList<string> Sorted(IEnumerable<string> codes)
     {
         return codes.OrderBy(code => code, System.StringComparer.Ordinal).ToList();
+    }
+
+    // Ic ice sozluk/liste yapisini tek duz diziye indirger; karsilastirma boylece deger bazli olur.
+    private static IReadOnlyList<string> Flatten(Dictionary<string, IReadOnlyList<string>> codesByLookup)
+    {
+        return Sorted(codesByLookup.SelectMany(entry => entry.Value.Select(code => $"{entry.Key}:{code}")));
     }
 }

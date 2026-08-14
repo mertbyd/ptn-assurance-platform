@@ -11,7 +11,6 @@ public class TestTriggerKind : LookupEntity<Guid>
     protected TestTriggerKind()
     {
     }
-
     // Ortak lookup alanlarini tek taban invariantindan kurar.
     public TestTriggerKind(Guid id, string code, string name, string? description = null)
         : base(id, code, name, description)
