@@ -3,7 +3,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Pintern.Authenticator.EntityFrameworkCore;
 using Pintern.Notifications.EntityFrameworkCore;
+using Ptn.TestModule.Adapters;
 using Ptn.TestModule.Constants;
+using Ptn.TestModule.Interface.Bridge;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.PostgreSql;
 using Volo.Abp.Modularity;
@@ -29,6 +31,8 @@ public class TestModuleEntityFrameworkCoreModule : AbpModule
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        context.Services.AddTransient<IProfilePackProvider, ProfilePackFileProvider>();
+
         Configure<AbpDbContextOptions>(options =>
         {
             options.Configure<TestModuleDbContext>(dbContext =>

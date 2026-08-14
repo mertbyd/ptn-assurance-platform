@@ -30,6 +30,7 @@
     <MicrosoftAspNetCoreVersion>10.0.9</MicrosoftAspNetCoreVersion>
     <MicrosoftExtensionsVersion>10.0.10</MicrosoftExtensionsVersion>
     <EfCoreNamingConventionsVersion>10.0.1</EfCoreNamingConventionsVersion>
+    <YamlDotNetVersion>18.1.0</YamlDotNetVersion>
   </PropertyGroup>
 
   <ItemGroup>

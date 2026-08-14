@@ -29,6 +29,7 @@
     </PackageReference>
     <PackageReference Include="Volo.Abp.EntityFrameworkCore" Version="$(AbpVersion)" />
     <PackageReference Include="Volo.Abp.EntityFrameworkCore.PostgreSql" Version="$(AbpVersion)" />
+    <PackageReference Include="YamlDotNet" Version="$(YamlDotNetVersion)" />
     <ProjectReference Include="..\Ptn.TestModule.Domain\Ptn.TestModule.Domain.csproj" />
   </ItemGroup>
 
