@@ -25,6 +25,26 @@ public class ScenarioPublicationGateTests
         decision.FailedGateCodes.ShouldContain(ScenarioGateCodes.Derivability);
     }
 
+    // Redocly lint kirmizi dondugunde sema kapisi dusmelidir (ADR-0015 §C).
+    [Fact]
+    public void Should_reject_when_the_lint_gate_is_red()
+    {
+        var decision = Evaluate(CreateScenario(), isSchemaValid: false);
+
+        decision.IsPublishable.ShouldBeFalse();
+        decision.FailedGateCodes.ShouldContain(ScenarioGateCodes.SchemaValidity);
+    }
+
+    // Bes makine kaniti da olumluysa senaryo Published karari alabilmelidir.
+    [Fact]
+    public void Should_publish_when_every_machine_gate_passes()
+    {
+        var decision = Evaluate(CreateScenario());
+
+        decision.IsPublishable.ShouldBeTrue();
+        decision.FailedGateCodes.ShouldBeEmpty();
+    }
+
     // Derleyici hic assertion uretmediyse senaryo Published kararini alamamalidir.
     [Fact]
     public void Should_reject_zero_assertion_count()
