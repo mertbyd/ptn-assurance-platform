@@ -1,6 +1,14 @@
 {
   "culture": "tr",
   "texts": {
-    "Permission:TestModule": "Test Modulu"
+    "Permission:TestModule": "Test Modulu",
+    "TestModule.Bridge:ProfilePackNotFound": "Istenen kopru profil paketi bulunamadi.",
+    "TestModule.Bridge:ProfilePackInvalid": "Kopru profil paketi gecersiz.",
+    "TestModule.Bridge:ProfileFingerprintMismatch": "Kopru profil paketi guncel veritabani semasiyla eslesmiyor.",
+    "TestModule.Bridge:ConceptNotBound": "Gerekli kavram kopru profil paketinde bagli degil.",
+    "TestModule.Bridge:EvidencePathNotFound": "Verilen tetikleyiciye uyan onayli kanit yolu bulunamadi.",
+    "TestModule.Bridge:HopBudgetExceeded": "Kanit yolu atlama butcesini asti.",
+    "TestModule.Bridge:EvidenceUnavailable": "Kanit toplanamadi.",
+    "TestModule.Bridge:CheckerCallFailed": "Checker kopru istegine cevap veremedi."
   }
 }

@@ -9,6 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CheckNexus.ApiContracts.Domain.Shared" Version="$(CheckNexusVersion)" />
+    <PackageReference Include="CheckNexus.DatabaseComparison.Domain.Shared" Version="$(CheckNexusVersion)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
   </ItemGroup>
 
