@@ -142,7 +142,7 @@ public class ProfilePackFileProvider : IProfilePackProvider
         return new PtnEvidencePathDefinition
         {
             PathKey = document.PathKey,
-            Trigger = new PtnEvidencePathDefinition.PtnEvidencePathTrigger
+            Trigger = new PtnEvidencePathTrigger
             {
                 StatusCodes = document.Trigger.StatusCodes,
                 OperationIds = document.Trigger.OperationIds
@@ -154,9 +154,9 @@ public class ProfilePackFileProvider : IProfilePackProvider
     }
 
     // Tek YAML kanit adimini kapali kaynak ve dugum kodlariyla domain modeline cevirir.
-    private static PtnEvidencePathDefinition.PtnEvidencePathStep MapStep(EvidenceStepDocument document)
+    private static PtnEvidencePathStep MapStep(EvidenceStepDocument document)
     {
-        return new PtnEvidencePathDefinition.PtnEvidencePathStep
+        return new PtnEvidencePathStep
         {
             NodeKindCode = document.NodeKind,
             SourceCode = document.Source,

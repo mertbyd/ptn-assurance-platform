@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Kanit dugumunun uc degerli gozlem durumunu tanimlar.
 // sistemdeki gorevi: Kanitin okunamamasi ile olgunun gozlenmemesi arasindaki ayrimi zorunlu kilar.

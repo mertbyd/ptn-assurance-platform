@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
-using Ptn.TestModule.Constants.Bridge.Lookups;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Models.Bridge;
 using Shouldly;
 using Xunit;

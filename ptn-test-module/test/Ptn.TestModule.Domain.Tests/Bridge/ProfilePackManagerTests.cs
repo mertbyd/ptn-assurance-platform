@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
-using Ptn.TestModule.Constants.Bridge.Lookups;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.ExceptionCodes.Bridge;
 using Ptn.TestModule.Interface.Bridge;
 using Ptn.TestModule.Managers.Bridge;
@@ -103,10 +103,10 @@ public class ProfilePackManagerTests
         return new PtnEvidencePathDefinition
         {
             PathKey = "unit-path",
-            Trigger = new PtnEvidencePathDefinition.PtnEvidencePathTrigger { StatusCodes = [403] },
+            Trigger = new PtnEvidencePathTrigger { StatusCodes = [403] },
             Steps =
             [
-                new PtnEvidencePathDefinition.PtnEvidencePathStep
+                new PtnEvidencePathStep
                 {
                     NodeKindCode = PtnNodeKindCodes.ScopeRequired,
                     SourceCode = PtnEvidenceSourceCodes.ApiFailureIdentity

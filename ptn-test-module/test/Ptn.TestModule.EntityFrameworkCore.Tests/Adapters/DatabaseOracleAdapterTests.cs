@@ -6,7 +6,7 @@ using Ptn.DatabaseChecker.Constants.Comparison.Assertions;
 using Ptn.DatabaseChecker.Dtos.Assertions;
 using Ptn.DatabaseChecker.Services.Assertions;
 using Ptn.TestModule.Constants.Bridge;
-using Ptn.TestModule.Constants.Bridge.Lookups;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Models.Bridge;
 using Shouldly;
 using Xunit;

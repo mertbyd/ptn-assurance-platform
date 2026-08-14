@@ -1,4 +1,4 @@
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Kopru motorunun port cevaplarindan urettigi kapali kanit probe turlerini tanimlar.
 // sistemdeki gorevi: Aciklama dugumlerini kaynak metni veya metot adindan bagimsiz alintilar.

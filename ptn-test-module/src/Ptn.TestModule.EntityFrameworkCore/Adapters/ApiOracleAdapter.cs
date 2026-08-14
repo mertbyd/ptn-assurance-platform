@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Ptn.ApiContractChecker.Constants.Conformance.Lookups;
 using Ptn.ApiContractChecker.Dtos.Conformance;
 using Ptn.ApiContractChecker.Services.Conformance;
-using Ptn.TestModule.Constants.Bridge.Lookups;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.ExceptionCodes.Bridge;
 using Ptn.TestModule.Interface.Bridge;
 using Ptn.TestModule.Models.Bridge;

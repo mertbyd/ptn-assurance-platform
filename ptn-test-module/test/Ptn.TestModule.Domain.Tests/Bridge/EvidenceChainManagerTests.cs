@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
-using Ptn.TestModule.Constants.Bridge.Lookups;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Interface.Bridge;
 using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Models.Bridge;
@@ -61,7 +61,7 @@ public class EvidenceChainManagerTests
     {
         var pack = CreatePack();
         pack.Paths[0].Steps = Enumerable.Range(0, 7).Select(_ =>
-            new PtnEvidencePathDefinition.PtnEvidencePathStep
+            new PtnEvidencePathStep
             {
                 NodeKindCode = PtnNodeKindCodes.ScopeRequired,
                 SourceCode = PtnEvidenceSourceCodes.ApiFailureIdentity
@@ -216,7 +216,7 @@ public class EvidenceChainManagerTests
         return new PtnEvidencePathDefinition
         {
             PathKey = "access-denied-403",
-            Trigger = new PtnEvidencePathDefinition.PtnEvidencePathTrigger { StatusCodes = [403] },
+            Trigger = new PtnEvidencePathTrigger { StatusCodes = [403] },
             Steps =
             [
                 CreateStep(PtnNodeKindCodes.ScopeRequired, PtnEvidenceSourceCodes.ApiFailureIdentity),
@@ -230,13 +230,13 @@ public class EvidenceChainManagerTests
     }
 
     // Tek kanit yolu adimini kaynak, kavram ve istege bagli join referansiyla olusturur.
-    private static PtnEvidencePathDefinition.PtnEvidencePathStep CreateStep(
+    private static PtnEvidencePathStep CreateStep(
         string nodeKindCode,
         string sourceCode,
         string? conceptCode = null,
         string? joinFrom = null)
     {
-        return new PtnEvidencePathDefinition.PtnEvidencePathStep
+        return new PtnEvidencePathStep
         {
             NodeKindCode = nodeKindCode,
             SourceCode = sourceCode,

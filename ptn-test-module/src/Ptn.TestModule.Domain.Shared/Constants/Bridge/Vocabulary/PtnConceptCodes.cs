@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Profil paketinin somut semaya baglayabildigi kapali is kavramlarini tanimlar.
 // sistemdeki gorevi: Ajanin tablo veya kolon adi tahmin etmesi yerine onayli kavram secmesini saglar.

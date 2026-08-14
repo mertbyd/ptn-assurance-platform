@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Ptn.TestModule.Constants.Bridge;
-using Ptn.TestModule.Constants.Bridge.Lookups;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.ExceptionCodes.Bridge;
 using Ptn.TestModule.Interface.Bridge;
 using Ptn.TestModule.Models.Bridge;
@@ -628,7 +628,7 @@ public class EvidenceChainManager : DomainService
     private sealed record StepExecutionContext(
         PtnProfilePack Pack,
         PtnEvidencePathDefinition Path,
-        PtnEvidencePathDefinition.PtnEvidencePathStep Step,
+        PtnEvidencePathStep Step,
         PtnAccessTuple Tuple,
         IReadOnlyList<PtnExplanationNode> Nodes);
 

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Bir kanitin geldigi checker veya kopru kaynagini kapali kodlarla tanimlar.
 // sistemdeki gorevi: Fingerprint kimligini kaynak checker ile ayrilmaz bir cift olarak tasir.

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Iki checker'in hipotez kimliklerini anlam-temelli tek gramerde tanimlar.
 // sistemdeki gorevi: H-CD-01 ve RowNeverCreated gibi kaynak gramerlerini ajan raporundan gizler.

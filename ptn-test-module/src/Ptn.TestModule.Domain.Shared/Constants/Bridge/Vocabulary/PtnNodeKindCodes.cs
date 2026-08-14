@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Veri gudumlu kanit yolunda kaydedilebilen dugum turlerini tanimlar.
 // sistemdeki gorevi: Aciklama agacini serbest metinden ve vaka-ozel siniflardan bagimsiz tutar.

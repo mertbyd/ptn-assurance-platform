@@ -5,7 +5,7 @@ using NSubstitute;
 using Ptn.ApiContractChecker.Constants.Conformance.Lookups;
 using Ptn.ApiContractChecker.Dtos.Conformance;
 using Ptn.ApiContractChecker.Services.Conformance;
-using Ptn.TestModule.Constants.Bridge.Lookups;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Models.Bridge;
 using Shouldly;
 using Xunit;

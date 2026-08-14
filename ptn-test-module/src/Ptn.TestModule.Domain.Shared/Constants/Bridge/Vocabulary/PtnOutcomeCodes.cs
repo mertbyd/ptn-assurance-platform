@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Iki checker'in assertion ve uygunluk sonuclarini tek PascalCase sozlukte toplar.
 // sistemdeki gorevi: Passed/passed gibi casing farklarinin ajan yuzeyine sizmasini engeller.

@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ptn.DatabaseChecker.Dtos.SchemaDiscovery;
 using Ptn.DatabaseChecker.Services.SchemaDiscovery;
-using Ptn.TestModule.Constants.Bridge.Lookups;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Shouldly;
 using Xunit;
 

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Tablo taniminda kullanilan birincil ve tekil anahtar turlerini tanimlar.
 // sistemdeki gorevi: KeyUnique kanitini checker metni veya index adindan bagimsiz tutar.

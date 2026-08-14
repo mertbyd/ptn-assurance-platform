@@ -1,4 +1,4 @@
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Checker teshis kimliginden kanit yoluna aktarilan kapali olgu alanlarini tanimlar.
 // sistemdeki gorevi: Scope ve method gibi kimlik olgularini serbest sozluk anahtarlarindan bagimsiz tutar.

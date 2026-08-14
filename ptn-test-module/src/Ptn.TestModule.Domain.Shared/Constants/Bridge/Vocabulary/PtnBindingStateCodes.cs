@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Profil paketi kavram baglamalarinin onay durumlarini tanimlar.
 // sistemdeki gorevi: Sema kaymasinda baglamayi sessizce kullanmak yerine yeniden onaya dusurur.

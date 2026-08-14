@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Iki checker'in probe olgularini tek kapali kanit sozlugunde tanimlar.
 // sistemdeki gorevi: Match/Matches gibi gramer farklarinin kanit agacina sizmasini engeller.

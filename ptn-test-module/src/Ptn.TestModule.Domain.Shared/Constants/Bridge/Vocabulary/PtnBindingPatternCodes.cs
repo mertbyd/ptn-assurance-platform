@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Profil paketinin destekledigi kapali semantik baglama desenlerini tanimlar.
 // sistemdeki gorevi: Kavram-tablo bagini serbest metin yerine onaylanabilir desen koduna baglar.

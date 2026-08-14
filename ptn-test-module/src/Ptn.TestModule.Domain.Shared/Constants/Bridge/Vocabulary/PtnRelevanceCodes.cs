@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Kanit dugumlerinin rapor icindeki kapali alaka seviyelerini tanimlar.
 // sistemdeki gorevi: Siralamayi ajanin sozel guveninden bagimsiz motor kararina baglar.

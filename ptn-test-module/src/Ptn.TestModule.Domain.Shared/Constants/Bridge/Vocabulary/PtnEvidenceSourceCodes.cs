@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Kanit yolu adimlarinin cagirabildigi deterministik port kaynaklarini tanimlar.
 // sistemdeki gorevi: Profil dosyasinin serbest servis veya kod calistirmasini engeller.

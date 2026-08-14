@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Tamamlanan kanit zincirinin kapali hukum kodlarini tanimlar.
 // sistemdeki gorevi: Sonucu metinden ve checker'a ozgu guven gramerinden bagimsiz tasir.

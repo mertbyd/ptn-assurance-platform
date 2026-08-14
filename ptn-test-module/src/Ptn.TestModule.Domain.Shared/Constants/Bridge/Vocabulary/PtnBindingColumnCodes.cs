@@ -1,4 +1,4 @@
-namespace Ptn.TestModule.Constants.Bridge.Lookups;
+namespace Ptn.TestModule.Constants.Bridge.Vocabulary;
 
 // islevi: Profil columnMap icindeki kapali semantik kolon rollerini tanimlar.
 // sistemdeki gorevi: Zincir join anahtarlarini musteri tablo ve kolon adlarindan bagimsiz cozer.
