@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Pintern.Authenticator.EntityFrameworkCore;
 using Pintern.Notifications.EntityFrameworkCore;
 using Ptn.TestModule.Constants;
+using Ptn.TestModule.Entities.Lookups;
+using Ptn.TestModule.EntityFrameworkCore.Repository.Lookups;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.PostgreSql;
 using Volo.Abp.Modularity;
@@ -44,6 +46,13 @@ public class TestModuleEntityFrameworkCoreModule : AbpModule
         context.Services.AddAbpDbContext<TestModuleDbContext>(options =>
         {
             options.AddDefaultRepositories<ITestModuleDbContext>(includeAllEntities: true);
+
+            // Lookup depolari Foundation tabanindan gelir; varsayilan depo kaydi bu arayuzleri cozmez.
+            options.AddRepository<TestRunStatus, EfCoreTestRunStatusRepository>();
+            options.AddRepository<TestOutcomeStatus, EfCoreTestOutcomeStatusRepository>();
+            options.AddRepository<TestFailureCategory, EfCoreTestFailureCategoryRepository>();
+            options.AddRepository<TestTriggerKind, EfCoreTestTriggerKindRepository>();
+            options.AddRepository<TestScenarioState, EfCoreTestScenarioStateRepository>();
         });
     }
 

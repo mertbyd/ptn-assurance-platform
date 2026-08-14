@@ -28,7 +28,6 @@ public class TestOutcomeStatusManager : LookupManager<TestOutcomeStatus, Guid>
     public virtual TestOutcomeStatus SetBuildPolicy(TestOutcomeStatus entity, bool breaksBuild)
     {
         ArgumentNullException.ThrowIfNull(entity);
-
         entity.BreaksBuild = breaksBuild;
         return entity;
     }
