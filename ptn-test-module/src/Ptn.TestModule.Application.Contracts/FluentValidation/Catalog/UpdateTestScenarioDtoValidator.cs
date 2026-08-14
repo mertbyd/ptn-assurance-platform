@@ -1,0 +1,41 @@
+using FluentValidation;
+using Ptn.TestModule.Constants.Catalog;
+using Ptn.TestModule.Dtos.Catalog;
+using Ptn.TestModule.ExceptionCodes.Catalog;
+
+namespace Ptn.TestModule.FluentValidation.Catalog;
+
+// islevi: Senaryo guncelleme DTO'sunun degistirilebilir alanlarini dogrular.
+// sistemdeki gorevi: Kalici ScenarioKey ve VersionNo disindaki public update bicimini korur.
+public sealed class UpdateTestScenarioDtoValidator : AbstractValidator<UpdateTestScenarioDto>
+{
+    public UpdateTestScenarioDtoValidator()
+    {
+        RuleFor(input => input.Title)
+            .NotEmpty().WithErrorCode(TestModuleScenarioErrorCodes.Validation.TitleRequired)
+            .MaximumLength(TestScenarioConsts.MaxTitleLength).WithErrorCode(TestModuleScenarioErrorCodes.Validation.TitleTooLong);
+        RuleFor(input => input.Description)
+            .MaximumLength(TestScenarioConsts.MaxDescriptionLength).WithErrorCode(TestModuleScenarioErrorCodes.Validation.DescriptionTooLong);
+        RuleFor(input => input.SourceDocument)
+            .NotEmpty().WithErrorCode(TestModuleScenarioErrorCodes.Validation.SourceDocumentRequired);
+        RuleFor(input => input.CompiledDocument)
+            .NotEmpty().WithErrorCode(TestModuleScenarioErrorCodes.Validation.CompiledDocumentRequired);
+        RuleFor(input => input.SourceHash)
+            .NotEmpty().WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashRequired)
+            .Matches(TestScenarioConsts.HashPattern).WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashInvalid);
+        RuleFor(input => input.CompiledHash)
+            .NotEmpty().WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashRequired)
+            .Matches(TestScenarioConsts.HashPattern).WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashInvalid);
+        RuleFor(input => input.AssertionCount)
+            .GreaterThanOrEqualTo(0).WithErrorCode(TestModuleScenarioErrorCodes.Validation.AssertionCountInvalid);
+        RuleFor(input => input.DerivabilityCode)
+            .MaximumLength(TestScenarioConsts.MaxDerivabilityCodeLength).WithErrorCode(TestModuleScenarioErrorCodes.Validation.DerivabilityCodeTooLong);
+        RuleFor(input => input.AgentModelRef)
+            .MaximumLength(TestScenarioConsts.MaxAgentModelRefLength).WithErrorCode(TestModuleScenarioErrorCodes.Validation.AgentModelRefTooLong);
+        RuleFor(input => input.Notes)
+            .MaximumLength(TestScenarioConsts.MaxNotesLength).WithErrorCode(TestModuleScenarioErrorCodes.Validation.NotesTooLong);
+        RuleFor(input => input.MaterialSeal)
+            .NotNull().WithErrorCode(TestModuleScenarioErrorCodes.Validation.MaterialSealRequired)
+            .SetValidator(new TestScenarioMaterialSealDtoValidator());
+    }
+}

@@ -6,7 +6,5 @@ namespace Ptn.TestModule.EntityFrameworkCore;
 [ConnectionStringName(TestModuleDbProperties.ConnectionStringName)]
 public interface ITestModuleDbContext : IEfCoreDbContext
 {
-    /* Add DbSet for each Aggregate Root here. Example:
-     * DbSet<Question> Questions { get; }
-     */
+    Microsoft.EntityFrameworkCore.DbSet<Ptn.TestModule.Entities.Catalog.TestScenario> TestScenarios { get; }
 }

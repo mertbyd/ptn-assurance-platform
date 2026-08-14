@@ -15,6 +15,7 @@ public partial class TestModulePermissionDefinitionProvider : PermissionDefiniti
             TestModulePermissions.GroupName,
             L(TestModuleLocalizationKeys.Permissions.Group));
         AddBridgePermissions(group);
+        AddScenarioPermissions(group);
     }
 
     // Localization anahtarini modul kaynagindan olusturur.

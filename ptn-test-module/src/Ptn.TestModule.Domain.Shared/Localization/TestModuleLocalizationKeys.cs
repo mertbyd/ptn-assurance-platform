@@ -14,5 +14,11 @@ public static class TestModuleLocalizationKeys
         public const string BridgeValidate = "Permission:Bridge.Validate";
         public const string BridgeKnowledge = "Permission:Bridge.Knowledge";
         public const string BridgeFootprint = "Permission:Bridge.Footprint";
+        public const string Scenarios = "Permission:Scenarios";
+        public const string ScenariosCreate = "Permission:Scenarios.Create";
+        public const string ScenariosUpdate = "Permission:Scenarios.Update";
+        public const string ScenariosDelete = "Permission:Scenarios.Delete";
+        public const string ScenariosPublish = "Permission:Scenarios.Publish";
+        public const string ScenariosApprove = "Permission:Scenarios.Approve";
     }
 }

@@ -3,6 +3,7 @@ using Pintern.Authenticator;
 using Pintern.Notifications;
 using Ptn.DatabaseChecker;
 using Ptn.TestModule.Services.Bridge;
+using Ptn.TestModule.Services.Catalog;
 using Volo.Abp.Application;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Mapperly;
@@ -33,5 +34,6 @@ public class TestModuleApplicationModule : AbpModule
         context.Services.AddTransient<ISchemaKnowledgeAppService, SchemaKnowledgeAppService>();
         context.Services.AddTransient<IWriteSetCapabilityService, WriteSetCapabilityAppService>();
         context.Services.AddTransient<IPtnBridgeAppService, PtnBridgeAppService>();
+        context.Services.AddTransient<ITestScenarioAppService, TestScenarioAppService>();
     }
 }
