@@ -12,14 +12,10 @@ public static class TestModuleDbContextModelCreatingExtensions
     {
         Check.NotNull(builder, nameof(builder));
 
-        /* Entity konfigurasyonlari buraya eklenir (ADR-0016 §B).
-         * Sema secimi: lookup -> LookupSchema, tanim -> CatalogSchema, kosum -> RunSchema.
-         *
-         * builder.Entity<Scenario>(b =>
-         * {
-         *     b.ToTable(TestModuleDbProperties.DbTablePrefix + "scenarios", TestModuleDbProperties.CatalogSchema);
-         *     b.ConfigureByConvention();
-         * });
+        /* Entity konfigurasyonlari IEntityTypeConfiguration olarak Configurations/ altinda yasar (ADR-0016 §B).
+         * Sema secimi her configuration'in kendi tabaninda yapilir:
+         * lookup -> LookupSchema, tanim -> CatalogSchema, kosum -> RunSchema.
          */
+        builder.ApplyConfigurationsFromAssembly(typeof(TestModuleDbContextModelCreatingExtensions).Assembly);
     }
 }

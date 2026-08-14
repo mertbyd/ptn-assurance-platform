@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Ptn.TestModule.Entities.Lookups;
 using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,6 +13,17 @@ public class TestModuleDbContext : AbpDbContext<TestModuleDbContext>, ITestModul
     /* Aggregate root basina DbSet buraya eklenir. Ornek:
      * public DbSet<Scenario> Scenarios { get; set; } = null!;
      */
+
+    // Sabit deger listeleri (test_lookup semasi); global referans verisidir, IMultiTenant tasimaz (ADR-0016 §D).
+    public DbSet<TestRunStatus> TestRunStatuses { get; set; } = null!;
+
+    public DbSet<TestOutcomeStatus> TestOutcomeStatuses { get; set; } = null!;
+
+    public DbSet<TestFailureCategory> TestFailureCategories { get; set; } = null!;
+
+    public DbSet<TestTriggerKind> TestTriggerKinds { get; set; } = null!;
+
+    public DbSet<TestScenarioState> TestScenarioStates { get; set; } = null!;
 
     public TestModuleDbContext(DbContextOptions<TestModuleDbContext> options)
         : base(options)
