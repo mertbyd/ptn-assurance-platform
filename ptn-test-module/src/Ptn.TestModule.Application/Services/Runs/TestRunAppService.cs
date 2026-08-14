@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Ptn.TestModule.BackgroundJobs.Runs;
 using Ptn.TestModule.Dtos.Runs;
 using Ptn.TestModule.Interface.Runs;
 using Ptn.TestModule.Managers.Runs;
@@ -7,6 +8,7 @@ using Ptn.TestModule.Mappers.Runs;
 using Ptn.TestModule.Models.Runs;
 using Ptn.TestModule.Permissions;
 using Volo.Abp;
+using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Threading;
 
@@ -39,6 +41,9 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
     /// <summary>Aktif ABP istek iptal token'ini saglayan provider'dir.</summary>
     private readonly ICancellationTokenProvider _cancellationTokenProvider;
 
+    /// <summary>Dayanikli kosum icra job'ini kuyruga veren ABP job manager'idir.</summary>
+    private readonly IBackgroundJobManager _backgroundJobManager;
+
     /// <summary>Application orkestrasyonunu Manager ve repository bagimliliklariyla kurar.</summary>
     public TestRunAppService(
         TestRunManager testRunManager,
@@ -46,7 +51,8 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         RunEnvironmentBindingManager environmentBindingManager,
         ITestRunRepository testRunRepository,
         ITestRunResultRepository testRunResultRepository,
-        ICancellationTokenProvider cancellationTokenProvider)
+        ICancellationTokenProvider cancellationTokenProvider,
+        IBackgroundJobManager backgroundJobManager)
     {
         _testRunManager = testRunManager;
         _testRunResultManager = testRunResultManager;
@@ -54,6 +60,7 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         _testRunRepository = testRunRepository;
         _testRunResultRepository = testRunResultRepository;
         _cancellationTokenProvider = cancellationTokenProvider;
+        _backgroundJobManager = backgroundJobManager;
     }
 
     /// <summary>Kimligi verilen test kosumunu permission kontrolunden sonra getirir.</summary>
@@ -95,6 +102,19 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
             autoSave: true,
             cancellationToken: cancellationToken);
         return Mapper.Map(saved);
+    }
+
+    /// <summary>Pending kosumu olusturup dayanikli icra job'ini kuyruga verir.</summary>
+    public async Task<TestRunDto> TriggerAsync(CreateTestRunDto input)
+    {
+        var created = await CreateAsync(input);
+        await _backgroundJobManager.EnqueueAsync(new ExecuteTestRunArgs
+        {
+            TestRunId = created.Id,
+            TenantId = CurrentTenant.Id,
+            TraceId = created.TraceId ?? string.Empty
+        });
+        return created;
     }
 
     /// <summary>Pending kosumu idempotent bicimde Running durumuna claim edip guncel kaydi dondurur.</summary>

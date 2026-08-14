@@ -25,6 +25,11 @@ public interface ITestRunAppService : IApplicationService
     /// <returns>Kalicilastirilan Pending kosum.</returns>
     Task<TestRunDto> CreateAsync(CreateTestRunDto input);
 
+    /// <summary>Yeni Pending kosumu olusturup dayanikli icra job'ini kuyruga verir.</summary>
+    /// <param name="input">Kosum, ortam ve fingerprint girdileri.</param>
+    /// <returns>Kuyruga verilen Pending kosum.</returns>
+    Task<TestRunDto> TriggerAsync(CreateTestRunDto input);
+
     /// <summary>Pending kosumu idempotent bicimde Running durumuna claim eder.</summary>
     /// <param name="id">Claim edilecek TestRun aggregate kimligi.</param>
     /// <returns>Claim karari ve guncel kosum.</returns>

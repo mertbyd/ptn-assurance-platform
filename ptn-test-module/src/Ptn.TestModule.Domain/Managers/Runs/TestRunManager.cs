@@ -68,6 +68,7 @@ public class TestRunManager : FoundationManager<TestRun, Guid>
         ArgumentNullException.ThrowIfNull(environmentBinding);
         var normalizedModel = Normalize(model);
         var normalizedBinding = Normalize(environmentBinding);
+        await EnsureNoActiveRunAsync(normalizedBinding.EnvironmentKey, cancellationToken);
         var pendingStatusId = await GetStatusIdAsync(TestRunStatusCodes.Pending, cancellationToken);
         var triggerKindId = await GetTriggerKindIdAsync(normalizedModel.TriggerKindCode, cancellationToken);
 
@@ -150,6 +151,25 @@ public class TestRunManager : FoundationManager<TestRun, Guid>
         }
 
         return staleRuns.Count;
+    }
+
+    // Ayni mantiksal ortamda ikinci bir kosumun paralel baslamasini veritabani uzerinden engeller.
+    /// <summary>Verilen ortamda Pending veya Running bir kosum varsa yeni kosumu reddeder.</summary>
+    public async Task EnsureNoActiveRunAsync(
+        string environmentKey,
+        CancellationToken cancellationToken = default)
+    {
+        var activeStatusIds = new[]
+        {
+            await GetStatusIdAsync(TestRunStatusCodes.Pending, cancellationToken),
+            await GetStatusIdAsync(TestRunStatusCodes.Running, cancellationToken)
+        };
+
+        if (await _repository.ExistsActiveForEnvironmentAsync(environmentKey, activeStatusIds, cancellationToken))
+        {
+            throw new BusinessException(TestModuleRunErrorCodes.EnvironmentRunInProgress)
+                .WithData(nameof(environmentKey), environmentKey);
+        }
     }
 
     // Kosum kayitlari tarihsel oldugu icin delete use-case'ini reddeder.

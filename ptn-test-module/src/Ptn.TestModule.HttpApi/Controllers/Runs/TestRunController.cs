@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.Dtos.Runs;
@@ -50,6 +51,19 @@ public class TestRunController : TestModuleController
     public virtual async Task<Result<TestRunDto>> Create([FromBody] CreateTestRunDto input)
     {
         var result = await AppService.CreateAsync(input);
+        return result;
+    }
+
+    /// <summary>Yeni kosum olusturup dayanikli icra job'ini kuyruga verir.</summary>
+    /// <param name="input">Kosum, ortam ve fingerprint girdileri.</param>
+    /// <returns>Ev standardi icinde kuyruga verilen Pending kosum.</returns>
+    [HttpPost(TestRunRoutes.Trigger)]
+    [Authorize(TestModulePermissions.Runs.Trigger)]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    public virtual async Task<Result<TestRunDto>> Trigger([FromBody] CreateTestRunDto input)
+    {
+        var result = await AppService.TriggerAsync(input);
+        Response.StatusCode = StatusCodes.Status202Accepted;
         return result;
     }
 

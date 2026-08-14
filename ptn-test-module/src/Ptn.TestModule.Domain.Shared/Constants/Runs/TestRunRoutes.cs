@@ -11,6 +11,9 @@ public static class TestRunRoutes
     /// <summary>Kimlige gore tek kosum rotasidir.</summary>
     public const string ById = "{id:guid}";
 
+    /// <summary>Kosumu olusturup dayanikli icra kuyruguna veren alt rotadir.</summary>
+    public const string Trigger = "trigger";
+
     /// <summary>Pending kosumu claim eden alt rotadir.</summary>
     public const string Start = "{id:guid}/start";
 
