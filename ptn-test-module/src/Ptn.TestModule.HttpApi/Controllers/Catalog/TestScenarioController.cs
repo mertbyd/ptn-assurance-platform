@@ -91,32 +91,26 @@ public class TestScenarioController : TestModuleController
         return result;
     }
 
-    /// <summary>Bes yayin kapisini kalici durum degistirmeden degerlendirir.</summary>
+    /// <summary>Bes yayin kapisini makine kanitiyla, kalici durum degistirmeden degerlendirir.</summary>
     /// <param name="id">Degerlendirilecek senaryo surumu kimligi.</param>
-    /// <param name="input">Anlik sema ve turetilebilirlik kaniti.</param>
     /// <returns>Ev standardi icinde yayin kapisi karari.</returns>
     [HttpPost(TestScenarioRoutes.EvaluatePublication)]
     [Authorize(TestModulePermissions.Scenarios.Publish)]
-    public virtual async Task<Result<TestScenarioPublishDecisionDto>> EvaluatePublication(
-        Guid id,
-        [FromBody] PublishTestScenarioDto input)
+    public virtual async Task<Result<TestScenarioPublishDecisionDto>> EvaluatePublication(Guid id)
     {
-        var result = await AppService.EvaluatePublicationAsync(id, input);
+        var result = await AppService.EvaluatePublicationAsync(id);
         return result;
     }
 
     /// <summary>Onayi source hash'e baglayip tum kapilar gectiyse senaryoyu yayinlar.</summary>
     /// <param name="id">Yayinlanacak senaryo surumu kimligi.</param>
-    /// <param name="input">Anlik sema ve turetilebilirlik kaniti.</param>
     /// <returns>Ev standardi icinde yayinlanan senaryo.</returns>
     [HttpPost(TestScenarioRoutes.Publish)]
     [Authorize(TestModulePermissions.Scenarios.Publish)]
     [Authorize(TestModulePermissions.Scenarios.Approve)]
-    public virtual async Task<Result<TestScenarioDto>> Publish(
-        Guid id,
-        [FromBody] PublishTestScenarioDto input)
+    public virtual async Task<Result<TestScenarioDto>> Publish(Guid id)
     {
-        var result = await AppService.PublishAsync(id, input);
+        var result = await AppService.PublishAsync(id);
         return result;
     }
 

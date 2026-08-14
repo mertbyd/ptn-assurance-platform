@@ -21,16 +21,9 @@ public sealed class CreateTestScenarioDtoValidator : AbstractValidator<CreateTes
             .MaximumLength(TestScenarioConsts.MaxDescriptionLength).WithErrorCode(TestModuleScenarioErrorCodes.Validation.DescriptionTooLong);
         RuleFor(input => input.SourceDocument)
             .NotEmpty().WithErrorCode(TestModuleScenarioErrorCodes.Validation.SourceDocumentRequired);
-        RuleFor(input => input.CompiledDocument)
-            .NotEmpty().WithErrorCode(TestModuleScenarioErrorCodes.Validation.CompiledDocumentRequired);
         RuleFor(input => input.SourceHash)
             .NotEmpty().WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashRequired)
             .Matches(TestScenarioConsts.HashPattern).WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashInvalid);
-        RuleFor(input => input.CompiledHash)
-            .NotEmpty().WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashRequired)
-            .Matches(TestScenarioConsts.HashPattern).WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashInvalid);
-        RuleFor(input => input.AssertionCount)
-            .GreaterThanOrEqualTo(0).WithErrorCode(TestModuleScenarioErrorCodes.Validation.AssertionCountInvalid);
         RuleFor(input => input.DerivabilityCode)
             .MaximumLength(TestScenarioConsts.MaxDerivabilityCodeLength).WithErrorCode(TestModuleScenarioErrorCodes.Validation.DerivabilityCodeTooLong);
         RuleFor(input => input.AgentModelRef)

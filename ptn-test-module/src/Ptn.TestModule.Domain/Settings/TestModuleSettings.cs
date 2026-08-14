@@ -16,6 +16,9 @@ public static class TestModuleSettings
     /// <summary>Kopru profil paketi kok yolu ayar adidir.</summary>
     public const string ProfilePackPath = PtnBridgeSettingNames.ProfilePackPath;
 
+    /// <summary>Yayin aninda derlemeye malzeme olan aktif profil paketi anahtari ayar adidir.</summary>
+    public const string ProfilePackKey = PtnBridgeSettingNames.ProfilePackKey;
+
     /// <summary>Tenant-scoped test ortami baglama haritasi ayar adidir.</summary>
     public const string EnvironmentBindings = TestModuleRunSettingNames.EnvironmentBindings;
 

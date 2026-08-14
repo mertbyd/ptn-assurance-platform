@@ -10,11 +10,13 @@ using System.Threading.Tasks;
 using Ptn.DatabaseChecker.Constants;
 using Ptn.DatabaseChecker.Constants.Comparison;
 using Ptn.DatabaseChecker.Constants.Comparison.Assertions;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Constants.Compilation;
 using Ptn.TestModule.ExceptionCodes.Compilation;
 using Ptn.TestModule.Interface.Compilation;
 using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Models.Bridge;
+using Ptn.TestModule.Models.Bridge.Database;
 using Ptn.TestModule.Models.Compilation;
 using Volo.Abp;
 using YamlDotNet.Core;
@@ -42,29 +44,99 @@ public class ArazzoCompilerManager : TestModuleDomainService
     public async Task<ArazzoCompilationResult> CompileAsync(
         string sourceDocument,
         ProfilePack profilePack,
+        Guid specSnapshotId,
         CancellationToken cancellationToken = default)
     {
-        var result = Compile(sourceDocument, profilePack);
+        var result = Compile(sourceDocument, profilePack, specSnapshotId);
         var lintResult = await _documentLinter.LintAsync(result.CompiledDocument, cancellationToken);
         result.IsSchemaValid = lintResult.IsValid;
         result.LintDiagnostics = lintResult.Diagnostics;
         return result;
     }
 
+    // Derleme ciktisini ve iki turetilebilirlik yuzeyinin cevabini tek yayin kanitina indirger.
+    public ScenarioCompilationEvidence CreateEvidence(
+        ArazzoCompilationResult compilation,
+        DerivabilityResult? apiDerivability,
+        DatabaseDerivabilityResult? databaseDerivability)
+    {
+        ArgumentNullException.ThrowIfNull(compilation);
+        return new ScenarioCompilationEvidence
+        {
+            CompiledDocument = compilation.CompiledDocument,
+            CompiledHash = compilation.CompiledHash,
+            AssertionCount = compilation.CompiledAssertionCount,
+            IsSchemaValid = compilation.IsSchemaValid,
+            AreAssertionsDerivable = IsFullyDerivable(compilation, apiDerivability, databaseDerivability),
+            SourceDescriptionSpecSnapshotIds = compilation.SourceDescriptionSpecSnapshotIds,
+            LintDiagnostics = compilation.LintDiagnostics
+        };
+    }
+
     // Saf derleme adiminda uzantilari standart HTTP step nesnelerine cevirir.
-    private ArazzoCompilationResult Compile(string sourceDocument, ProfilePack profilePack)
+    private ArazzoCompilationResult Compile(
+        string sourceDocument,
+        ProfilePack profilePack,
+        Guid specSnapshotId)
     {
         ArgumentNullException.ThrowIfNull(profilePack);
         var root = LoadRoot(sourceDocument);
         EnsureDocumentContract(root);
-        var assertionCount = CompileDatabaseSteps(root, profilePack);
-        var compiledDocument = Serialize(root);
-        return new ArazzoCompilationResult
+        var result = new ArazzoCompilationResult
         {
-            CompiledDocument = compiledDocument,
-            CompiledHash = ComputeHash(compiledDocument),
-            CompiledAssertionCount = assertionCount
+            SourceDescriptionSpecSnapshotIds = ResolveSourceDescriptionSnapshotIds(root)
         };
+        CollectApiAssertions(root, specSnapshotId, result);
+        result.DatabaseAssertions = CompileDatabaseSteps(root, profilePack);
+        result.CompiledDocument = Serialize(root);
+        result.CompiledHash = ComputeHash(result.CompiledDocument);
+        result.CompiledAssertionCount = CountAssertions(result);
+        return result;
+    }
+
+    // Iki yuzeyin sonucunu fail-closed birlestirir; cevaplanmamis yuzey turetilebilir sayilmaz (RULE-0006).
+    private static bool IsFullyDerivable(
+        ArazzoCompilationResult compilation,
+        DerivabilityResult? apiDerivability,
+        DatabaseDerivabilityResult? databaseDerivability)
+    {
+        if (compilation.CompiledAssertionCount <= 0 || compilation.UnresolvedApiAssertionCount > 0)
+        {
+            return false;
+        }
+        return IsDatabaseSurfaceDerivable(compilation, databaseDerivability) &&
+               IsApiSurfaceDerivable(compilation, apiDerivability);
+    }
+
+    // DB assertion tasiyan belge icin checker'in butun adresleri turetilebilir bulmasini sart kosar.
+    private static bool IsDatabaseSurfaceDerivable(
+        ArazzoCompilationResult compilation,
+        DatabaseDerivabilityResult? databaseDerivability)
+    {
+        return compilation.DatabaseAssertions.Count == 0 ||
+               (databaseDerivability?.AllDerivable ?? false);
+    }
+
+    // API assertion tasiyan belge icin her pointer'in kesilmemis Derivable hukmu almasini sart kosar.
+    private static bool IsApiSurfaceDerivable(
+        ArazzoCompilationResult compilation,
+        DerivabilityResult? apiDerivability)
+    {
+        if (compilation.ApiAssertions.Count == 0)
+        {
+            return true;
+        }
+        return apiDerivability is { IsTruncated: false } &&
+               apiDerivability.Assertions.Count > 0 &&
+               apiDerivability.Assertions.All(item => item.OutcomeCode == PtnOutcomeCodes.Derivable);
+    }
+
+    // Derlenmis belgedeki DB ve API assertion'larini tek RULE-0006 sayacinda birlestirir.
+    private static int CountAssertions(ArazzoCompilationResult result)
+    {
+        return result.DatabaseAssertions.Count +
+               result.ApiAssertions.Sum(request => request.AssertionPaths.Count) +
+               result.UnresolvedApiAssertionCount;
     }
 
     // YAML kutuphanesiyle tek ve butceli Arazzo kok nesnesini okur.
@@ -115,32 +187,65 @@ public class ArazzoCompilerManager : TestModuleDomainService
     private static void EnsureDatabaseSourceDescription(YamlMappingNode root)
     {
         var sources = GetRequiredSequence(root, ArazzoCompilationConsts.Fields.SourceDescriptions);
-        var exists = sources.Children.OfType<YamlMappingNode>().Any(source =>
-            TryGetScalar(source, ArazzoCompilationConsts.Fields.Name, out var name) &&
-            name == ArazzoCompilationConsts.DatabaseSourceDescriptionName);
-        if (!exists)
+        if (!sources.Children.OfType<YamlMappingNode>().Any(IsDatabaseSourceDescription))
         {
             throw new BusinessException(TestModuleCompilationErrorCodes.DatabaseSourceDescriptionMissing);
         }
     }
 
+    // Modulun kendi checker kaydini API kaynak tanimlarindan ayirir.
+    private static bool IsDatabaseSourceDescription(YamlMappingNode source)
+    {
+        return TryGetScalar(source, ArazzoCompilationConsts.Fields.Name, out var name) &&
+               name == ArazzoCompilationConsts.DatabaseSourceDescriptionName;
+    }
+
+    // API kaynak tanimlarini satirdaki spec snapshot kimligine cozer (ADR-0020 §B/5).
+    private static List<Guid> ResolveSourceDescriptionSnapshotIds(YamlMappingNode root)
+    {
+        var sources = GetRequiredSequence(root, ArazzoCompilationConsts.Fields.SourceDescriptions);
+        return
+        [
+            .. sources.Children.OfType<YamlMappingNode>()
+                .Where(source => !IsDatabaseSourceDescription(source))
+                .Select(ReadSourceDescriptionSnapshotId)
+                .Where(snapshotId => snapshotId != Guid.Empty)
+        ];
+    }
+
+    // Kaynak url'indeki snapshot kimligini kararli adres ayraclariyla ayiklar; kimlik uydurmaz.
+    private static Guid ReadSourceDescriptionSnapshotId(YamlMappingNode source)
+    {
+        if (!TryGetScalar(source, ArazzoCompilationConsts.Fields.Url, out var url))
+        {
+            return Guid.Empty;
+        }
+
+        var tokens = url.Split(
+            ArazzoCompilationConsts.SourceUrlSeparators,
+            StringSplitOptions.RemoveEmptyEntries);
+        return tokens
+            .Select(token => Guid.TryParseExact(token, "D", out var parsed) ? parsed : Guid.Empty)
+            .FirstOrDefault(parsed => parsed != Guid.Empty);
+    }
+
     // Tum workflow adimlarindaki CheckNexus DB uzantilarini kaynak sirasini koruyarak derler.
-    private int CompileDatabaseSteps(YamlMappingNode root, ProfilePack profilePack)
+    private List<DatabaseDerivabilityAddress> CompileDatabaseSteps(YamlMappingNode root, ProfilePack profilePack)
     {
         var workflows = GetRequiredSequence(root, ArazzoCompilationConsts.Fields.Workflows);
-        var assertionCount = 0;
+        var addresses = new List<DatabaseDerivabilityAddress>();
         foreach (var workflow in workflows.Children.OfType<YamlMappingNode>())
         {
             var steps = GetRequiredSequence(workflow, ArazzoCompilationConsts.Fields.Steps);
-            assertionCount += CompileSteps(steps, profilePack);
+            addresses.AddRange(CompileSteps(steps, profilePack));
         }
-        return assertionCount;
+        return addresses;
     }
 
     // Bir workflow icindeki uzantili step'leri standart Arazzo alanlariyla degistirir.
-    private int CompileSteps(YamlSequenceNode steps, ProfilePack profilePack)
+    private List<DatabaseDerivabilityAddress> CompileSteps(YamlSequenceNode steps, ProfilePack profilePack)
     {
-        var compiledCount = 0;
+        var addresses = new List<DatabaseDerivabilityAddress>();
         foreach (var step in steps.Children.OfType<YamlMappingNode>())
         {
             if (!TryGetMapping(step, ArazzoCompilationConsts.DatabaseExtension, out var extension))
@@ -148,14 +253,13 @@ public class ArazzoCompilerManager : TestModuleDomainService
                 continue;
             }
 
-            CompileStep(step, extension, profilePack);
-            compiledCount++;
+            addresses.Add(CompileStep(step, extension, profilePack));
         }
-        return compiledCount;
+        return addresses;
     }
 
     // Tek uzantiyi profil bagi, endpoint yolu, request govdesi ve Passed kriterine indirger.
-    private void CompileStep(
+    private DatabaseDerivabilityAddress CompileStep(
         YamlMappingNode step,
         YamlMappingNode extension,
         ProfilePack profilePack)
@@ -173,6 +277,178 @@ public class ArazzoCompilerManager : TestModuleDomainService
         Set(step, ArazzoCompilationConsts.Fields.RequestBody, requestBody);
         EnsurePassedCriterion(step);
         EnsureObservedRowCountOutput(step);
+        return BuildDerivabilityAddress(binding, requestBody);
+    }
+
+    // Derlenmis checker payload'ini turetilebilirlik yuzeyinin okudugu somut adrese cevirir.
+    private static DatabaseDerivabilityAddress BuildDerivabilityAddress(
+        ConceptBinding binding,
+        YamlMappingNode requestBody)
+    {
+        var payload = GetRequiredMapping(requestBody, ArazzoCompilationConsts.Fields.Payload);
+        var keys = GetRequiredMapping(payload, ArazzoCompilationConsts.Fields.KeyValues);
+        var expectations = GetRequiredSequence(payload, ArazzoCompilationConsts.Fields.Expectations);
+        var cardinality = GetRequiredMapping(payload, ArazzoCompilationConsts.Fields.Cardinality);
+        return new DatabaseDerivabilityAddress
+        {
+            SchemaName = binding.DbSchemaName,
+            TableName = binding.TableName,
+            KeyColumns = [.. keys.Children.Keys.Select(key => GetScalarValue(key, ArazzoCompilationConsts.Fields.KeyValues))],
+            ExpectedColumns = [.. ReadExpectationColumns(expectations)],
+            MatcherCode = ResolveMatcherCode(expectations),
+            CardinalityKindCode = GetRequiredScalar(cardinality, ArazzoCompilationConsts.Fields.KindCode)
+        };
+    }
+
+    // Derlenmis beklenti listesindeki somut kolon adlarini kararli sirada okur.
+    private static IEnumerable<string> ReadExpectationColumns(YamlSequenceNode expectations)
+    {
+        return expectations.Children
+            .OfType<YamlMappingNode>()
+            .Select(item => GetRequiredScalar(item, ArazzoCompilationConsts.Fields.ColumnName));
+    }
+
+    // Adres basina tek matcher tasiyan checker sozlesmesine ilk beklentinin matcher kodunu verir.
+    private static string ResolveMatcherCode(YamlSequenceNode expectations)
+    {
+        var first = expectations.Children.OfType<YamlMappingNode>().FirstOrDefault();
+        return first is null
+            ? MatcherKindCodes.Equals
+            : GetRequiredScalar(first, ArazzoCompilationConsts.Fields.MatcherKindCode);
+    }
+
+    // Uzantisiz adimlarin response assertion'larini API turetilebilirlik istegine cevirir.
+    private static void CollectApiAssertions(
+        YamlMappingNode root,
+        Guid specSnapshotId,
+        ArazzoCompilationResult result)
+    {
+        var workflows = GetRequiredSequence(root, ArazzoCompilationConsts.Fields.Workflows);
+        foreach (var workflow in workflows.Children.OfType<YamlMappingNode>())
+        {
+            var steps = GetRequiredSequence(workflow, ArazzoCompilationConsts.Fields.Steps);
+            CollectWorkflowApiAssertions(steps, specSnapshotId, result);
+        }
+    }
+
+    // Tek workflow icindeki DB disi adimlari assertion pointer'lariyla toplar.
+    private static void CollectWorkflowApiAssertions(
+        YamlSequenceNode steps,
+        Guid specSnapshotId,
+        ArazzoCompilationResult result)
+    {
+        foreach (var step in steps.Children.OfType<YamlMappingNode>())
+        {
+            if (!Has(step, ArazzoCompilationConsts.DatabaseExtension))
+            {
+                AddApiAssertion(step, specSnapshotId, result);
+            }
+        }
+    }
+
+    // Assertion tasiyan API adimini cozulebilir operasyon adresiyle eslestirir, cozulemezse fail-closed sayar.
+    private static void AddApiAssertion(
+        YamlMappingNode step,
+        Guid specSnapshotId,
+        ArazzoCompilationResult result)
+    {
+        var assertionPaths = ReadResponseAssertionPaths(step);
+        if (assertionPaths.Count == 0)
+        {
+            return;
+        }
+
+        if (!TryReadOperationAddress(step, out var method, out var path))
+        {
+            result.UnresolvedApiAssertionCount += assertionPaths.Count;
+            return;
+        }
+
+        result.ApiAssertions.Add(CreateApiRequest(step, specSnapshotId, method, path, assertionPaths));
+    }
+
+    // Cozulmus operasyon adresini ve pointer listesini checker turetilebilirlik istegine cevirir.
+    private static DerivabilityRequest CreateApiRequest(
+        YamlMappingNode step,
+        Guid specSnapshotId,
+        string method,
+        string path,
+        List<string> assertionPaths)
+    {
+        return new DerivabilityRequest
+        {
+            SnapshotId = specSnapshotId,
+            OperationId = TryGetScalar(step, ArazzoCompilationConsts.Fields.OperationId, out var operationId)
+                ? operationId
+                : null,
+            Method = method,
+            Path = path,
+            AssertionPaths = assertionPaths
+        };
+    }
+
+    // successCriteria icindeki response govdesi pointer'larini kararli sirada assertion yoluna cevirir.
+    private static List<string> ReadResponseAssertionPaths(YamlMappingNode step)
+    {
+        if (!TryGetSequence(step, ArazzoCompilationConsts.Fields.SuccessCriteria, out var criteria))
+        {
+            return [];
+        }
+
+        return
+        [
+            .. criteria.Children.OfType<YamlMappingNode>()
+                .Select(ReadAssertionPointer)
+                .Where(pointer => pointer.Length > 0)
+        ];
+    }
+
+    // Tek criterion'un $response.body pointer bolumunu ilk bosluga kadar ayiklar.
+    private static string ReadAssertionPointer(YamlMappingNode criterion)
+    {
+        if (!TryGetScalar(criterion, ArazzoCompilationConsts.Fields.Condition, out var condition))
+        {
+            return string.Empty;
+        }
+
+        var marker = condition.IndexOf(
+            ArazzoCompilationConsts.ResponseBodyPointerMarker,
+            StringComparison.Ordinal);
+        if (marker < 0)
+        {
+            return string.Empty;
+        }
+
+        var pointer = condition[(marker + ArazzoCompilationConsts.ResponseBodyPointerMarker.Length)..];
+        var end = pointer.IndexOf(' ', StringComparison.Ordinal);
+        return end < 0 ? pointer : pointer[..end];
+    }
+
+    // operationPath JSON Pointer'ini OpenAPI yoluna ve HTTP metoduna geri cozer.
+    private static bool TryReadOperationAddress(YamlMappingNode step, out string method, out string path)
+    {
+        method = string.Empty;
+        path = string.Empty;
+        if (!TryGetScalar(step, ArazzoCompilationConsts.Fields.OperationPath, out var operationPath))
+        {
+            return false;
+        }
+
+        var marker = operationPath.IndexOf(ArazzoCompilationConsts.PathsPointerMarker, StringComparison.Ordinal);
+        if (marker < 0)
+        {
+            return false;
+        }
+
+        var segments = operationPath[(marker + ArazzoCompilationConsts.PathsPointerMarker.Length)..].Split('/');
+        if (segments.Length != 2)
+        {
+            return false;
+        }
+
+        path = segments[0].Replace("~1", "/", StringComparison.Ordinal).Replace("~0", "~", StringComparison.Ordinal);
+        method = segments[1];
+        return path.Length > 0 && method.Length > 0;
     }
 
     // Extension step'inin baska bir operation/workflow hedefiyle belirsizlesmesini engeller.

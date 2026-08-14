@@ -19,6 +19,8 @@ namespace Ptn.TestModule.Compilation;
 // sistemdeki gorevi: Runner plugin'i veya ozel DSL olmadan uretilen Arazzo 1.0.1 adim sozlesmesini korur.
 public class ArazzoCompilerManagerTests
 {
+    private static readonly Guid SpecSnapshotId = Guid.NewGuid();
+
     // Uc DB operation uzantisini somut profil kolonlari ve gercek checker HTTP yollarina derler.
     [Fact]
     public async Task Should_compile_all_database_assertion_operations_deterministically()
@@ -26,8 +28,8 @@ public class ArazzoCompilerManagerTests
         var linter = new LinterStub(isValid: true);
         var manager = CreateManager(linter);
 
-        var first = await manager.CompileAsync(SourceDocument, CreateProfilePack());
-        var second = await manager.CompileAsync(SourceDocument, CreateProfilePack());
+        var first = await manager.CompileAsync(SourceDocument, CreateProfilePack(), SpecSnapshotId);
+        var second = await manager.CompileAsync(SourceDocument, CreateProfilePack(), SpecSnapshotId);
 
         first.CompiledAssertionCount.ShouldBe(3);
         first.IsSchemaValid.ShouldBeTrue();
@@ -57,7 +59,7 @@ public class ArazzoCompilerManagerTests
             StringComparison.Ordinal);
 
         var exception = await Should.ThrowAsync<BusinessException>(() =>
-            manager.CompileAsync(source, CreateProfilePack()));
+            manager.CompileAsync(source, CreateProfilePack(), SpecSnapshotId));
 
         exception.Code.ShouldBe(TestModuleCompilationErrorCodes.XPathCriteriaUnsupported);
         linter.CallCount.ShouldBe(0);
@@ -74,7 +76,7 @@ public class ArazzoCompilerManagerTests
             StringComparison.Ordinal);
 
         var exception = await Should.ThrowAsync<BusinessException>(() =>
-            manager.CompileAsync(source, CreateProfilePack()));
+            manager.CompileAsync(source, CreateProfilePack(), SpecSnapshotId));
 
         exception.Code.ShouldBe(TestModuleCompilationErrorCodes.ConceptColumnNotBound);
     }
@@ -85,7 +87,7 @@ public class ArazzoCompilerManagerTests
     {
         var manager = CreateManager(new LinterStub(isValid: false, diagnostics: "struct error"));
 
-        var result = await manager.CompileAsync(SourceDocument, CreateProfilePack());
+        var result = await manager.CompileAsync(SourceDocument, CreateProfilePack(), SpecSnapshotId);
 
         result.IsSchemaValid.ShouldBeFalse();
         result.LintDiagnostics.ShouldBe("struct error");

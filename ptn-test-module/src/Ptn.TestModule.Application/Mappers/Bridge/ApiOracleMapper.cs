@@ -27,7 +27,9 @@ public partial class ApiOracleMapper
     public partial OperationBindingDto Map(OperationBinding input);
     public partial RequestExampleDto Map(RequestExample input);
     public partial DerivabilityRequest Map(DerivabilityRequestDto input);
+    public partial DerivabilityRequestDto MapToDto(DerivabilityRequest input);
     public partial DerivabilityResultDto Map(DerivabilityResult input);
+    public partial DerivabilityResult MapResult(DerivabilityResultDto input);
     public partial ResponseObservation Map(ResponseObservationDto input);
     public partial ResponseObservationDto MapToDto(ResponseObservation input);
     public partial ConformanceResultDto Map(ConformanceResult input);

@@ -3,6 +3,7 @@ using Ptn.TestModule.Constants.Catalog.Lookups;
 using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Managers.Catalog;
 using Ptn.TestModule.Models.Catalog;
+using Ptn.TestModule.Models.Compilation;
 using Shouldly;
 using Xunit;
 
@@ -24,11 +25,11 @@ public class ScenarioPublicationGateTests
         decision.FailedGateCodes.ShouldContain(ScenarioGateCodes.Derivability);
     }
 
-    // Assertion bulunmayan senaryo Published kararini alamamalidir.
+    // Derleyici hic assertion uretmediyse senaryo Published kararini alamamalidir.
     [Fact]
     public void Should_reject_zero_assertion_count()
     {
-        var decision = Evaluate(CreateScenario(assertionCount: 0));
+        var decision = Evaluate(CreateScenario(), assertionCount: 0);
 
         decision.IsPublishable.ShouldBeFalse();
         decision.FailedGateCodes.ShouldContain(ScenarioGateCodes.AssertionCount);
@@ -59,9 +60,10 @@ public class ScenarioPublicationGateTests
     public void Should_report_failed_gate_codes_in_evaluation_order()
     {
         var decision = Evaluate(
-            CreateScenario(assertionCount: 0, includeDbSchemaFingerprint: false),
+            CreateScenario(includeDbSchemaFingerprint: false),
             isSchemaValid: false,
             areAssertionsDerivable: false,
+            assertionCount: 0,
             sourceSnapshotId: Guid.NewGuid());
 
         decision.FailedGateCodes.ShouldBe([
@@ -73,17 +75,21 @@ public class ScenarioPublicationGateTests
         ]);
     }
 
-    // Verilen aggregate ve makine kanitini gercek gate manager ile degerlendirir.
+    // Verilen aggregate ve derleyici kanitini gercek gate manager ile degerlendirir.
     private static TestScenarioPublishDecision Evaluate(
         TestScenario scenario,
         bool isSchemaValid = true,
         bool areAssertionsDerivable = true,
+        int assertionCount = 1,
         Guid? sourceSnapshotId = null)
     {
         return new ScenarioPublicationGateManager().Evaluate(
             scenario,
-            new TestScenarioPublishModel
+            new ScenarioCompilationEvidence
             {
+                CompiledDocument = "compiled",
+                CompiledHash = new string('b', 64),
+                AssertionCount = assertionCount,
                 IsSchemaValid = isSchemaValid,
                 AreAssertionsDerivable = areAssertionsDerivable,
                 SourceDescriptionSpecSnapshotIds = [sourceSnapshotId ?? SpecSnapshotId]
@@ -91,7 +97,7 @@ public class ScenarioPublicationGateTests
     }
 
     // Gate testlerine gereken en kucuk senaryo veri kabugunu kurar.
-    private static TestScenario CreateScenario(int assertionCount = 1, bool includeDbSchemaFingerprint = true)
+    private static TestScenario CreateScenario(bool includeDbSchemaFingerprint = true)
     {
         return new TestScenario(
             Guid.NewGuid(),
@@ -104,9 +110,6 @@ public class ScenarioPublicationGateTests
                 Title = "Gate scenario",
                 SourceDocument = "source",
                 SourceHash = Hash('a'),
-                CompiledDocument = "compiled",
-                CompiledHash = Hash('b'),
-                AssertionCount = assertionCount,
                 MaterialSeal = new TestScenarioMaterialSeal
                 {
                     RulesFingerprint = Hash('c'),

@@ -6,7 +6,7 @@ using Volo.Abp.MultiTenancy;
 namespace Ptn.TestModule.Entities.Catalog;
 
 // islevi: Her satiri ayri bir surum olan test senaryosunun DBML alanlarini tasir.
-// sistemdeki gorevi: Normalizasyon, gecis ve onay davranisini Manager'a birakan ince ve tenant-aware persistence kabugudur.
+// sistemdeki gorevi: Normalizasyon, gecis, onay ve derleme yazimini Manager'a birakan ince ve tenant-aware persistence kabugudur.
 public class TestScenario : AuditedAggregateRoot<Guid>, IMultiTenant
 {
     public string ScenarioKey { get; internal set; } = string.Empty;
@@ -55,15 +55,12 @@ public class TestScenario : AuditedAggregateRoot<Guid>, IMultiTenant
         StateId = stateId;
         SourceDocument = model.SourceDocument;
         SourceHash = model.SourceHash;
-        CompiledDocument = model.CompiledDocument;
-        CompiledHash = model.CompiledHash;
         RulesFingerprint = model.MaterialSeal.RulesFingerprint;
         SpecSnapshotId = model.MaterialSeal.SpecSnapshotId;
         SpecFingerprint = model.MaterialSeal.SpecFingerprint;
         DbConnectionId = model.MaterialSeal.DbConnectionId;
         DbSchemaFingerprint = model.MaterialSeal.DbSchemaFingerprint;
         ProfileFingerprint = model.MaterialSeal.ProfileFingerprint;
-        AssertionCount = model.AssertionCount;
         DerivabilityCode = model.DerivabilityCode;
         AuthoredByAgent = model.AuthoredByAgent;
         AgentModelRef = model.AgentModelRef;

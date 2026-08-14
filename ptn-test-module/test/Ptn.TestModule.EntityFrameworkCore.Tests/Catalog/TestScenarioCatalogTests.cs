@@ -149,9 +149,6 @@ public class TestScenarioCatalogTests : TestModuleEntityFrameworkCoreTestBase
             Title = "Scenario",
             SourceDocument = "source",
             SourceHash = Hash(hashSeed),
-            CompiledDocument = "compiled",
-            CompiledHash = Hash('c'),
-            AssertionCount = 1,
             MaterialSeal = CreateMaterialSeal()
         };
     }
@@ -164,9 +161,6 @@ public class TestScenarioCatalogTests : TestModuleEntityFrameworkCoreTestBase
             Title = "Scenario updated",
             SourceDocument = "source updated",
             SourceHash = Hash(hashSeed),
-            CompiledDocument = "compiled updated",
-            CompiledHash = Hash('d'),
-            AssertionCount = 1,
             MaterialSeal = CreateMaterialSeal()
         };
     }

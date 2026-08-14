@@ -12,6 +12,8 @@ public static class ArazzoCompilationConsts
     public const string DatabaseConnectionRuntimeExpression = "{$inputs.dbConnectionId}";
     public const string PassedCriterion = "$response.body#/data/passed == true";
     public const string ObservedRowCountExpression = "$response.body#/data/observedRowCount";
+    public const string ResponseBodyPointerMarker = "$response.body#";
+    public const string PathsPointerMarker = "#/paths/";
     public const string DockerExecutable = "docker";
     public const string RedoclyCliImage = "redocly/cli:2.14.0";
     public const string LintDocumentFileName = "document.arazzo.yaml";
@@ -21,6 +23,9 @@ public static class ArazzoCompilationConsts
     public const int LintTimeoutMs = 60_000;
     public const int MaxDocumentBytes = 1_048_576;
     public const int MaxLintDiagnosticsLength = 16_384;
+
+    // Kaynak tanimi url'inde snapshot kimligini ayiran kararli adres ayraclaridir.
+    public static char[] SourceUrlSeparators { get; } = ['/', '\\', '?', '#', '=', '&', '.'];
 
     // islevi: Desteklenen DB assertion operasyonlarini uzanti sozlugunde kapali tutar.
     public static class Operations
@@ -39,6 +44,7 @@ public static class ArazzoCompilationConsts
         public const string Arazzo = "arazzo";
         public const string SourceDescriptions = "sourceDescriptions";
         public const string Name = "name";
+        public const string Url = "url";
         public const string Workflows = "workflows";
         public const string Steps = "steps";
         public const string StepId = "stepId";

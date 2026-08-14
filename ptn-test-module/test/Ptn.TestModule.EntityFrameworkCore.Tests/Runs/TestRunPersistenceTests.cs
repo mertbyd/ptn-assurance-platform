@@ -215,9 +215,6 @@ public class TestRunPersistenceTests : TestModuleEntityFrameworkCoreTestBase
                 Title = "Persistence scenario",
                 SourceDocument = "source",
                 SourceHash = Hash('a'),
-                CompiledDocument = "compiled",
-                CompiledHash = Hash('b'),
-                AssertionCount = 1,
                 MaterialSeal = new TestScenarioMaterialSeal
                 {
                     RulesFingerprint = Hash('c'),

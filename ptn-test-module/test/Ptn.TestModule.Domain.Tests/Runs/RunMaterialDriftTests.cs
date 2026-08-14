@@ -58,9 +58,6 @@ public class RunMaterialDriftTests
                 Title = "Drift scenario",
                 SourceDocument = "source",
                 SourceHash = Hash('e'),
-                CompiledDocument = "compiled",
-                CompiledHash = Hash('f'),
-                AssertionCount = 1,
                 MaterialSeal = new TestScenarioMaterialSeal
                 {
                     RulesFingerprint = Hash('a'),

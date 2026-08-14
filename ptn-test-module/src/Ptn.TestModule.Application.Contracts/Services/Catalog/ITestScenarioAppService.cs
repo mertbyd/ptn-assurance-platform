@@ -28,11 +28,11 @@ public interface ITestScenarioAppService : IApplicationService
     // Draft senaryo surumunu insan onayi bekleyen duruma tasir.
     Task<TestScenarioDto> SubmitForApprovalAsync(Guid id);
 
-    // Bes yayin kapisini durum degistirmeden degerlendirir.
-    Task<TestScenarioPublishDecisionDto> EvaluatePublicationAsync(Guid id, PublishTestScenarioDto input);
+    // Bes yayin kapisini makine kanitiyla, durum degistirmeden degerlendirir.
+    Task<TestScenarioPublishDecisionDto> EvaluatePublicationAsync(Guid id);
 
     // Insan onayini source hash'e baglayip tum kapilar gectiyse senaryoyu yayinlar.
-    Task<TestScenarioDto> PublishAsync(Guid id, PublishTestScenarioDto input);
+    Task<TestScenarioDto> PublishAsync(Guid id);
 
     // Yayinlanmis senaryo surumunu tarihsel kaydi koruyarak kullanimdan kaldirir.
     Task<TestScenarioDto> DeprecateAsync(Guid id);

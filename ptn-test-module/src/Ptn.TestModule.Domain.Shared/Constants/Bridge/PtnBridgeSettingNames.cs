@@ -6,6 +6,8 @@ public static class PtnBridgeSettingNames
 {
     public const string ProfilePackPath = "TestModule.Bridge.ProfilePackPath";
     public const string DefaultProfilePackPath = "samples/profiles";
+    public const string ProfilePackKey = "TestModule.Bridge.ProfilePackKey";
+    public const string DefaultProfilePackKey = "acme-ticketing";
     public const string ProfilePackExtension = ".yaml";
     public const string FingerprintPrefix = "sha256:";
 }

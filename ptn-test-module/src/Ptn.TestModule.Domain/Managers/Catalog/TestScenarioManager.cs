@@ -13,6 +13,7 @@ using Ptn.TestModule.ExceptionCodes.Catalog;
 using Ptn.TestModule.Interface.Catalog;
 using Ptn.TestModule.Interface.Lookups;
 using Ptn.TestModule.Models.Catalog;
+using Ptn.TestModule.Models.Compilation;
 using Volo.Abp;
 using Volo.Abp.Domain.Entities;
 
@@ -124,13 +125,15 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
         return entity;
     }
 
-    // Tum kapilar gecmis ve guncel hash'e bagli onayli surumu Published durumuna tasir.
+    // Tum kapilar gecmis onayli surume makine kanitini yazar ve Published durumuna tasir.
     public async Task<TestScenario> PublishAsync(
         TestScenario entity,
         TestScenarioPublishDecision decision,
+        ScenarioCompilationEvidence evidence,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(decision);
+        ArgumentNullException.ThrowIfNull(evidence);
         await EnsureStateAsync(entity, TestScenarioStateCodes.PendingApproval, cancellationToken);
         EnsureApprovalIsCurrent(entity);
         if (!decision.IsPublishable)
@@ -139,8 +142,20 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
                 .WithData(nameof(decision.FailedGateCodes), decision.FailedGateCodes);
         }
 
+        ApplyCompilation(entity, evidence);
         entity.StateId = await GetStateIdAsync(TestScenarioStateCodes.Published, cancellationToken);
         return entity;
+    }
+
+    // Derleyicinin urettigi belgeyi, kanonik hash'i ve assertion sayisini satira yazar (ADR-0015 §C).
+    private static void ApplyCompilation(TestScenario entity, ScenarioCompilationEvidence evidence)
+    {
+        entity.CompiledDocument = EnsureDocument(
+            evidence.CompiledDocument,
+            nameof(entity.CompiledDocument),
+            TestModuleScenarioErrorCodes.Validation.CompiledDocumentRequired);
+        entity.CompiledHash = NormalizeRequiredHash(evidence.CompiledHash, nameof(entity.CompiledHash));
+        entity.AssertionCount = evidence.AssertionCount;
     }
 
     // Yayinlanmis surumu silmeden kullanimdan kaldirir.
@@ -258,13 +273,7 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
                 nameof(model.SourceDocument),
                 TestModuleScenarioErrorCodes.Validation.SourceDocumentRequired),
             SourceHash = NormalizeRequiredHash(model.SourceHash, nameof(model.SourceHash)),
-            CompiledDocument = EnsureDocument(
-                model.CompiledDocument,
-                nameof(model.CompiledDocument),
-                TestModuleScenarioErrorCodes.Validation.CompiledDocumentRequired),
-            CompiledHash = NormalizeRequiredHash(model.CompiledHash, nameof(model.CompiledHash)),
             MaterialSeal = Normalize(model.MaterialSeal),
-            AssertionCount = EnsureAssertionCount(model.AssertionCount),
             DerivabilityCode = NormalizeOptionalText(model.DerivabilityCode, nameof(model.DerivabilityCode), TestScenarioConsts.MaxDerivabilityCodeLength),
             AuthoredByAgent = model.AuthoredByAgent,
             AgentModelRef = NormalizeOptionalText(model.AgentModelRef, nameof(model.AgentModelRef), TestScenarioConsts.MaxAgentModelRefLength),
@@ -284,13 +293,7 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
                 nameof(model.SourceDocument),
                 TestModuleScenarioErrorCodes.Validation.SourceDocumentRequired),
             SourceHash = NormalizeRequiredHash(model.SourceHash, nameof(model.SourceHash)),
-            CompiledDocument = EnsureDocument(
-                model.CompiledDocument,
-                nameof(model.CompiledDocument),
-                TestModuleScenarioErrorCodes.Validation.CompiledDocumentRequired),
-            CompiledHash = NormalizeRequiredHash(model.CompiledHash, nameof(model.CompiledHash)),
             MaterialSeal = Normalize(model.MaterialSeal),
-            AssertionCount = EnsureAssertionCount(model.AssertionCount),
             DerivabilityCode = NormalizeOptionalText(model.DerivabilityCode, nameof(model.DerivabilityCode), TestScenarioConsts.MaxDerivabilityCodeLength),
             AuthoredByAgent = model.AuthoredByAgent,
             AgentModelRef = NormalizeOptionalText(model.AgentModelRef, nameof(model.AgentModelRef), TestScenarioConsts.MaxAgentModelRefLength),
@@ -320,15 +323,12 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
         entity.Description = model.Description;
         entity.SourceDocument = model.SourceDocument;
         entity.SourceHash = model.SourceHash;
-        entity.CompiledDocument = model.CompiledDocument;
-        entity.CompiledHash = model.CompiledHash;
         entity.RulesFingerprint = model.MaterialSeal.RulesFingerprint;
         entity.SpecSnapshotId = model.MaterialSeal.SpecSnapshotId;
         entity.SpecFingerprint = model.MaterialSeal.SpecFingerprint;
         entity.DbConnectionId = model.MaterialSeal.DbConnectionId;
         entity.DbSchemaFingerprint = model.MaterialSeal.DbSchemaFingerprint;
         entity.ProfileFingerprint = model.MaterialSeal.ProfileFingerprint;
-        entity.AssertionCount = model.AssertionCount;
         entity.DerivabilityCode = model.DerivabilityCode;
         entity.AuthoredByAgent = model.AuthoredByAgent;
         entity.AgentModelRef = model.AgentModelRef;
@@ -373,16 +373,6 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
     private static string? NormalizeOptionalHash(string? value, string field)
     {
         return string.IsNullOrWhiteSpace(value) ? null : NormalizeRequiredHash(value, field);
-    }
-
-    // Assertion sayisinin negatif olmasini domain sinirinda reddeder.
-    private static int EnsureAssertionCount(int assertionCount)
-    {
-        if (assertionCount < 0)
-        {
-            throw new BusinessException(TestModuleScenarioErrorCodes.Validation.AssertionCountInvalid);
-        }
-        return assertionCount;
     }
 
     // Gecis hatasini mevcut durum kimligiyle kodlu olarak olusturur.

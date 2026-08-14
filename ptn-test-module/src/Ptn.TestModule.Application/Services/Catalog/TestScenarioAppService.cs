@@ -12,6 +12,7 @@ using Ptn.TestModule.Mappers.Catalog;
 using Ptn.TestModule.Models.Catalog;
 using Ptn.TestModule.Permissions;
 using Ptn.TestModule.Services.Bridge;
+using Ptn.TestModule.Services.Compilation;
 using Volo.Abp;
 using Volo.Abp.Users;
 
@@ -35,19 +36,22 @@ public class TestScenarioAppService : BaseApplicationService<
     private static readonly TestScenarioMapper Mapper = new();
     private readonly ScenarioPublicationGateManager _publicationGateManager;
     private readonly ISchemaKnowledgeAppService _schemaKnowledgeAppService;
+    private readonly ScenarioCompilationService _compilationService;
 
     protected override string GetPolicyName => TestModulePermissions.Scenarios.Default;
     protected override string CreatePolicyName => TestModulePermissions.Scenarios.Create;
     protected override string UpdatePolicyName => TestModulePermissions.Scenarios.Update;
     protected override string DeletePolicyName => TestModulePermissions.Scenarios.Delete;
 
-    // Yayin kapisi ve KBP-714 sema fingerprint capability'sini katalog akimina baglar.
+    // Yayin kapisini, sema fingerprint capability'sini ve makine derlemesini katalog akimina baglar.
     public TestScenarioAppService(
         ScenarioPublicationGateManager publicationGateManager,
-        ISchemaKnowledgeAppService schemaKnowledgeAppService)
+        ISchemaKnowledgeAppService schemaKnowledgeAppService,
+        ScenarioCompilationService compilationService)
     {
         _publicationGateManager = publicationGateManager;
         _schemaKnowledgeAppService = schemaKnowledgeAppService;
+        _compilationService = compilationService;
     }
 
     // Draft senaryo surumunu insan onayi bekleyen duruma tasiyip kaydeder.
@@ -63,25 +67,25 @@ public class TestScenarioAppService : BaseApplicationService<
         return Mapper.Map(saved);
     }
 
-    // Bes yayin kapisini kalici durumu degistirmeden kodlu karar olarak dondurur.
-    public async Task<TestScenarioPublishDecisionDto> EvaluatePublicationAsync(
-        Guid id,
-        PublishTestScenarioDto input)
+    // Bes yayin kapisini derleyicinin urettigi kanitla, kalici durumu degistirmeden degerlendirir.
+    public async Task<TestScenarioPublishDecisionDto> EvaluatePublicationAsync(Guid id)
     {
         await CheckPolicyAsync(TestModulePermissions.Scenarios.Publish);
         var entity = await Manager.EnsureExistsAsync(id, cancellationToken: CancellationTokenProvider.Token);
-        return Mapper.Map(_publicationGateManager.Evaluate(entity, Mapper.Map(input)));
+        var evidence = await _compilationService.CompileAsync(entity, CancellationTokenProvider.Token);
+        return Mapper.Map(_publicationGateManager.Evaluate(entity, evidence));
     }
 
-    // Insan onayini source hash'e baglar ve tum kapilar gectiyse Published durumunu kaydeder.
-    public async Task<TestScenarioDto> PublishAsync(Guid id, PublishTestScenarioDto input)
+    // Onayi source hash'e baglar, belgeyi yeniden derler ve kapilar gectiyse kaniti satira yazar.
+    public async Task<TestScenarioDto> PublishAsync(Guid id)
     {
         await CheckPolicyAsync(TestModulePermissions.Scenarios.Approve);
         await CheckPolicyAsync(TestModulePermissions.Scenarios.Publish);
         var entity = await Manager.EnsureExistsAsync(id, cancellationToken: CancellationTokenProvider.Token);
         await Manager.BindApprovalAsync(entity, CurrentUser.GetId(), Clock.Now, CancellationTokenProvider.Token);
-        var decision = _publicationGateManager.Evaluate(entity, Mapper.Map(input));
-        var published = await Manager.PublishAsync(entity, decision, CancellationTokenProvider.Token);
+        var evidence = await _compilationService.CompileAsync(entity, CancellationTokenProvider.Token);
+        var decision = _publicationGateManager.Evaluate(entity, evidence);
+        var published = await Manager.PublishAsync(entity, decision, evidence, CancellationTokenProvider.Token);
         var saved = await Repository.UpdateAsync(
             published,
             autoSave: true,
