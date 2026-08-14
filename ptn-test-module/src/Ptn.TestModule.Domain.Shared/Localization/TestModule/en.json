@@ -75,6 +75,15 @@
     "TestModule.Run:RunCancelled": "The test run was cancelled.",
     "TestModule.Run:RunFailedUnexpectedly": "The test run stopped with an unexpected error.",
     "TestModule.Run:MaterialDriftDetected": "The scenario materials drifted, so the run verified nothing.",
-    "TestModule.Run:AssertionResponseUnreadable": "The database assertion response could not be read."
+    "TestModule.Run:AssertionResponseUnreadable": "The database assertion response could not be read.",
+    "TestModule.Compilation:InvalidDocument": "The Arazzo document is invalid.",
+    "TestModule.Compilation:UnsupportedVersion": "Only Arazzo 1.0.1 documents are supported.",
+    "TestModule.Compilation:XPathCriteriaUnsupported": "XPath criteria are not supported by the selected workflow runner.",
+    "TestModule.Compilation:DatabaseSourceDescriptionMissing": "The databaseChecker source description is required.",
+    "TestModule.Compilation:UnsupportedDatabaseOperation": "The database assertion operation is not supported.",
+    "TestModule.Compilation:InvalidDatabaseAssertion": "The x-checknexus-db assertion is invalid.",
+    "TestModule.Compilation:ConceptColumnNotBound": "The requested concept column is not bound in the profile pack.",
+    "TestModule.Compilation:LintProcessFailed": "The pinned Redocly lint process could not run.",
+    "TestModule.Compilation:LintTimedOut": "The pinned Redocly lint process timed out."
   }
 }

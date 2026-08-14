@@ -75,6 +75,15 @@
     "TestModule.Run:RunCancelled": "Test kosumu iptal edildi.",
     "TestModule.Run:RunFailedUnexpectedly": "Test kosumu beklenmeyen bir hatayla durdu.",
     "TestModule.Run:MaterialDriftDetected": "Senaryo malzemeleri kaydigi icin kosum hicbir seyi dogrulamadi.",
-    "TestModule.Run:AssertionResponseUnreadable": "Veritabani assertion yaniti okunamadi."
+    "TestModule.Run:AssertionResponseUnreadable": "Veritabani assertion yaniti okunamadi.",
+    "TestModule.Compilation:InvalidDocument": "Arazzo belgesi gecersizdir.",
+    "TestModule.Compilation:UnsupportedVersion": "Yalniz Arazzo 1.0.1 belgeleri desteklenir.",
+    "TestModule.Compilation:XPathCriteriaUnsupported": "Secilen workflow runner XPath kriterlerini desteklemiyor.",
+    "TestModule.Compilation:DatabaseSourceDescriptionMissing": "databaseChecker source description kaydi zorunludur.",
+    "TestModule.Compilation:UnsupportedDatabaseOperation": "Veritabani assertion operasyonu desteklenmiyor.",
+    "TestModule.Compilation:InvalidDatabaseAssertion": "x-checknexus-db assertion tanimi gecersizdir.",
+    "TestModule.Compilation:ConceptColumnNotBound": "Istenen kavram kolonu profil paketinde bagli degildir.",
+    "TestModule.Compilation:LintProcessFailed": "Pinli Redocly lint sureci calistirilamadi.",
+    "TestModule.Compilation:LintTimedOut": "Pinli Redocly lint sureci zaman asimina ugradi."
   }
 }

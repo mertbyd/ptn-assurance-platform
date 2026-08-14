@@ -1,0 +1,29 @@
+arazzo: 1.0.1
+info:
+  title: CheckNexus database assertion source
+  version: 1.0.1
+sourceDescriptions:
+  - name: databaseChecker
+    url: ./database-checker.openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: verify-subject
+    inputs:
+      type: object
+      properties:
+        dbConnectionId: { type: string, format: uuid }
+        subjectId: { type: string }
+        email: { type: string }
+    steps:
+      - stepId: verify-subject-row
+        x-checknexus-db:
+          operation: assertRow
+          concept: Subject
+          key:
+            identity: '{$inputs.subjectId}'
+          expect:
+            naturalKey:
+              matcher: equals
+              value: '{$inputs.email}'
+          timeoutMs: 5000
+          pollIntervalMs: 250

@@ -1,0 +1,58 @@
+openapi: 3.1.0
+info:
+  title: CheckNexus Database Checker assertion contract
+  version: 0.2.0-alpha.6
+paths:
+  /api/comparison/assertions/row:
+    post:
+      operationId: assertRow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - connectionId
+                - schemaName
+                - tableName
+                - keyValues
+                - expectations
+                - cardinality
+              properties:
+                connectionId: { type: string, format: uuid }
+                schemaName: { type: string }
+                tableName: { type: string }
+                keyValues:
+                  type: object
+                  additionalProperties:
+                    type: [string, "null"]
+                expectations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      columnName: { type: string }
+                      matcherKindCode: { type: string }
+                      expectedValue: { type: [string, "null"] }
+                cardinality:
+                  type: object
+                  properties:
+                    kindCode: { type: string }
+                    expectedCount: { type: integer, format: int64 }
+                timeoutMs: { type: integer, format: int32 }
+                pollIntervalMs: { type: integer, format: int32 }
+                includeRowOnFailure: { type: boolean }
+      responses:
+        "200":
+          description: Assertion result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      passed: { type: boolean }
+                      observedRowCount: { type: integer, format: int64 }
