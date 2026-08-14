@@ -1,3 +1,4 @@
+using System.Globalization;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Runs;
 using Volo.Abp.Settings;
@@ -21,5 +22,20 @@ public class TestModuleSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(new SettingDefinition(
             TestModuleSettings.EnvironmentBindings,
             TestModuleRunSettingNames.DefaultEnvironmentBindings));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.RunnerImage,
+            WorkflowRunnerConsts.RedoclyCliImage));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.RunnerExecutionTimeoutSeconds,
+            WorkflowRunnerConsts.DefaultExecutionTimeoutSeconds.ToString(CultureInfo.InvariantCulture)));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.RunnerMaxFetchTimeoutSeconds,
+            WorkflowRunnerConsts.DefaultMaxFetchTimeoutSeconds.ToString(CultureInfo.InvariantCulture)));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.HarRetentionDays,
+            TestModuleRunSettingNames.DefaultHarRetentionDays));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.StaleRunThresholdMinutes,
+            TestModuleRunSettingNames.DefaultStaleRunThresholdMinutes));
     }
 }

@@ -61,6 +61,20 @@
     "TestModule.Run:InvalidFingerprint": "Fingerprint 64 karakterlik kucuk harfli SHA-256 degeri olmalidir.",
     "TestModule.Run:MaterialDriftRequired": "Bu terminal hukum icin malzeme kaymasi sonucu zorunludur.",
     "TestModule.Run:SourceCheckerNotSupported": "Bulgu kaynak checker'i desteklenmiyor.",
-    "TestModule.Run:DurationInvalid": "Test kosumu suresi negatif olamaz."
+    "TestModule.Run:DurationInvalid": "Test kosumu suresi negatif olamaz.",
+    "TestModule.Run:RunnerImageUnavailable": "Pinli workflow runner imaji cekilemedi veya baslatilamadi.",
+    "TestModule.Run:RunnerTimedOut": "Workflow runner sure butcesini asti ve durduruldu.",
+    "TestModule.Run:RunnerExitedNonZero": "Workflow runner beklenmeyen bir cikis koduyla sonlandi.",
+    "TestModule.Run:HarNotProduced": "Workflow runner okunabilir bir HAR artefakti uretmedi.",
+    "TestModule.Run:HarTooLarge": "HAR artefakti azami saklama boyutunu asiyor.",
+    "TestModule.Run:ArazzoVersionUnsupported": "Yalniz Arazzo 1.0.1 belgeleri kosulabilir.",
+    "TestModule.Run:XPathCriteriaRejected": "Workflow runner XPath kriterlerini desteklemiyor.",
+    "TestModule.Run:StepKeyMissing": "HAR entry'si adim kimligi tasimadigi icin hukum adima baglanamiyor.",
+    "TestModule.Run:EnvironmentRunInProgress": "Bu ortamda zaten aktif bir test kosumu var.",
+    "TestModule.Run:ScenarioDocumentRequired": "Senaryonun kosulacak derlenmis belgesi yok.",
+    "TestModule.Run:RunCancelled": "Test kosumu iptal edildi.",
+    "TestModule.Run:RunFailedUnexpectedly": "Test kosumu beklenmeyen bir hatayla durdu.",
+    "TestModule.Run:MaterialDriftDetected": "Senaryo malzemeleri kaydigi icin kosum hicbir seyi dogrulamadi.",
+    "TestModule.Run:AssertionResponseUnreadable": "Veritabani assertion yaniti okunamadi."
   }
 }

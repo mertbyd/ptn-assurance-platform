@@ -61,6 +61,20 @@
     "TestModule.Run:InvalidFingerprint": "The fingerprint must be a 64-character lowercase SHA-256 value.",
     "TestModule.Run:MaterialDriftRequired": "A material drift result is required for this terminal outcome.",
     "TestModule.Run:SourceCheckerNotSupported": "The finding source checker is not supported.",
-    "TestModule.Run:DurationInvalid": "The test run duration cannot be negative."
+    "TestModule.Run:DurationInvalid": "The test run duration cannot be negative.",
+    "TestModule.Run:RunnerImageUnavailable": "The pinned workflow runner image could not be pulled or started.",
+    "TestModule.Run:RunnerTimedOut": "The workflow runner exceeded its execution budget and was stopped.",
+    "TestModule.Run:RunnerExitedNonZero": "The workflow runner exited with an unexpected exit code.",
+    "TestModule.Run:HarNotProduced": "The workflow runner did not produce a readable HAR artifact.",
+    "TestModule.Run:HarTooLarge": "The HAR artifact exceeds the maximum stored size.",
+    "TestModule.Run:ArazzoVersionUnsupported": "Only Arazzo 1.0.1 documents can be executed.",
+    "TestModule.Run:XPathCriteriaRejected": "XPath criteria are not supported by the workflow runner.",
+    "TestModule.Run:StepKeyMissing": "The HAR entry carries no step key, so the verdict cannot be bound to a step.",
+    "TestModule.Run:EnvironmentRunInProgress": "Another test run is already active for this environment.",
+    "TestModule.Run:ScenarioDocumentRequired": "The scenario has no compiled document to execute.",
+    "TestModule.Run:RunCancelled": "The test run was cancelled.",
+    "TestModule.Run:RunFailedUnexpectedly": "The test run stopped with an unexpected error.",
+    "TestModule.Run:MaterialDriftDetected": "The scenario materials drifted, so the run verified nothing.",
+    "TestModule.Run:AssertionResponseUnreadable": "The database assertion response could not be read."
   }
 }

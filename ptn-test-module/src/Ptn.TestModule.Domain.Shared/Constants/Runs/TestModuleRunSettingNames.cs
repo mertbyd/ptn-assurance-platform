@@ -33,4 +33,25 @@ public static class TestModuleRunSettingNames
 
     /// <summary>Secret degeri yerine saklanan mantiksal referans alanidir.</summary>
     public const string SecretRef = "secretRef";
+
+    /// <summary>Kosumu icra eden pinli dis runner imajinin ayar adidir.</summary>
+    public const string RunnerImage = "TestModule.Runs.RunnerImage";
+
+    /// <summary>Tum senaryonun runner tarafindaki azami sure ayar adidir.</summary>
+    public const string RunnerExecutionTimeoutSeconds = "TestModule.Runs.RunnerExecutionTimeoutSeconds";
+
+    /// <summary>Tek HTTP cagrisinin runner tarafindaki azami sure ayar adidir.</summary>
+    public const string RunnerMaxFetchTimeoutSeconds = "TestModule.Runs.RunnerMaxFetchTimeoutSeconds";
+
+    /// <summary>HAR artefaktlarinin gun cinsinden saklama suresi ayar adidir.</summary>
+    public const string HarRetentionDays = "TestModule.Runs.HarRetentionDays";
+
+    /// <summary>Asili Running kosularinin kurtarilma esigi dakika ayar adidir.</summary>
+    public const string StaleRunThresholdMinutes = "TestModule.Runs.StaleRunThresholdMinutes";
+
+    /// <summary>Varsayilan HAR saklama suresidir.</summary>
+    public const string DefaultHarRetentionDays = "30";
+
+    /// <summary>Varsayilan asili kosum kurtarma esigidir.</summary>
+    public const string DefaultStaleRunThresholdMinutes = "120";
 }

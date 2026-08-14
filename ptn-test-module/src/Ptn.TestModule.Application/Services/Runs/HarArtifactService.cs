@@ -1,0 +1,58 @@
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Ptn.TestModule.Interface.Runs;
+using Volo.Abp.BlobStoring;
+using Volo.Abp.DependencyInjection;
+
+namespace Ptn.TestModule.Services.Runs;
+
+// islevi: HAR artefaktini ABP BLOB Storing container'ina yazar, geri okur ve siler.
+// sistemdeki gorevi: Artefakti satirdan cikaran kalicilik siniridir; test_runs uzerinde yalniz har_blob_name kalir (ADR-0016 §H).
+public sealed class HarArtifactService : IHarArtifactStore, ITransientDependency
+{
+    // HAR artefaktlarinin tipli BLOB Storing container'idir.
+    private readonly IBlobContainer<HarArtifactContainer> _blobContainer;
+
+    // Artefakt sinirini tipli container'a baglar.
+    public HarArtifactService(IBlobContainer<HarArtifactContainer> blobContainer)
+    {
+        _blobContainer = blobContainer;
+    }
+
+    // Manager'in urettigi blob adiyla artefakti yazar ve adi cagirana geri verir.
+    public async Task<string> SaveAsync(
+        string blobName,
+        string harContent,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(blobName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(harContent);
+        await _blobContainer.SaveAsync(
+            blobName,
+            Encoding.UTF8.GetBytes(harContent),
+            overrideExisting: true,
+            cancellationToken);
+        return blobName;
+    }
+
+    // Saklanmis artefakti raporlama ve yeniden yargi icin geri okur.
+    public async Task<string?> ReadAsync(
+        string blobName,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(blobName);
+        var bytes = await _blobContainer.GetAllBytesOrNullAsync(blobName, cancellationToken);
+        return bytes is null ? null : Encoding.UTF8.GetString(bytes);
+    }
+
+    // Saklama suresi dolan artefakti kalici depodan birakir.
+    public Task DeleteAsync(
+        string blobName,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(blobName);
+        return _blobContainer.DeleteAsync(blobName, cancellationToken);
+    }
+}

@@ -46,6 +46,48 @@ public static class TestModuleRunErrorCodes
     /// <summary>Kosum suresinin negatif verildigini bildirir.</summary>
     public const string DurationInvalid = $"{Prefix}:DurationInvalid";
 
+    /// <summary>Pinli dis runner imajinin cekilemedigini veya baslatilamadigini bildirir.</summary>
+    public const string RunnerImageUnavailable = $"{Prefix}:RunnerImageUnavailable";
+
+    /// <summary>Dis runner surecinin verilen butceyi asip sert olduruldugunu bildirir.</summary>
+    public const string RunnerTimedOut = $"{Prefix}:RunnerTimedOut";
+
+    /// <summary>Dis runner surecinin bilinmeyen bir cikis koduyla sonlandigini bildirir.</summary>
+    public const string RunnerExitedNonZero = $"{Prefix}:RunnerExitedNonZero";
+
+    /// <summary>Kosum bitmesine ragmen HAR artefaktinin uretilmedigini bildirir.</summary>
+    public const string HarNotProduced = $"{Prefix}:HarNotProduced";
+
+    /// <summary>HAR artefaktinin kalici depo boyut butcesini astigini bildirir.</summary>
+    public const string HarTooLarge = $"{Prefix}:HarTooLarge";
+
+    /// <summary>Belgenin desteklenen Arazzo surumunu tasimadigini bildirir.</summary>
+    public const string ArazzoVersionUnsupported = $"{Prefix}:ArazzoVersionUnsupported";
+
+    /// <summary>Belgenin runner tarafindan desteklenmeyen XPath kriteri tasidigini bildirir.</summary>
+    public const string XPathCriteriaRejected = $"{Prefix}:XPathCriteriaRejected";
+
+    /// <summary>HAR entry'sinin adim kimligi tasimadigi icin hukmun baglanamadigini bildirir.</summary>
+    public const string StepKeyMissing = $"{Prefix}:StepKeyMissing";
+
+    /// <summary>Ayni ortamda zaten aktif bir kosum bulundugunu bildirir.</summary>
+    public const string EnvironmentRunInProgress = $"{Prefix}:EnvironmentRunInProgress";
+
+    /// <summary>Kosumun bagli oldugu senaryonun derlenmis belge tasimadigini bildirir.</summary>
+    public const string ScenarioDocumentRequired = $"{Prefix}:ScenarioDocumentRequired";
+
+    /// <summary>Kosumun disaridan iptal edildigini bildirir.</summary>
+    public const string RunCancelled = $"{Prefix}:RunCancelled";
+
+    /// <summary>Kosumun beklenmeyen bir hatayla kirildigini bildirir.</summary>
+    public const string RunFailedUnexpectedly = $"{Prefix}:RunFailedUnexpectedly";
+
+    /// <summary>Senaryo malzemelerinin kosum aninda kaydigini bildirir.</summary>
+    public const string MaterialDriftDetected = $"{Prefix}:MaterialDriftDetected";
+
+    /// <summary>Veritabani assertion yanitinin okunamadigini bildirir.</summary>
+    public const string AssertionResponseUnreadable = $"{Prefix}:AssertionResponseUnreadable";
+
     /// <summary>Public kosum girdilerinin kararli FluentValidation hata kodlarini tasir.</summary>
     public static class Validation
     {

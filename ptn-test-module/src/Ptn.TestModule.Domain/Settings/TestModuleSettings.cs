@@ -18,4 +18,19 @@ public static class TestModuleSettings
 
     /// <summary>Tenant-scoped test ortami baglama haritasi ayar adidir.</summary>
     public const string EnvironmentBindings = TestModuleRunSettingNames.EnvironmentBindings;
+
+    /// <summary>Kosumu icra eden pinli dis runner imaji ayar adidir.</summary>
+    public const string RunnerImage = TestModuleRunSettingNames.RunnerImage;
+
+    /// <summary>Tum senaryonun runner tarafindaki azami sure ayar adidir.</summary>
+    public const string RunnerExecutionTimeoutSeconds = TestModuleRunSettingNames.RunnerExecutionTimeoutSeconds;
+
+    /// <summary>Tek HTTP cagrisinin runner tarafindaki azami sure ayar adidir.</summary>
+    public const string RunnerMaxFetchTimeoutSeconds = TestModuleRunSettingNames.RunnerMaxFetchTimeoutSeconds;
+
+    /// <summary>HAR artefaktlarinin gun cinsinden saklama suresi ayar adidir.</summary>
+    public const string HarRetentionDays = TestModuleRunSettingNames.HarRetentionDays;
+
+    /// <summary>Asili Running kosularinin kurtarilma esigi ayar adidir.</summary>
+    public const string StaleRunThresholdMinutes = TestModuleRunSettingNames.StaleRunThresholdMinutes;
 }
