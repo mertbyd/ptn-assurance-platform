@@ -10,8 +10,8 @@ public sealed class OperationQueryDtoValidator : AbstractValidator<OperationQuer
 {
     public OperationQueryDtoValidator()
     {
-        RuleFor(input => input.SnapshotId).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.SnapshotIdRequired);
-        RuleFor(input => input.Method).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.MethodRequired);
-        RuleFor(input => input.Path).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.PathRequired);
+        RuleFor(input => input.SnapshotId).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.SnapshotIdRequired);
+        RuleFor(input => input.Method).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.MethodRequired);
+        RuleFor(input => input.Path).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.PathRequired);
     }
 }

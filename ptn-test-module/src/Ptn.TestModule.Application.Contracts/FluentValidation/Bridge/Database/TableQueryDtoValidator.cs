@@ -10,8 +10,8 @@ public sealed class TableQueryDtoValidator : AbstractValidator<TableQueryDto>
 {
     public TableQueryDtoValidator()
     {
-        RuleFor(input => input.ConnectionId).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.ConnectionIdRequired);
-        RuleFor(input => input.DbSchemaName).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.SchemaNameRequired);
-        RuleFor(input => input.TableName).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.TableNameRequired);
+        RuleFor(input => input.ConnectionId).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.ConnectionIdRequired);
+        RuleFor(input => input.DbSchemaName).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.SchemaNameRequired);
+        RuleFor(input => input.TableName).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.TableNameRequired);
     }
 }

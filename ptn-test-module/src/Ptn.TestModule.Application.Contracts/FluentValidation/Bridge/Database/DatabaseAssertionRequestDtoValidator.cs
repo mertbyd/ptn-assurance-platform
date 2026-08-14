@@ -10,14 +10,14 @@ public sealed class DatabaseAssertionRequestDtoValidator : AbstractValidator<Dat
 {
     public DatabaseAssertionRequestDtoValidator()
     {
-        RuleFor(input => input.ConnectionId).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.ConnectionIdRequired);
-        RuleFor(input => input.SchemaName).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.SchemaNameRequired);
-        RuleFor(input => input.TableName).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.TableNameRequired);
-        RuleFor(input => input.TimeoutMs).GreaterThan(0).WithErrorCode(TestModuleBridgeValidationErrorCodes.TimeoutInvalid);
-        RuleFor(input => input.PollIntervalMs).GreaterThan(0).WithErrorCode(TestModuleBridgeValidationErrorCodes.PollIntervalInvalid);
+        RuleFor(input => input.ConnectionId).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.ConnectionIdRequired);
+        RuleFor(input => input.SchemaName).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.SchemaNameRequired);
+        RuleFor(input => input.TableName).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.TableNameRequired);
+        RuleFor(input => input.TimeoutMs).GreaterThan(0).WithMessage(TestModuleBridgeErrorCodes.Validation.TimeoutInvalid);
+        RuleFor(input => input.PollIntervalMs).GreaterThan(0).WithMessage(TestModuleBridgeErrorCodes.Validation.PollIntervalInvalid);
         RuleForEach(input => input.Expectations).SetValidator(new ColumnExpectationDtoValidator());
         RuleFor(input => input.Cardinality).NotNull()
-            .WithErrorCode(TestModuleBridgeValidationErrorCodes.RequestRequired)
+            .WithMessage(TestModuleBridgeErrorCodes.Validation.RequestRequired)
             .SetValidator(new DatabaseCardinalityExpectationDtoValidator());
     }
 }

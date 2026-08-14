@@ -10,10 +10,10 @@ public sealed class DerivabilityRequestDtoValidator : AbstractValidator<Derivabi
 {
     public DerivabilityRequestDtoValidator()
     {
-        RuleFor(input => input.SnapshotId).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.SnapshotIdRequired);
-        RuleFor(input => input.Method).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.MethodRequired);
-        RuleFor(input => input.Path).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.PathRequired);
-        RuleFor(input => input.AssertionPaths).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.AssertionPathRequired);
-        RuleForEach(input => input.AssertionPaths).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.AssertionPathRequired);
+        RuleFor(input => input.SnapshotId).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.SnapshotIdRequired);
+        RuleFor(input => input.Method).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.MethodRequired);
+        RuleFor(input => input.Path).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.PathRequired);
+        RuleFor(input => input.AssertionPaths).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.AssertionPathRequired);
+        RuleForEach(input => input.AssertionPaths).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.AssertionPathRequired);
     }
 }

@@ -10,9 +10,9 @@ public sealed class ResponseObservationDtoValidator : AbstractValidator<Response
 {
     public ResponseObservationDtoValidator()
     {
-        RuleFor(input => input.SnapshotId).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.SnapshotIdRequired);
-        RuleFor(input => input.Method).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.MethodRequired);
-        RuleFor(input => input.Path).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.PathRequired);
-        RuleFor(input => input.StatusCode).InclusiveBetween(100, 599).WithErrorCode(TestModuleBridgeValidationErrorCodes.StatusCodeInvalid);
+        RuleFor(input => input.SnapshotId).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.SnapshotIdRequired);
+        RuleFor(input => input.Method).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.MethodRequired);
+        RuleFor(input => input.Path).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.PathRequired);
+        RuleFor(input => input.StatusCode).InclusiveBetween(100, 599).WithMessage(TestModuleBridgeErrorCodes.Validation.StatusCodeInvalid);
     }
 }

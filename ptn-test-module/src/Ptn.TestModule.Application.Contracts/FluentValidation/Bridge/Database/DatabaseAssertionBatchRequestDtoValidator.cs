@@ -10,8 +10,8 @@ public sealed class DatabaseAssertionBatchRequestDtoValidator : AbstractValidato
 {
     public DatabaseAssertionBatchRequestDtoValidator()
     {
-        RuleFor(input => input.Requests).NotEmpty().WithErrorCode(TestModuleBridgeValidationErrorCodes.BatchRequired);
-        RuleForEach(input => input.Requests).NotNull().WithErrorCode(TestModuleBridgeValidationErrorCodes.RequestRequired)
+        RuleFor(input => input.Requests).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.BatchRequired);
+        RuleForEach(input => input.Requests).NotNull().WithMessage(TestModuleBridgeErrorCodes.Validation.RequestRequired)
             .SetValidator(new DatabaseAssertionRequestDtoValidator());
     }
 }

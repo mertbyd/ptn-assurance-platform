@@ -11,8 +11,8 @@ public sealed class FailedExpectationDtoValidator : AbstractValidator<FailedExpe
     public FailedExpectationDtoValidator()
     {
         RuleFor(input => input.ColumnName).NotEmpty()
-            .WithErrorCode(TestModuleBridgeValidationErrorCodes.ColumnNameRequired);
+            .WithMessage(TestModuleBridgeErrorCodes.Validation.ColumnNameRequired);
         RuleFor(input => input.MatcherKindCode).NotEmpty()
-            .WithErrorCode(TestModuleBridgeValidationErrorCodes.MatcherKindRequired);
+            .WithMessage(TestModuleBridgeErrorCodes.Validation.MatcherKindRequired);
     }
 }

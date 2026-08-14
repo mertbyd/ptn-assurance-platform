@@ -11,7 +11,7 @@ public sealed class LocationDtoValidator : AbstractValidator<LocationDto>
     public LocationDtoValidator()
     {
         RuleFor(input => input).Must(HasAddress)
-            .WithErrorCode(TestModuleBridgeValidationErrorCodes.LocationRequired);
+            .WithMessage(TestModuleBridgeErrorCodes.Validation.LocationRequired);
     }
 
     private static bool HasAddress(LocationDto input) =>

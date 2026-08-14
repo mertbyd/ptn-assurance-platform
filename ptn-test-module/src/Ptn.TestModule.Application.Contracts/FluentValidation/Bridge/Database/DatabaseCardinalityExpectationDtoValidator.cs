@@ -12,6 +12,6 @@ public sealed class DatabaseCardinalityExpectationDtoValidator
     public DatabaseCardinalityExpectationDtoValidator()
     {
         RuleFor(input => input.KindCode).NotEmpty()
-            .WithErrorCode(TestModuleBridgeValidationErrorCodes.CardinalityKindRequired);
+            .WithMessage(TestModuleBridgeErrorCodes.Validation.CardinalityKindRequired);
     }
 }

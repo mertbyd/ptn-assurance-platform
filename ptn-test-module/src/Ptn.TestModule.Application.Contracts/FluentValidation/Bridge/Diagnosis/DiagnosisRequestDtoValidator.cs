@@ -12,20 +12,20 @@ public sealed class DiagnosisRequestDtoValidator : AbstractValidator<DiagnosisRe
 {
     public DiagnosisRequestDtoValidator()
     {
-        RuleFor(input => input.Location).NotNull().WithErrorCode(TestModuleBridgeValidationErrorCodes.RequestRequired);
+        RuleFor(input => input.Location).NotNull().WithMessage(TestModuleBridgeErrorCodes.Validation.RequestRequired);
         RuleFor(input => input.Location).SetValidator(new LocationDtoValidator());
         RuleForEach(input => input.FailedExpectations).SetValidator(new FailedExpectationDtoValidator());
 
         RuleSet(PtnBridgeValidationRuleSets.Api, () =>
         {
             RuleFor(input => input.SpecSnapshotId).NotNull().NotEqual(Guid.Empty)
-                .WithErrorCode(TestModuleBridgeValidationErrorCodes.SnapshotIdRequired);
+                .WithMessage(TestModuleBridgeErrorCodes.Validation.SnapshotIdRequired);
         });
 
         RuleSet(PtnBridgeValidationRuleSets.Database, () =>
         {
             RuleFor(input => input.ConnectionId).NotEmpty()
-                .WithErrorCode(TestModuleBridgeValidationErrorCodes.ConnectionIdRequired);
+                .WithMessage(TestModuleBridgeErrorCodes.Validation.ConnectionIdRequired);
         });
     }
 }
