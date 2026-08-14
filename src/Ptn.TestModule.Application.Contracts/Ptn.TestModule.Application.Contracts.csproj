@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.TestModule</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Authenticator.Application.Contracts" Version="$(AuthenticatorVersion)" />
+    <PackageReference Include="Pintern.SaaS.Notifications.Application.Contracts" Version="$(NotificationsVersion)" />
+  </ItemGroup>
+
+  <!-- Ev standardi Result<T> AppService sozlesmesinin donus tipidir; bu yuzden yalniz Core
+       (ASP.NET Core/ABP entegrasyonu degil) bu katmanda durur. Validation, DTO'larin
+       FluentValidation tabanlarini tasir. -->
+  <ItemGroup>
+    <PackageReference Include="SystemStandards.Core" Version="$(SystemStandardsCoreVersion)" />
+    <PackageReference Include="SystemStandards.Validation" Version="$(SystemStandardsValidationVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Ddd.Application.Contracts" Version="$(AbpVersion)" />
+    <PackageReference Include="Volo.Abp.Authorization" Version="$(AbpVersion)" />
+    <PackageReference Include="Volo.Abp.FluentValidation" Version="$(AbpVersion)" />
+    <ProjectReference Include="..\Ptn.TestModule.Domain.Shared\Ptn.TestModule.Domain.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

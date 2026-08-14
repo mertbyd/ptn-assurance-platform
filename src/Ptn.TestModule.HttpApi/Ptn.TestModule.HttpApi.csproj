@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.TestModule</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Controller'lar ev standardi Result<T> yuzeyini kullanir; SystemStandards.Abp bu
+       yuzeyi ve ortak MVC davranisini ABP modulu olarak kaydeder. -->
+  <ItemGroup>
+    <PackageReference Include="SystemStandards.Core" Version="$(SystemStandardsCoreVersion)" />
+    <PackageReference Include="SystemStandards.Abp" Version="$(SystemStandardsAbpVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.AspNetCore.Mvc" Version="$(AbpVersion)" />
+    <ProjectReference Include="..\Ptn.TestModule.Application.Contracts\Ptn.TestModule.Application.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>
