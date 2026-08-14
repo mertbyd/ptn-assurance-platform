@@ -1,11 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using NSubstitute;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.ExceptionCodes.Bridge;
-using Ptn.TestModule.Interface.Bridge;
 using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Models.Bridge;
 using Shouldly;
@@ -20,14 +16,14 @@ public class ProfilePackManagerTests
 {
     // Sema fingerprint'i degistiginde onayli baglamalari yeniden Proposed durumuna dusurur.
     [Fact]
-    public async Task Should_downgrade_approved_bindings_when_schema_fingerprint_drifts()
+    public void Should_downgrade_approved_bindings_when_schema_fingerprint_drifts()
     {
-        var fixture = CreateFixture("sha256:current");
+        var fixture = CreateFixture();
 
-        var pack = await fixture.Rules.GetValidatedAsync(
+        var pack = fixture.Rules.GetValidated(
+            fixture.Pack,
             fixture.Pack.ProfileKey,
-            Guid.NewGuid(),
-            CancellationToken.None);
+            "sha256:current");
 
         pack.Bindings.ShouldAllBe(binding => binding.StateCode == PtnBindingStateCodes.Proposed);
         pack.Bindings.ShouldAllBe(binding => binding.ApprovedBy == null);
@@ -37,7 +33,7 @@ public class ProfilePackManagerTests
     [Fact]
     public void Should_reject_unbound_concept()
     {
-        var fixture = CreateFixture("sha256:profile");
+        var fixture = CreateFixture();
 
         var exception = Should.Throw<BusinessException>(() =>
             fixture.Rules.ResolveConcept(fixture.Pack, PtnConceptCodes.Quota));
@@ -49,7 +45,7 @@ public class ProfilePackManagerTests
     [Fact]
     public void Should_build_bound_and_unbound_coverage()
     {
-        var fixture = CreateFixture("sha256:profile");
+        var fixture = CreateFixture();
 
         var coverage = fixture.Rules.BuildCoverage(
             fixture.Pack,
@@ -62,15 +58,10 @@ public class ProfilePackManagerTests
     }
 
     // Teste ozel port cevaplariyla gercek manager sahipligini kurar.
-    private static Fixture CreateFixture(string currentFingerprint)
+    private static Fixture CreateFixture()
     {
         var pack = CreatePack();
-        var provider = Substitute.For<IProfilePackProvider>();
-        provider.LoadAsync(pack.ProfileKey, Arg.Any<CancellationToken>()).Returns(pack);
-        var schema = Substitute.For<ISchemaKnowledgePort>();
-        schema.GetSchemaFingerprintAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
-            .Returns(currentFingerprint);
-        return new Fixture(new ProfilePackManager(provider, schema), pack);
+        return new Fixture(new ProfilePackManager(), pack);
     }
 
     // Gecerli kapali kodlar ve ifadeler iceren en kucuk profil paketini olusturur.
