@@ -15,7 +15,7 @@ namespace Ptn.TestModule.Managers.Bridge;
 public class ApiOracleManager : TestModuleDomainService
 {
     // Operasyon sorgusunu checker'in kapali verbosity koduyla tamamlar.
-    public PtnApiOperationRequest CreateOperationRequest(PtnOperationQuery query) =>
+    public ApiOperationRequest CreateOperationRequest(OperationQuery query) =>
         new()
         {
             SnapshotId = query.SnapshotId,
@@ -26,7 +26,7 @@ public class ApiOracleManager : TestModuleDomainService
         };
 
     // Response gozlemini checker'in runtime profil koduyla tamamlar.
-    public PtnApiResponseRequest CreateResponseRequest(PtnResponseObservation observation) =>
+    public ApiResponseRequest CreateResponseRequest(ResponseObservation observation) =>
         new()
         {
             SnapshotId = observation.SnapshotId,
@@ -37,36 +37,52 @@ public class ApiOracleManager : TestModuleDomainService
             ContentType = observation.ContentType,
             Headers = observation.Headers,
             Body = observation.Body,
-            ProfileCode = PtnApiOracleRequestCodes.RuntimeProfile
+            ProfileCode = PtnApiOracleRequestCodes.RuntimeProfile,
+            Correlation = observation.Correlation
         };
 
     // Operasyon baglama sonucunun outcome kodunu kanoniklestirir.
-    public PtnOperationBinding Normalize(PtnOperationBinding result)
+    public OperationBinding Normalize(OperationBinding result)
     {
         result.OutcomeCode = NormalizeOutcome(result.OutcomeCode);
         return result;
     }
 
     // Request ornegi sonucunun outcome kodunu kanoniklestirir.
-    public PtnRequestExample Normalize(PtnRequestExample result)
+    public RequestExample Normalize(RequestExample result)
     {
         result.OutcomeCode = NormalizeOutcome(result.OutcomeCode);
         return result;
     }
 
     // Turetilebilirlik listesindeki her outcome kodunu kanoniklestirir.
-    public PtnDerivabilityResult Normalize(PtnDerivabilityResult result)
+    public DerivabilityResult Normalize(DerivabilityResult result)
     {
         result.Assertions.ForEach(assertion => assertion.OutcomeCode = NormalizeOutcome(assertion.OutcomeCode));
         return result;
     }
 
     // Response uygunluk sonucunun outcome kodunu kanoniklestirir.
-    public PtnConformanceResult Normalize(PtnConformanceResult result)
+    public ConformanceResult Normalize(
+        ResponseObservation request,
+        ConformanceResult result)
     {
+        if (!CorrelationMatches(request.Correlation, result.Correlation))
+        {
+            return new ConformanceResult
+            {
+                OutcomeCode = PtnOutcomeCodes.Unavailable,
+                Correlation = request.Correlation
+            };
+        }
+
         result.OutcomeCode = NormalizeOutcome(result.OutcomeCode);
         return result;
     }
+
+    // Istenen ve echo edilen API korelasyon alanlarini ordinal olarak karsilastirir.
+    private static bool CorrelationMatches(CorrelationRef? expected, CorrelationRef? actual) =>
+        expected?.TraceId == actual?.TraceId && expected?.StepKey == actual?.StepKey;
 
     // Checker kodunu Bridge'in tek outcome sozlugune cevirir.
     private static string NormalizeOutcome(string outcomeCode) =>

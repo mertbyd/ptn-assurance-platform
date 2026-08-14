@@ -3,6 +3,7 @@ using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Dtos.Bridge.Diagnosis;
 using Ptn.TestModule.ExceptionCodes.Bridge;
 using Ptn.TestModule.FluentValidation.Bridge.Database;
+using Ptn.TestModule.FluentValidation.Bridge.Correlation;
 
 namespace Ptn.TestModule.FluentValidation.Bridge.Diagnosis;
 
@@ -15,6 +16,9 @@ public sealed class DiagnosisRequestDtoValidator : AbstractValidator<DiagnosisRe
         RuleFor(input => input.Location).NotNull().WithMessage(TestModuleBridgeErrorCodes.Validation.RequestRequired);
         RuleFor(input => input.Location).SetValidator(new LocationDtoValidator());
         RuleForEach(input => input.FailedExpectations).SetValidator(new FailedExpectationDtoValidator());
+        RuleFor(input => input.Correlation!)
+            .SetValidator(new CorrelationRefDtoValidator())
+            .When(input => input.Correlation is not null);
 
         RuleSet(PtnBridgeValidationRuleSets.Api, () =>
         {

@@ -16,8 +16,8 @@ namespace Ptn.TestModule.Managers.Bridge;
 public class ProfilePackManager : TestModuleDomainService
 {
     // Yuklenmis profili kapali sozluklerle dogrular ve sema kaymasinda onaylari geri alir.
-    public PtnProfilePack GetValidated(
-        PtnProfilePack pack,
+    public ProfilePack GetValidated(
+        ProfilePack pack,
         string profileKey,
         string currentFingerprint)
     {
@@ -25,9 +25,8 @@ public class ProfilePackManager : TestModuleDomainService
         DowngradeDriftedBindings(pack, currentFingerprint);
         return pack;
     }
-
     // Onayli kavram bagini dondurur; baglanmamis kavrami tahmin etmez.
-    public PtnConceptBinding ResolveConcept(PtnProfilePack pack, string conceptCode)
+    public ConceptBinding ResolveConcept(ProfilePack pack, string conceptCode)
     {
         var binding = pack.Bindings.FirstOrDefault(item =>
             item.ConceptCode == conceptCode && item.StateCode == PtnBindingStateCodes.Approved);
@@ -39,10 +38,9 @@ public class ProfilePackManager : TestModuleDomainService
         throw new BusinessException(TestModuleBridgeErrorCodes.ConceptNotBound)
             .WithData(nameof(conceptCode), conceptCode);
     }
-
     // Gerekli kavramlari onayli baglamalarla karsilastirip bound/required oranini uretir.
-    public PtnCoverageReport BuildCoverage(
-        PtnProfilePack pack,
+    public CoverageReport BuildCoverage(
+        ProfilePack pack,
         IReadOnlyCollection<string> requiredConcepts)
     {
         var required = requiredConcepts.Distinct(StringComparer.Ordinal).Order().ToList();
@@ -54,16 +52,15 @@ public class ProfilePackManager : TestModuleDomainService
         var unbound = required.Where(item => !approved.Contains(item)).ToList();
         return CreateCoverage(required, bound, unbound);
     }
-
     // Dogrulanmis profil paketinden istenen kapali kavramlar icin ozet-once knowledge sonucunu kurar.
-    public PtnKnowledgeResult GetKnowledge(
-        PtnKnowledgeRequest request,
-        PtnProfilePack pack,
+    public KnowledgeResult GetKnowledge(
+        KnowledgeRequest request,
+        ProfilePack pack,
         string currentFingerprint)
     {
         GetValidated(pack, request.ProfileKey, currentFingerprint);
         var concepts = request.ConceptCodes.Distinct(StringComparer.Ordinal).Order().ToList();
-        return new PtnKnowledgeResult
+        return new KnowledgeResult
         {
             ResponseFormat = request.ResponseFormat,
             Coverage = BuildCoverage(pack, concepts),
@@ -73,9 +70,8 @@ public class ProfilePackManager : TestModuleDomainService
                 : null
         };
     }
-
     // Profil kimligini, kapali kodlarini ve sinirli hukum dilini dogrular.
-    private static void ValidatePack(PtnProfilePack pack, string expectedProfileKey)
+    private static void ValidatePack(ProfilePack pack, string expectedProfileKey)
     {
         if (pack.ProfileKey != expectedProfileKey || string.IsNullOrWhiteSpace(pack.Revision))
         {
@@ -85,9 +81,8 @@ public class ProfilePackManager : TestModuleDomainService
         EnsureBindingsAreKnown(pack.Bindings);
         EnsurePathsAreKnown(pack.Paths);
     }
-
     // Kavram, desen ve durum kodlarinin kapali sozluklerde bulunmasini zorunlu kilar.
-    private static void EnsureBindingsAreKnown(IEnumerable<PtnConceptBinding> bindings)
+    private static void EnsureBindingsAreKnown(IEnumerable<ConceptBinding> bindings)
     {
         var invalid = bindings.Any(item =>
             !PtnConceptCodes.All.Contains(item.ConceptCode) ||
@@ -98,9 +93,8 @@ public class ProfilePackManager : TestModuleDomainService
             throw new BusinessException(TestModuleBridgeErrorCodes.ProfilePackInvalid);
         }
     }
-
     // Yol adimlarini kapali dugum/kaynak sozlugu ve sinirli ifade diliyle dogrular.
-    private static void EnsurePathsAreKnown(IEnumerable<PtnEvidencePathDefinition> paths)
+    private static void EnsurePathsAreKnown(IEnumerable<EvidencePathDefinition> paths)
     {
         var invalid = paths.Any(path =>
             path.Steps.Any(step =>
@@ -126,7 +120,7 @@ public class ProfilePackManager : TestModuleDomainService
     }
 
     // Sema muhru degismisse daha once onaylanan tum baglamalari yeniden onaya dusurur.
-    private static void DowngradeDriftedBindings(PtnProfilePack pack, string currentFingerprint)
+    private static void DowngradeDriftedBindings(ProfilePack pack, string currentFingerprint)
     {
         if (pack.DbSchemaFingerprint == currentFingerprint)
         {
@@ -141,12 +135,12 @@ public class ProfilePackManager : TestModuleDomainService
     }
 
     // Sirali kapsam listelerini sayi ve oran alanlariyla veri modeline yerlestirir.
-    private static PtnCoverageReport CreateCoverage(
+    private static CoverageReport CreateCoverage(
         List<string> required,
         List<string> bound,
         List<string> unbound)
     {
-        return new PtnCoverageReport
+        return new CoverageReport
         {
             RequiredConcepts = required,
             BoundConcepts = bound,

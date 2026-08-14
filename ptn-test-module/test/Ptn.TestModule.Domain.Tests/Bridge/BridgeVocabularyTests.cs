@@ -13,8 +13,8 @@ public class BridgeVocabularyTests
     [Fact]
     public void Should_not_expose_ambiguous_schema_name_property()
     {
-        var bridgeTypes = typeof(PtnLocation).Assembly.GetTypes()
-            .Where(type => type.Namespace == typeof(PtnLocation).Namespace);
+        var bridgeTypes = typeof(Location).Assembly.GetTypes()
+            .Where(type => type.Namespace == typeof(Location).Namespace);
 
         var ambiguousProperties = bridgeTypes
             .SelectMany(type => type.GetProperties())

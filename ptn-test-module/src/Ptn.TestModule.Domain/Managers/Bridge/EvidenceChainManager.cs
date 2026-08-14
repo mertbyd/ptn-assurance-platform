@@ -27,10 +27,10 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Application sinirinda toplanmis kanit dugumlerini profil yoluna gore mekanik hukumle birlestirir.
-    public PtnChainResult Run(
-        PtnProfilePack pack,
-        PtnAccessTuple tuple,
-        IReadOnlyCollection<PtnExplanationNode> observations)
+    public ChainResult Run(
+        ProfilePack pack,
+        AccessTuple tuple,
+        IReadOnlyCollection<ExplanationNode> observations)
     {
         var path = SelectPath(pack, tuple);
         var coverage = _profilePackManager.BuildCoverage(pack, GetRequiredConcepts(path));
@@ -49,13 +49,13 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Kapali operasyon referansi cozulemediginde tahmin yerine Inconclusive aciklama sonucu dondurur.
-    public PtnExplainResult Explain(
-        PtnExplainRequest request,
-        PtnProfilePack pack,
+    public ExplainResult Explain(
+        ExplainRequest request,
+        ProfilePack pack,
         string currentFingerprint)
     {
         _profilePackManager.GetValidated(pack, request.ProfileKey, currentFingerprint);
-        return new PtnExplainResult
+        return new ExplainResult
         {
             ResponseFormat = request.ResponseFormat,
             Coverage = _profilePackManager.BuildCoverage(pack, PtnConceptCodes.All),
@@ -69,7 +69,7 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Cozulemeyen operasyon referansini kapali onay secenegine cevirir.
-    private static PtnClosedQuestion CreateOperationQuestion(Guid operationReferenceId) => new()
+    private static ClosedQuestion CreateOperationQuestion(Guid operationReferenceId) => new()
     {
         QuestionCode = PtnOpenQuestionCodes.OperationReferenceRequired,
         Prompt = TestModuleBridgeErrorCodes.EvidenceUnavailable,
@@ -78,7 +78,7 @@ public class EvidenceChainManager : TestModuleDomainService
     };
 
     // Status veya operasyon tetikleyicisine uyan tek profil yolunu secer.
-    private static PtnEvidencePathDefinition SelectPath(PtnProfilePack pack, PtnAccessTuple tuple)
+    private static EvidencePathDefinition SelectPath(ProfilePack pack, AccessTuple tuple)
     {
         var path = pack.Paths.FirstOrDefault(item =>
             tuple.StatusCode is not null && item.Trigger.StatusCodes.Contains(tuple.StatusCode.Value) ||
@@ -87,7 +87,7 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Yol adimlarindaki kavram kodlarini sirali ve tekrarsiz kapsam girdisine cevirir.
-    private static IReadOnlyCollection<string> GetRequiredConcepts(PtnEvidencePathDefinition path)
+    private static IReadOnlyCollection<string> GetRequiredConcepts(EvidencePathDefinition path)
     {
         return path.Steps
             .Where(step => step.ConceptCode is not null)
@@ -97,11 +97,11 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Baglanmamis kavramlari kapali NOT_BOUND sorulariyla Inconclusive sonucuna cevirir.
-    private static PtnChainResult BuildUnboundResult(
-        PtnEvidencePathDefinition path,
-        PtnCoverageReport coverage)
+    private static ChainResult BuildUnboundResult(
+        EvidencePathDefinition path,
+        CoverageReport coverage)
     {
-        return new PtnChainResult
+        return new ChainResult
         {
             PathKey = path.PathKey,
             VerdictCode = PtnVerdictCodes.Inconclusive,
@@ -113,11 +113,11 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Hop veya dugum butcesini asan yolu probe calistirmadan Inconclusive yapar.
-    private static PtnChainResult BuildBudgetResult(
-        PtnEvidencePathDefinition path,
-        PtnCoverageReport coverage)
+    private static ChainResult BuildBudgetResult(
+        EvidencePathDefinition path,
+        CoverageReport coverage)
     {
-        return new PtnChainResult
+        return new ChainResult
         {
             PathKey = path.PathKey,
             VerdictCode = PtnVerdictCodes.Inconclusive,
@@ -128,7 +128,7 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Step concept kodunu onayli profil baglamasina cozer.
-    private PtnConceptBinding ResolveStepBinding(PtnEvidenceStepExecutionContext context)
+    private ConceptBinding ResolveStepBinding(EvidenceStepExecutionContext context)
     {
         return _profilePackManager.ResolveConcept(
             context.Pack,
@@ -138,7 +138,7 @@ public class EvidenceChainManager : TestModuleDomainService
     // Kavramin sonraki join veya hukum icin anlamli kolon degerlerini projeksiyon satirlarindan secer.
     private static List<string> ExtractProjectionValues(
         string? conceptCode,
-        PtnConceptBinding binding,
+        ConceptBinding binding,
         IEnumerable<Dictionary<string, string?>> rows)
     {
         var semanticRole = conceptCode == PtnConceptCodes.Subject
@@ -158,11 +158,11 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Profil kolon rollerinden onceki dugum degerine bagli, SQL icermeyen projeksiyon istegi kurar.
-    private static PtnProjectionRequest CreateProjectionRequest(
-        PtnEvidenceStepExecutionContext context,
-        PtnConceptBinding binding)
+    private static ProjectionRequest CreateProjectionRequest(
+        EvidenceStepExecutionContext context,
+        ConceptBinding binding)
     {
-        return new PtnProjectionRequest
+        return new ProjectionRequest
         {
             ConnectionId = context.Tuple.ConnectionId,
             DbSchemaName = binding.DbSchemaName,
@@ -175,8 +175,8 @@ public class EvidenceChainManager : TestModuleDomainService
 
     // Ilk kavramda subject referansini, sonraki kavramlarda joinFrom dugum kanitini anahtara baglar.
     private static Dictionary<string, string?> CreateProjectionKeys(
-        PtnEvidenceStepExecutionContext context,
-        PtnConceptBinding binding)
+        EvidenceStepExecutionContext context,
+        ConceptBinding binding)
     {
         var semanticKey = context.Step.JoinFromNodeKindCode is null
             ? PtnBindingColumnCodes.Identity
@@ -201,7 +201,7 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // joinFrom ile adlandirilan onceki dugumun ilk gozlenen kanit degerini dondurur.
-    private static string? FindJoinValue(PtnEvidenceStepExecutionContext context)
+    private static string? FindJoinValue(EvidenceStepExecutionContext context)
     {
         return context.Nodes
             .LastOrDefault(node => node.NodeKindCode == context.Step.JoinFromNodeKindCode)?
@@ -209,19 +209,19 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Kaniti olmayan dugumleri rapor listesinden mekanik olarak dusurur.
-    private static List<PtnExplanationNode> DropUnsupportedNodes(IEnumerable<PtnExplanationNode> nodes)
+    private static List<ExplanationNode> DropUnsupportedNodes(IEnumerable<ExplanationNode> nodes)
     {
         return nodes.Where(node => node.Evidence.Count > 0).ToList();
     }
 
     // Dugum listesini sirali agaca baglar ve unavailable/ifade kurallarindan hukum uretir.
-    private static PtnChainResult BuildResult(
-        PtnEvidencePathDefinition path,
-        PtnCoverageReport coverage,
-        List<PtnExplanationNode> nodes)
+    private static ChainResult BuildResult(
+        EvidencePathDefinition path,
+        CoverageReport coverage,
+        List<ExplanationNode> nodes)
     {
         LinkAsChain(nodes);
-        return new PtnChainResult
+        return new ChainResult
         {
             PathKey = path.PathKey,
             VerdictCode = EvaluateVerdict(path, nodes),
@@ -232,7 +232,7 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Sirali dugum listesini her dugumun tek cocugu olacak bicimde aciklama agacina cevirir.
-    private static void LinkAsChain(IReadOnlyList<PtnExplanationNode> nodes)
+    private static void LinkAsChain(IReadOnlyList<ExplanationNode> nodes)
     {
         for (var index = 0; index + 1 < nodes.Count; index++)
         {
@@ -242,8 +242,8 @@ public class EvidenceChainManager : TestModuleDomainService
 
     // Unavailable'i Inconclusive yapar; kalan durumda kapali confirmed ifadesini mekanik degerlendirir.
     private static string EvaluateVerdict(
-        PtnEvidencePathDefinition path,
-        IReadOnlyCollection<PtnExplanationNode> nodes)
+        EvidencePathDefinition path,
+        IReadOnlyCollection<ExplanationNode> nodes)
     {
         if (nodes.Any(node => node.StateCode == PtnEvidenceStateCodes.Unavailable))
         {
@@ -258,7 +258,7 @@ public class EvidenceChainManager : TestModuleDomainService
     // AND ile baglanan kapali observed/containsAny atomlarinin tamamini degerlendirir.
     private static bool EvaluateConfirmed(
         string expression,
-        IReadOnlyCollection<PtnExplanationNode> nodes)
+        IReadOnlyCollection<ExplanationNode> nodes)
     {
         return expression.Split(
                 PtnEvidenceExpressionPatterns.AndSeparator,
@@ -267,7 +267,7 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Tek observed veya containsAny atomunu dugum durum ve kanit degerlerine karsi cozer.
-    private static bool EvaluateAtom(string atom, IReadOnlyCollection<PtnExplanationNode> nodes)
+    private static bool EvaluateAtom(string atom, IReadOnlyCollection<ExplanationNode> nodes)
     {
         if (atom.EndsWith(PtnEvidenceExpressionTokens.ObservedSuffix, StringComparison.Ordinal))
         {
@@ -282,7 +282,7 @@ public class EvidenceChainManager : TestModuleDomainService
     // containsAny atomunun iki dugum deger kumesini ve istege bagli olumsuzlamasini degerlendirir.
     private static bool EvaluateContainsAny(
         string atom,
-        IReadOnlyCollection<PtnExplanationNode> nodes)
+        IReadOnlyCollection<ExplanationNode> nodes)
     {
         var negated = atom.StartsWith(PtnEvidenceExpressionTokens.Negation, StringComparison.Ordinal);
         var normalized = negated ? atom[PtnEvidenceExpressionTokens.Negation.Length..] : atom;
@@ -296,7 +296,7 @@ public class EvidenceChainManager : TestModuleDomainService
 
     // Adlandirilan dugum turundeki bos olmayan kanit degerlerini ordinal kume olarak dondurur.
     private static IReadOnlyCollection<string> ValuesFor(
-        IEnumerable<PtnExplanationNode> nodes,
+        IEnumerable<ExplanationNode> nodes,
         string nodeKindCode)
     {
         return nodes.Where(node => node.NodeKindCode == nodeKindCode)
@@ -308,13 +308,13 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Bir port cevabini state, alaka, konum ve butceli kanit listesiyle dugume cevirir.
-    private static PtnExplanationNode CreateNode(
-        PtnEvidenceStepExecutionContext context,
+    private static ExplanationNode CreateNode(
+        EvidenceStepExecutionContext context,
         string stateCode,
-        List<PtnEvidence> evidence,
-        PtnLocation location)
+        List<Evidence> evidence,
+        Location location)
     {
-        return new PtnExplanationNode
+        return new ExplanationNode
         {
             NodeKindCode = context.Step.NodeKindCode,
             StateCode = stateCode,
@@ -327,11 +327,11 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Unavailable port cevabini kanitli ve Inconclusive'a zorlayan dugume cevirir.
-    private static PtnExplanationNode CreateUnavailableNode(
-        PtnEvidenceStepExecutionContext context,
-        PtnLocation? location = null)
+    private static ExplanationNode CreateUnavailableNode(
+        EvidenceStepExecutionContext context,
+        Location? location = null)
     {
-        var evidence = new PtnEvidence
+        var evidence = new Evidence
         {
             ProbeKindCode = PtnProbeKindCodes.BridgeAvailability,
             FactCode = PtnFactCodes.Unavailable,
@@ -341,22 +341,22 @@ public class EvidenceChainManager : TestModuleDomainService
             context,
             PtnEvidenceStateCodes.Unavailable,
             [evidence],
-            location ?? new PtnLocation());
+            location ?? new Location());
     }
 
     // Porttan gelen her kapali degeri ayri ve kaynakli kanita cevirir; bos listeyi de Absent kanitiyla korur.
-    private static List<PtnEvidence> CreateValueEvidence(
+    private static List<Evidence> CreateValueEvidence(
         string probeKindCode,
         IReadOnlyCollection<string> values,
-        PtnFindingRef findingRef,
+        FindingRef findingRef,
         string? expectedValue = null)
     {
         if (values.Count == 0)
         {
-            return [new PtnEvidence { ProbeKindCode = probeKindCode, FactCode = PtnFactCodes.Absent, Ref = findingRef }];
+            return [new Evidence { ProbeKindCode = probeKindCode, FactCode = PtnFactCodes.Absent, Ref = findingRef }];
         }
 
-        return values.Take(PtnBridgeConsts.MaxEvidencePerNode).Select(value => new PtnEvidence
+        return values.Take(PtnBridgeConsts.MaxEvidencePerNode).Select(value => new Evidence
         {
             ProbeKindCode = probeKindCode,
             FactCode = PtnFactCodes.Present,
@@ -367,7 +367,7 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Yol ve dugum kimliginden Bridge kaynakli, kaynak-ayrik SHA-256 kanit referansi olusturur.
-    private static PtnFindingRef CreateBridgeRef(PtnEvidenceStepExecutionContext context)
+    private static FindingRef CreateBridgeRef(EvidenceStepExecutionContext context)
     {
         var canonical = string.Join(
             PtnBridgeConsts.EvidenceReferenceSeparator,
@@ -375,7 +375,7 @@ public class EvidenceChainManager : TestModuleDomainService
             context.Step.NodeKindCode,
             context.Step.SourceCode);
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
-        return new PtnFindingRef
+        return new FindingRef
         {
             SourceCheckerCode = PtnSourceCheckerCodes.Bridge,
             Fingerprint = PtnBridgeSettingNames.FingerprintPrefix + hash
@@ -383,9 +383,9 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Access tuple alanlarini iki checker icin ortak teshis port girdisine cevirir.
-    private static PtnDiagnosisRequest CreateDiagnosisRequest(PtnAccessTuple tuple)
+    private static DiagnosisRequest CreateDiagnosisRequest(AccessTuple tuple)
     {
-        return new PtnDiagnosisRequest
+        return new DiagnosisRequest
         {
             SpecSnapshotId = tuple.SpecSnapshotId,
             ConnectionId = tuple.ConnectionId,
@@ -395,9 +395,9 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Access tuple operasyon adresini API oracle sorgusuna cevirir.
-    private static PtnOperationQuery CreateOperationQuery(PtnAccessTuple tuple)
+    private static OperationQuery CreateOperationQuery(AccessTuple tuple)
     {
-        return new PtnOperationQuery
+        return new OperationQuery
         {
             SnapshotId = tuple.SpecSnapshotId!.Value,
             OperationId = tuple.OperationId,
@@ -407,11 +407,11 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Access tuple ve kapali context pointer'larini turetilebilirlik istegine cevirir.
-    private static PtnDerivabilityRequest CreateDerivabilityRequest(PtnAccessTuple tuple)
+    private static DerivabilityRequest CreateDerivabilityRequest(AccessTuple tuple)
     {
         tuple.Context.TryGetValue(PtnBridgeContextKeys.AssertionPaths, out var pathsJson);
         tuple.Context.TryGetValue(PtnBridgeContextKeys.MediaType, out var mediaType);
-        return new PtnDerivabilityRequest
+        return new DerivabilityRequest
         {
             SnapshotId = tuple.SpecSnapshotId!.Value,
             OperationId = tuple.OperationId,
@@ -426,9 +426,9 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Access tuple operasyon adresini API sema anlamli konuma cevirir.
-    private static PtnLocation CreateApiLocation(PtnAccessTuple tuple)
+    private static Location CreateApiLocation(AccessTuple tuple)
     {
-        return new PtnLocation
+        return new Location
         {
             OperationId = tuple.OperationId,
             Method = tuple.Method,
@@ -437,9 +437,9 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Profil database baglamasini DbSchemaName ve DbTableName anlamli konuma cevirir.
-    private static PtnLocation CreateDatabaseLocation(PtnConceptBinding binding)
+    private static Location CreateDatabaseLocation(ConceptBinding binding)
     {
-        return new PtnLocation
+        return new Location
         {
             DbSchemaName = binding.DbSchemaName,
             DbTableName = binding.TableName
@@ -447,7 +447,7 @@ public class EvidenceChainManager : TestModuleDomainService
     }
 
     // Yol uzunlugunu hem hop hem toplam dugum butcesine karsi sinar.
-    private static bool ExceedsBudget(PtnEvidencePathDefinition path)
+    private static bool ExceedsBudget(EvidencePathDefinition path)
     {
         return path.Steps.Count > PtnBridgeConsts.MaxHopCount ||
                path.Steps.Count > PtnBridgeConsts.MaxNodeCount;

@@ -11,8 +11,6 @@ public static class PtnBridgeConsts
     public const int MaxProfilePackBytes = 262144;
     public const int MaxReportBytes = 4096;
     public const int MinimumOperationScore = 70;
-    public const string WriteSetSlotPrefix = "ptn_bridge_";
     public const string ReferenceIdFormat = "D";
-    public const string CompactIdFormat = "N";
     public const string EvidenceReferenceSeparator = ":";
 }

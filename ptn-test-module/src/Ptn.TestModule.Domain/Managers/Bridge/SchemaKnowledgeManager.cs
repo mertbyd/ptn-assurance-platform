@@ -14,9 +14,9 @@ namespace Ptn.TestModule.Managers.Bridge;
 public class SchemaKnowledgeManager : TestModuleDomainService
 {
     // Checker sema adini acik DbSchemaName alanina uygular.
-    public PtnTableDescription CreateDescription(PtnCheckerTableDescription source)
+    public TableDescription CreateDescription(CheckerTableDescription source)
     {
-        return new PtnTableDescription
+        return new TableDescription
         {
             DbSchemaName = source.SchemaName,
             TableName = source.TableName,
@@ -27,7 +27,7 @@ public class SchemaKnowledgeManager : TestModuleDomainService
     }
 
     // Siralanmis sema fotografini JSON'a cevirip sha256 fingerprint dondurur.
-    public string GetFingerprint(PtnSchemaSnapshot snapshot)
+    public string GetFingerprint(SchemaSnapshot snapshot)
     {
         var canonical = snapshot.Tables
             .OrderBy(table => table.Schema, StringComparer.Ordinal)

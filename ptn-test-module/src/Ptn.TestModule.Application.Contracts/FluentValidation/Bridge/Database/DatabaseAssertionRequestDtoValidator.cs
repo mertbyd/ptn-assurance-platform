@@ -1,6 +1,7 @@
 using FluentValidation;
 using Ptn.TestModule.Dtos.Bridge.Database;
 using Ptn.TestModule.ExceptionCodes.Bridge;
+using Ptn.TestModule.FluentValidation.Bridge.Correlation;
 
 namespace Ptn.TestModule.FluentValidation.Bridge.Database;
 
@@ -19,5 +20,8 @@ public sealed class DatabaseAssertionRequestDtoValidator : AbstractValidator<Dat
         RuleFor(input => input.Cardinality).NotNull()
             .WithMessage(TestModuleBridgeErrorCodes.Validation.RequestRequired)
             .SetValidator(new DatabaseCardinalityExpectationDtoValidator());
+        RuleFor(input => input.Correlation!)
+            .SetValidator(new CorrelationRefDtoValidator())
+            .When(input => input.Correlation is not null);
     }
 }

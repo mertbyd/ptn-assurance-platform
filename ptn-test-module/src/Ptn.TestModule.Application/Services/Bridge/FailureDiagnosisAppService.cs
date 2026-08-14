@@ -52,7 +52,7 @@ public class FailureDiagnosisAppService : TestModuleAppService, IFailureDiagnosi
         cancellationToken.ThrowIfCancellationRequested();
         var request = Mapper.Map(input);
         var source = await _apiDiagnosisService.DiagnoseAsync(Mapper.Map(_manager.CreateApiRequest(request)));
-        return Mapper.Map(_manager.NormalizeApiReport(Mapper.Map(source)));
+        return Mapper.Map(_manager.NormalizeApiReport(request, Mapper.Map(source)));
     }
 
     // Public database diagnosis girdisini Domain modeline ve normalize sonucu DTO'ya map eder.
@@ -73,6 +73,6 @@ public class FailureDiagnosisAppService : TestModuleAppService, IFailureDiagnosi
         var source = await _databaseDiagnosisService.DiagnoseAsync(
             Mapper.Map(_manager.CreateDatabaseRequest(request)),
             cancellationToken);
-        return Mapper.Map(_manager.NormalizeDatabaseReport(Mapper.Map(source)));
+        return Mapper.Map(_manager.NormalizeDatabaseReport(request, Mapper.Map(source)));
     }
 }

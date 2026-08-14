@@ -6,6 +6,7 @@ using Ptn.TestModule.Services.Bridge;
 using Ptn.DatabaseChecker.Constants.Comparison.Assertions;
 using Ptn.DatabaseChecker.Dtos.Assertions;
 using Ptn.DatabaseChecker.Services.Assertions;
+using Ptn.DatabaseChecker.Services.Projections;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Dtos.Bridge.Database;
@@ -14,6 +15,8 @@ using Ptn.TestModule.Managers.Bridge;
 using Shouldly;
 using Xunit;
 using CheckerFailedExpectationDto = Ptn.DatabaseChecker.Dtos.Assertions.FailedExpectationDto;
+using CheckerProjectionResultDto = Ptn.DatabaseChecker.Dtos.Projections.ProjectionResultDto;
+using Ptn.DatabaseChecker.Constants.Comparison.Projections;
 
 namespace Ptn.TestModule.Application.Tests.Services.Bridge;
 
@@ -61,11 +64,21 @@ public class DatabaseOracleAppServiceTests
         result.FailedExpectations[0].ObservedValue.ShouldBe(PtnRedactionCodes.Redacted);
     }
 
-    // Checker projeksiyon yuzeyi bulunmadiginda assertion hilesi yapmadan Unavailable dondurur.
+    // Checker okunamama sonucu verdiginde yetki yorumu yapmadan Unavailable dondurur.
     [Fact]
     public async Task Should_return_unavailable_when_projection_surface_is_missing()
     {
-        var oracleService = CreateService(Substitute.For<IDatabaseAssertionAppService>());
+        var projectionService = Substitute.For<IProjectionAppService>();
+        projectionService.ProjectRowsAsync(
+                Arg.Any<Ptn.DatabaseChecker.Dtos.Projections.ProjectionRequestDto>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new CheckerProjectionResultDto
+            {
+                OutcomeCode = ProjectionOutcomeCodes.NotAuthorized
+            });
+        var oracleService = CreateService(
+            Substitute.For<IDatabaseAssertionAppService>(),
+            projectionService);
 
         var result = await oracleService.ProjectAsync(
             new ProjectionRequestDto
@@ -81,11 +94,16 @@ public class DatabaseOracleAppServiceTests
     }
 
     // Servisi gercek Application.Contracts validator'lariyla kurar.
-    private static DatabaseOracleAppService CreateService(IDatabaseAssertionAppService appService) =>
+    private static DatabaseOracleAppService CreateService(
+        IDatabaseAssertionAppService appService,
+        IProjectionAppService? projectionAppService = null) =>
         new(
             appService,
+            projectionAppService ?? Substitute.For<IProjectionAppService>(),
+            Substitute.For<IAssertionDerivabilityAppService>(),
             new DatabaseOracleManager(),
             new DatabaseAssertionRequestDtoValidator(),
             new DatabaseAssertionBatchRequestDtoValidator(),
-            new ProjectionRequestDtoValidator());
+            new ProjectionRequestDtoValidator(),
+            new DatabaseDerivabilityRequestDtoValidator());
 }

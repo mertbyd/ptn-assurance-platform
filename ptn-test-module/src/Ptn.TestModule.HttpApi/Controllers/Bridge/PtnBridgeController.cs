@@ -24,7 +24,7 @@ public class PtnBridgeController : TestModuleController
     /// <returns>Grounding karari ve kanit ozetini tasiyan ev standardi sonucu.</returns>
     [HttpPost(PtnBridgeRoutes.Ground)]
     [Authorize(TestModulePermissions.Bridge.Ground)]
-    public virtual async Task<Result<PtnGroundResultDto>> Ground([FromBody] PtnGroundRequestDto input)
+    public virtual async Task<Result<GroundResultDto>> Ground([FromBody] GroundRequestDto input)
     {
         var result = await AppService.GroundAsync(input);
         return result;
@@ -35,7 +35,7 @@ public class PtnBridgeController : TestModuleController
     /// <returns>Kanit zincirini tasiyan ev standardi sonucu.</returns>
     [HttpPost(PtnBridgeRoutes.Explain)]
     [Authorize(TestModulePermissions.Bridge.Explain)]
-    public virtual async Task<Result<PtnExplainResultDto>> Explain([FromBody] PtnExplainRequestDto input)
+    public virtual async Task<Result<ExplainResultDto>> Explain([FromBody] ExplainRequestDto input)
     {
         var result = await AppService.ExplainAsync(input);
         return result;
@@ -46,7 +46,7 @@ public class PtnBridgeController : TestModuleController
     /// <returns>Kapali validation kararini tasiyan ev standardi sonucu.</returns>
     [HttpPost(PtnBridgeRoutes.Validate)]
     [Authorize(TestModulePermissions.Bridge.Validate)]
-    public virtual async Task<Result<PtnValidateResultDto>> Validate([FromBody] PtnValidateRequestDto input)
+    public virtual async Task<Result<ValidateResultDto>> Validate([FromBody] ValidateRequestDto input)
     {
         var result = await AppService.ValidateAsync(input);
         return result;
@@ -57,7 +57,7 @@ public class PtnBridgeController : TestModuleController
     /// <returns>Profil kapsamini tasiyan ev standardi sonucu.</returns>
     [HttpPost(PtnBridgeRoutes.Knowledge)]
     [Authorize(TestModulePermissions.Bridge.Knowledge)]
-    public virtual async Task<Result<PtnKnowledgeResultDto>> GetKnowledge([FromBody] PtnKnowledgeRequestDto input)
+    public virtual async Task<Result<KnowledgeResultDto>> GetKnowledge([FromBody] KnowledgeRequestDto input)
     {
         var result = await AppService.GetKnowledgeAsync(input);
         return result;
@@ -67,7 +67,7 @@ public class PtnBridgeController : TestModuleController
     /// <returns>Aktif Bridge tool listesini tasiyan ev standardi sonucu.</returns>
     [HttpGet(PtnBridgeRoutes.ToolCatalog)]
     [Authorize(TestModulePermissions.Bridge.Knowledge)]
-    public virtual async Task<Result<PtnToolCatalogDto>> GetToolCatalog()
+    public virtual async Task<Result<ToolCatalogDto>> GetToolCatalog()
     {
         var result = await AppService.GetToolCatalogAsync();
         return result;

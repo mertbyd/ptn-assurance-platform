@@ -41,5 +41,10 @@ public static class TestModuleBridgeErrorCodes
         public const string AssertionReferenceRequired = $"{Prefix}:Validation:AssertionReferenceRequired";
         public const string ResponseFormatInvalid = $"{Prefix}:Validation:ResponseFormatInvalid";
         public const string ConceptCodeInvalid = $"{Prefix}:Validation:ConceptCodeInvalid";
+        public const string CorrelationTraceIdInvalid = $"{Prefix}:Validation:CorrelationTraceIdInvalid";
+        public const string CorrelationStepKeyInvalid = $"{Prefix}:Validation:CorrelationStepKeyInvalid";
+        public const string DerivabilityAssertionsRequired = $"{Prefix}:Validation:DerivabilityAssertionsRequired";
+        public const string DerivabilityKeyColumnsRequired = $"{Prefix}:Validation:DerivabilityKeyColumnsRequired";
+        public const string DerivabilityExpectedColumnsRequired = $"{Prefix}:Validation:DerivabilityExpectedColumnsRequired";
     }
 }

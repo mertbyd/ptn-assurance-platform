@@ -7,6 +7,7 @@ using Ptn.TestModule.ExceptionCodes.Bridge;
 using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Agent;
 using Ptn.TestModule.Models.Bridge.Footprint;
+using Ptn.TestModule.Models.Bridge.Database;
 
 namespace Ptn.TestModule.Managers.Bridge;
 
@@ -24,17 +25,16 @@ public class GroundingManager : TestModuleDomainService
         _profilePackManager = profilePackManager;
         _footprintCapabilityManager = footprintCapabilityManager;
     }
-
     // Profil, kapsam ve footprint yetenegini tek ozet-once grounding sonucunda toplar.
-    public PtnGroundingResult Ground(
-        PtnGroundRequest request,
-        PtnProfilePack pack,
+    public GroundingResult Ground(
+        GroundRequest request,
+        ProfilePack pack,
         string currentFingerprint,
-        PtnCapabilityLevel capability)
+        CapabilityLevel capability)
     {
         _profilePackManager.GetValidated(pack, request.ProfileKey, currentFingerprint);
         var coverage = _profilePackManager.BuildCoverage(pack, PtnConceptCodes.All);
-        var result = new PtnGroundingResult
+        var result = new GroundingResult
         {
             ResponseFormat = request.ResponseFormat,
             Coverage = coverage,
@@ -47,36 +47,41 @@ public class GroundingManager : TestModuleDomainService
         ApplyOperationThreshold(result);
         return result;
     }
-
     // Yayin kapisini referans cozulemediginde kapali ve ogreten bir sonuc olarak kapatir.
-    public PtnValidationResult Validate(
-        PtnValidateRequest request,
-        PtnProfilePack pack,
-        string currentFingerprint)
+    public ValidationResult Validate(
+        ValidateRequest request,
+        ProfilePack pack,
+        string currentFingerprint,
+        DatabaseDerivabilityResult? databaseDerivability = null)
     {
         _profilePackManager.GetValidated(pack, request.ProfileKey, currentFingerprint);
-        return new PtnValidationResult
+        return new ValidationResult
         {
             ResponseFormat = request.ResponseFormat,
             Coverage = _profilePackManager.BuildCoverage(pack, PtnConceptCodes.All),
             IsPublishable = false,
             DecisionCode = PtnVerdictCodes.Inconclusive,
+            DatabaseDerivability = databaseDerivability,
             Questions = [AssertionQuestion(request.AssertionReferenceIds)],
             ResourceLink = ResourceLink(request.ResponseFormat, PtnToolCodes.Validate)
         };
     }
-
+    // Validate domain girdisinden DB checker turetilebilirlik istegini tek yerde kurar.
+    public DatabaseDerivabilityRequest CreateDatabaseDerivabilityRequest(ValidateRequest request) => new()
+    {
+        ConnectionId = request.ConnectionId,
+        Assertions = request.DatabaseAssertions.ToList()
+    };
     // Cozulemeyen operasyon referansini tek kapali onay sorusuna cevirir.
-    private static PtnClosedQuestion OperationQuestion(Guid operationReferenceId) => new()
+    private static ClosedQuestion OperationQuestion(Guid operationReferenceId) => new()
     {
         QuestionCode = PtnOpenQuestionCodes.OperationReferenceRequired,
         Prompt = TestModuleBridgeErrorCodes.EvidenceUnavailable,
         Options = [operationReferenceId.ToString(PtnBridgeConsts.ReferenceIdFormat)],
         GapKindCode = PtnOpenQuestionCodes.OperationReferenceRequired
     };
-
     // Assertion referanslarini serbest JSON pointer tahmini yerine kapali secenek olarak korur.
-    private static PtnClosedQuestion AssertionQuestion(IEnumerable<Guid> assertionReferenceIds) => new()
+    private static ClosedQuestion AssertionQuestion(IEnumerable<Guid> assertionReferenceIds) => new()
     {
         QuestionCode = PtnOpenQuestionCodes.AssertionReferenceRequired,
         Prompt = TestModuleBridgeErrorCodes.EvidenceUnavailable,
@@ -85,15 +90,13 @@ public class GroundingManager : TestModuleDomainService
             .ToList(),
         GapKindCode = PtnOpenQuestionCodes.AssertionReferenceRequired
     };
-
     // Esik alti operasyon adaylarini listeden cikarip kapali secim sorusuna cevirir.
-    private static void ApplyOperationThreshold(PtnGroundingResult result)
+    private static void ApplyOperationThreshold(GroundingResult result)
     {
         if (result.OperationBinding is null)
         {
             return;
         }
-
         var confident = result.OperationBinding.Suggestions
             .Where(item => item.Score >= PtnBridgeConsts.MinimumOperationScore)
             .ToList();
@@ -102,7 +105,6 @@ public class GroundingManager : TestModuleDomainService
             result.OperationBinding.Suggestions = confident;
             return;
         }
-
         var options = result.OperationBinding.Suggestions
             .Select(item => item.SourceOperationId ?? string.Join(
                 PtnBridgeConsts.EvidenceReferenceSeparator,
@@ -112,16 +114,14 @@ public class GroundingManager : TestModuleDomainService
         result.OperationBinding.Suggestions = [];
         result.Questions.Add(OperationSelectionQuestion(options));
     }
-
     // Esik alti aday kimliklerini tek kapali secim sorusunda tasir.
-    private static PtnClosedQuestion OperationSelectionQuestion(List<string> options) => new()
+    private static ClosedQuestion OperationSelectionQuestion(List<string> options) => new()
     {
         QuestionCode = PtnOpenQuestionCodes.OperationSelectionRequired,
         Prompt = TestModuleBridgeErrorCodes.EvidenceUnavailable,
         Options = options,
         GapKindCode = PtnOpenQuestionCodes.OperationSelectionRequired
     };
-
     // Concise cevapta agir govdeyi tool resource adresine tasir.
     private static string? ResourceLink(string responseFormat, string toolCode) =>
         responseFormat == PtnResponseFormatCodes.Concise ? PtnBridgeRoutes.Resource(toolCode) : null;

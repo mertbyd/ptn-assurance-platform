@@ -7,9 +7,9 @@ namespace Ptn.TestModule.Services.Bridge;
 // sistemdeki gorevi: Dar Bridge yuzeyini HTTP ve MCP composition katmanlarindan ayirir.
 public interface IPtnBridgeAppService : IApplicationService
 {
-    Task<PtnGroundResultDto> GroundAsync(PtnGroundRequestDto input);
-    Task<PtnExplainResultDto> ExplainAsync(PtnExplainRequestDto input);
-    Task<PtnValidateResultDto> ValidateAsync(PtnValidateRequestDto input);
-    Task<PtnKnowledgeResultDto> GetKnowledgeAsync(PtnKnowledgeRequestDto input);
-    Task<PtnToolCatalogDto> GetToolCatalogAsync();
+    Task<GroundResultDto> GroundAsync(GroundRequestDto input);
+    Task<ExplainResultDto> ExplainAsync(ExplainRequestDto input);
+    Task<ValidateResultDto> ValidateAsync(ValidateRequestDto input);
+    Task<KnowledgeResultDto> GetKnowledgeAsync(KnowledgeRequestDto input);
+    Task<ToolCatalogDto> GetToolCatalogAsync();
 }

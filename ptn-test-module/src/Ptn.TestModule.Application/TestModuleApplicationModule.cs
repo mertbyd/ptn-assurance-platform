@@ -20,7 +20,7 @@ namespace Ptn.TestModule;
     typeof(AbpBackgroundJobsModule),
     typeof(AuthenticatorApplicationModule),
     typeof(NotificationsApplicationModule),
-    typeof(DatabaseCheckerDomainModule)
+    typeof(DatabaseCheckerApplicationContractsModule)
 )]
 public class TestModuleApplicationModule : AbpModule
 {
@@ -31,7 +31,7 @@ public class TestModuleApplicationModule : AbpModule
         context.Services.AddTransient<IDatabaseOracleAppService, DatabaseOracleAppService>();
         context.Services.AddTransient<IFailureDiagnosisAppService, FailureDiagnosisAppService>();
         context.Services.AddTransient<ISchemaKnowledgeAppService, SchemaKnowledgeAppService>();
-        context.Services.AddTransient<IWriteSetCapabilityService, WriteSetCapabilityService>();
+        context.Services.AddTransient<IWriteSetCapabilityService, WriteSetCapabilityAppService>();
         context.Services.AddTransient<IPtnBridgeAppService, PtnBridgeAppService>();
     }
 }

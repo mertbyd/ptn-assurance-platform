@@ -31,7 +31,7 @@ public class ProfilePackFileManager : TestModuleDomainService
     }
 
     // Profil dosyasini boyut butcesiyle okur, domain modeline cevirir ve icerik fingerprint'ini ekler.
-    public async Task<PtnProfilePack> LoadAsync(
+    public async Task<ProfilePack> LoadAsync(
         string profileKey,
         CancellationToken cancellationToken)
     {
@@ -84,31 +84,31 @@ public class ProfilePackFileManager : TestModuleDomainService
     }
 
     // YAML belgesini ara transport sinifi veya elle property kopyalama olmadan domain modeline cevirir.
-    private static PtnProfilePack Deserialize(byte[] bytes)
+    private static ProfilePack Deserialize(byte[] bytes)
     {
         try
         {
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
                 .WithAttributeOverride(
-                    typeof(PtnEvidencePathStep),
-                    nameof(PtnEvidencePathStep.NodeKindCode),
+                    typeof(EvidencePathStep),
+                    nameof(EvidencePathStep.NodeKindCode),
                     new YamlMemberAttribute { Alias = PtnProfilePackFieldNames.NodeKind })
                 .WithAttributeOverride(
-                    typeof(PtnEvidencePathStep),
-                    nameof(PtnEvidencePathStep.SourceCode),
+                    typeof(EvidencePathStep),
+                    nameof(EvidencePathStep.SourceCode),
                     new YamlMemberAttribute { Alias = PtnProfilePackFieldNames.Source })
                 .WithAttributeOverride(
-                    typeof(PtnEvidencePathStep),
-                    nameof(PtnEvidencePathStep.ConceptCode),
+                    typeof(EvidencePathStep),
+                    nameof(EvidencePathStep.ConceptCode),
                     new YamlMemberAttribute { Alias = PtnProfilePackFieldNames.Concept })
                 .WithAttributeOverride(
-                    typeof(PtnEvidencePathStep),
-                    nameof(PtnEvidencePathStep.JoinFromNodeKindCode),
+                    typeof(EvidencePathStep),
+                    nameof(EvidencePathStep.JoinFromNodeKindCode),
                     new YamlMemberAttribute { Alias = PtnProfilePackFieldNames.JoinFrom })
                 .Build();
             using var reader = new StreamReader(new MemoryStream(bytes));
-            return deserializer.Deserialize<PtnProfilePack>(reader);
+            return deserializer.Deserialize<ProfilePack>(reader);
         }
         catch (YamlException exception)
         {
@@ -128,7 +128,7 @@ public class ProfilePackFileManager : TestModuleDomainService
     }
 
     // Dosya icerigi ile istenen profil anahtarinin ayni kaydi gostermesini zorunlu kilar.
-    private static void EnsureProfileMatchesRequest(PtnProfilePack pack, string profileKey)
+    private static void EnsureProfileMatchesRequest(ProfilePack pack, string profileKey)
     {
         if (pack.ProfileKey != profileKey)
         {

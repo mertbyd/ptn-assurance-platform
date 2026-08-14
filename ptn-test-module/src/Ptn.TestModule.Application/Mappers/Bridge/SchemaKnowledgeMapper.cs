@@ -16,13 +16,13 @@ namespace Ptn.TestModule.Mappers.Bridge;
 [Mapper]
 public partial class SchemaKnowledgeMapper
 {
-    public partial PtnTableQuery Map(TableQueryDto input);
-    public partial TableDescriptionDto Map(PtnTableDescription input);
-    public partial SchemaSnapshotDto Map(PtnSchemaSnapshot input);
-    public partial PtnCheckerTableDescription Map(CheckerTableDescriptionDto input);
-    public partial PtnTableColumn MapColumn(CheckerTableColumnDto input);
-    public partial PtnTableKey MapKey(CheckerTableKeyDto input);
-    public partial PtnSchemaSnapshot Map(CheckerSchemaSnapshotDto input);
-    public partial PtnSchemaTable MapSchemaTable(CheckerSchemaTableDto input);
-    public partial PtnSchemaColumn MapSchemaColumn(CheckerSchemaColumnDto input);
+    public partial TableQuery Map(TableQueryDto input);
+    public partial TableDescriptionDto Map(TableDescription input);
+    public partial SchemaSnapshotDto Map(SchemaSnapshot input);
+    public partial CheckerTableDescription Map(CheckerTableDescriptionDto input);
+    public partial TableColumn MapColumn(CheckerTableColumnDto input);
+    public partial TableKey MapKey(CheckerTableKeyDto input);
+    public partial SchemaSnapshot Map(CheckerSchemaSnapshotDto input);
+    public partial SchemaTable MapSchemaTable(CheckerSchemaTableDto input);
+    public partial SchemaColumn MapSchemaColumn(CheckerSchemaColumnDto input);
 }

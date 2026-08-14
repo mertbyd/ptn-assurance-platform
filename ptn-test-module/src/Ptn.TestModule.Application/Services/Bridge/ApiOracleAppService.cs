@@ -21,7 +21,6 @@ public class ApiOracleAppService : TestModuleAppService, IApiOracleAppService
     private readonly IValidator<OperationQueryDto> _operationQueryValidator;
     private readonly IValidator<DerivabilityRequestDto> _derivabilityValidator;
     private readonly IValidator<ResponseObservationDto> _responseValidator;
-
     // API checker public servisini anti-corruption sinirina baglar.
     public ApiOracleAppService(
         IResponseConformanceAppService appService,
@@ -36,7 +35,6 @@ public class ApiOracleAppService : TestModuleAppService, IApiOracleAppService
         _derivabilityValidator = derivabilityValidator;
         _responseValidator = responseValidator;
     }
-
     // Public operasyon sorgusunu Domain modeline map edip normalize DTO sonucu dondurur.
     public async Task<OperationBindingDto> SuggestOperationBindingsAsync(
         OperationQueryDto input,
@@ -49,7 +47,6 @@ public class ApiOracleAppService : TestModuleAppService, IApiOracleAppService
             await _appService.SuggestOperationBindingsAsync(
                 Mapper.Map(_manager.CreateOperationRequest(query))))));
     }
-
     // Public operasyon sorgusundan uretilen request ornegini DTO'ya map eder.
     public async Task<RequestExampleDto> BuildRequestExampleAsync(
         OperationQueryDto input,
@@ -62,7 +59,6 @@ public class ApiOracleAppService : TestModuleAppService, IApiOracleAppService
             await _appService.BuildRequestExampleAsync(
                 Mapper.Map(_manager.CreateOperationRequest(query))))));
     }
-
     // Public assertion turetilebilirlik istegini Domain modeline ve sonucunu DTO'ya map eder.
     public async Task<DerivabilityResultDto> ValidateScenarioAssertionsAsync(
         DerivabilityRequestDto input,
@@ -74,7 +70,6 @@ public class ApiOracleAppService : TestModuleAppService, IApiOracleAppService
         return Mapper.Map(_manager.Normalize(Mapper.Map(
             await _appService.ValidateScenarioAssertionsAsync(Mapper.Map(request)))));
     }
-
     // Public response gozlemini Domain modeline ve uygunluk sonucunu DTO'ya map eder.
     public async Task<ConformanceResultDto> AssertResponseAsync(
         ResponseObservationDto input,
@@ -83,8 +78,9 @@ public class ApiOracleAppService : TestModuleAppService, IApiOracleAppService
         await _responseValidator.ValidateAndThrowAsync(input, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         var observation = Mapper.Map(input);
-        return Mapper.Map(_manager.Normalize(Mapper.Map(
-            await _appService.AssertResponseAsync(
+        return Mapper.Map(_manager.Normalize(
+            observation,
+            Mapper.Map(await _appService.AssertResponseAsync(
                 Mapper.Map(_manager.CreateResponseRequest(observation))))));
     }
 }

@@ -12,10 +12,10 @@ namespace Ptn.TestModule.Managers.Bridge;
 public class ToolCatalogManager : TestModuleDomainService
 {
     // Aktif ve discoverable tool kodlarini kararli sirada kataloglar.
-    public PtnToolCatalog GetCatalog(string responseFormat)
+    public ToolCatalog GetCatalog(string responseFormat)
     {
         EnsureBudget(PtnToolCodes.Active);
-        return new PtnToolCatalog
+        return new ToolCatalog
         {
             ResponseFormat = responseFormat,
             ActiveToolCodes = PtnToolCodes.Active.ToList(),
@@ -24,7 +24,6 @@ public class ToolCatalogManager : TestModuleDomainService
             ResourceLink = ResourceLink(responseFormat)
         };
     }
-
     // Secilen toolset icin yalniz o grubun kapali tool kodlarini dondurur.
     public IReadOnlyList<string> Discover(string toolsetCode) => toolsetCode switch
     {
@@ -32,7 +31,6 @@ public class ToolCatalogManager : TestModuleDomainService
         PtnToolCodes.RuntimeToolset => [PtnToolCodes.Run, PtnToolCodes.Result, PtnToolCodes.Explain, PtnToolCodes.Impact],
         _ => []
     };
-
     // Aktif tool sayisinin urun butcesini asmadigini mekanik olarak korur.
     private static void EnsureBudget(IReadOnlyCollection<string> activeTools)
     {
@@ -41,7 +39,6 @@ public class ToolCatalogManager : TestModuleDomainService
             throw new BusinessException(TestModuleBridgeErrorCodes.ToolBudgetExceeded);
         }
     }
-
     // Concise cevapta agir katalog semasini dinamik resource adresine tasir.
     private static string? ResourceLink(string responseFormat) =>
         responseFormat == PtnResponseFormatCodes.Concise

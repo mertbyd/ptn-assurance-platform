@@ -1,31 +1,46 @@
-using System.Collections.Generic;
+using System;
 using System.Linq;
 using Ptn.TestModule.Constants.Bridge;
-using Ptn.TestModule.ExceptionCodes.Bridge;
+using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Footprint;
 
 namespace Ptn.TestModule.Managers.Bridge;
 
-// islevi: Ortam yetenegini yoklar, yazma kumesi stratejisini secer ve slot yasam dongusunu kapatir.
-// sistemdeki gorevi: Paylasimli ortamda capture'i durdurur ve her sonucu advisory sozlesmesinde tutar.
+// islevi: Checker capability olgusunu Bridge sozlugune cevirir ve footprint butcelerini uygular.
+// sistemdeki gorevi: Checker'in sahip oldugu yoklamayi tekrar etmeden her sonucu advisory sozlesmesinde tutar.
 public class FootprintCapabilityManager : TestModuleDomainService
 {
-    // Ortam olgularina gore kullanilabilir en guclu footprint seviyesini dondurur.
-    public PtnCapabilityLevel ResolveCapability(
-        bool hasLogicalDecoding,
-        bool canReplicate,
-        bool hasExclusiveSandbox)
+    // Primitive servis girdilerinden checker'a maplenecek capability domain istegini kurar.
+    public CapabilityProbeRequest CreateProbeRequest(Guid connectionId, bool hasExclusiveSandbox) => new()
     {
-        if (!hasExclusiveSandbox)
-        {
-            return CreateUnavailableCapability(false);
-        }
+        ConnectionId = connectionId,
+        RequiresExclusiveSandbox = hasExclusiveSandbox
+    };
 
-        return CreateCapability(hasLogicalDecoding, canReplicate, true);
-    }
+    // Primitive servis girdilerinden checker'a maplenecek capture domain istegini kurar.
+    public WriteSetCaptureRequest CreateCaptureRequest(Guid connectionId, Guid captureId) => new()
+    {
+        ConnectionId = connectionId,
+        CaptureRef = captureId,
+        Correlation = new CorrelationRef
+        {
+            TraceId = captureId.ToString("N"),
+            StepKey = PtnCorrelationConsts.WriteSetCaptureStepKey
+        }
+    };
+
+    // Checker capability kodunu birebir Bridge seviyesine ve projection olgusuna cevirir.
+    public CapabilityLevel ResolveCapability(CheckerCapabilityLevel capability) => new()
+    {
+        FootprintStrengthCode = NormalizeStrength(capability.StrengthCode),
+        HasLogicalDecoding = capability.HasLogicalDecoding,
+        HasExclusiveSandbox = capability.HasExclusiveSandbox,
+        HasProjectionSurface = true,
+        Reasons = capability.Reasons.Take(PtnBridgeConsts.MaxEvidencePerNode).ToList()
+    };
 
     // Capability seviyesini ayni footprint sonuc sozlesmesine cevirir.
-    public PtnFootprintResult Describe(PtnCapabilityLevel capability) => new()
+    public FootprintResult Describe(CapabilityLevel capability) => new()
     {
         StrengthCode = capability.FootprintStrengthCode,
         IsAdvisoryOnly = true,
@@ -33,43 +48,20 @@ public class FootprintCapabilityManager : TestModuleDomainService
     };
 
     // Teknik provider sonucunun oracle bayragini acmasini engeller.
-    public static PtnFootprintResult EnsureAdvisory(PtnFootprintResult result)
+    public FootprintResult Normalize(FootprintResult result)
     {
+        result.StrengthCode = NormalizeStrength(result.StrengthCode);
+        result.Tables = result.Tables.Take(PtnBridgeConsts.MaxNodeCount).ToList();
+        result.Columns = result.Columns.Take(PtnBridgeConsts.MaxNodeCount).ToList();
+        result.RowDeltas = result.RowDeltas.Take(PtnBridgeConsts.MaxNodeCount).ToList();
+        result.Reasons = result.Reasons.Take(PtnBridgeConsts.MaxEvidencePerNode).ToList();
         result.IsAdvisoryOnly = true;
         return result;
     }
 
-    // Provider olgularini kapali footprint seviyesine cevirir.
-    public static PtnCapabilityLevel CreateCapability(
-        bool hasLogicalDecoding,
-        bool canReplicate,
-        bool hasExclusiveSandbox) => new()
-    {
-        FootprintStrengthCode = hasLogicalDecoding && canReplicate && hasExclusiveSandbox
-            ? PtnFootprintStrengthCodes.Exact
-            : PtnFootprintStrengthCodes.Unavailable,
-        HasLogicalDecoding = hasLogicalDecoding && canReplicate,
-        HasExclusiveSandbox = hasExclusiveSandbox,
-        HasProjectionSurface = false,
-        Reasons = hasLogicalDecoding && canReplicate
-            ? []
-            : [TestModuleBridgeErrorCodes.EvidenceUnavailable]
-    };
-
-    // Yetenek yoklugunu exception yerine kapali capability sonucuna cevirir.
-    public static PtnCapabilityLevel CreateUnavailableCapability(bool hasExclusiveSandbox) => new()
-    {
-        FootprintStrengthCode = PtnFootprintStrengthCodes.Unavailable,
-        HasExclusiveSandbox = hasExclusiveSandbox,
-        HasProjectionSurface = false,
-        Reasons = [TestModuleBridgeErrorCodes.EvidenceUnavailable]
-    };
-
-    // Yetenek yoklugunu advisory footprint sonucuna cevirir.
-    public static PtnFootprintResult CreateUnavailableFootprint(IEnumerable<string> reasons) => new()
-    {
-        StrengthCode = PtnFootprintStrengthCodes.Unavailable,
-        IsAdvisoryOnly = true,
-        Reasons = reasons.ToList()
-    };
+    // Bilinmeyen checker seviyesini sessiz drift yerine kapali unavailable sonucuna indirger.
+    private static string NormalizeStrength(string strengthCode) =>
+        PtnFootprintStrengthCodes.All.Contains(strengthCode)
+            ? strengthCode
+            : PtnFootprintStrengthCodes.Unavailable;
 }

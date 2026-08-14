@@ -60,7 +60,7 @@ public class EvidenceChainManagerTests
     }
 
     // Profil yolundaki her adim icin kaynakli bir observed dugumu olusturur.
-    private static List<PtnExplanationNode> CreateObservedNodes() =>
+    private static List<ExplanationNode> CreateObservedNodes() =>
     [
         CreateNode(PtnNodeKindCodes.ScopeRequired, "ticket.read"),
         CreateNode(PtnNodeKindCodes.SubjectResolved, "user-1"),
@@ -69,24 +69,24 @@ public class EvidenceChainManagerTests
     ];
 
     // Tek observed degeri kaynak referansiyla birlikte kanit dugumune yerlestirir.
-    private static PtnExplanationNode CreateNode(string nodeKindCode, string value) => new()
+    private static ExplanationNode CreateNode(string nodeKindCode, string value) => new()
     {
         NodeKindCode = nodeKindCode,
         StateCode = PtnEvidenceStateCodes.Observed,
         Evidence =
         [
-            new PtnEvidence
+            new Evidence
             {
                 ProbeKindCode = PtnProbeKindCodes.BridgeAvailability,
                 FactCode = PtnFactCodes.Present,
                 ObservedValue = value,
-                Ref = new PtnFindingRef()
+                Ref = new FindingRef()
             }
         ]
     };
 
     // access-denied-403 yolunu ve gerekli uc onayli kavram baglamasini olusturur.
-    private static PtnProfilePack CreatePack() => new()
+    private static ProfilePack CreatePack() => new()
     {
         ProfileKey = "access-profile",
         Revision = "1",
@@ -97,7 +97,7 @@ public class EvidenceChainManagerTests
     };
 
     // Tek kavrami gecerli desen ve Approved durumuyla profile baglar.
-    private static PtnConceptBinding CreateBinding(string conceptCode) => new()
+    private static ConceptBinding CreateBinding(string conceptCode) => new()
     {
         ConceptCode = conceptCode,
         DbSchemaName = "identity",
@@ -111,10 +111,10 @@ public class EvidenceChainManagerTests
     };
 
     // Dordu de veriyle tanimli access-denied-403 kanit adimlarini olusturur.
-    private static PtnEvidencePathDefinition CreatePath() => new()
+    private static EvidencePathDefinition CreatePath() => new()
     {
         PathKey = "access-denied-403",
-        Trigger = new PtnEvidencePathTrigger { StatusCodes = [403] },
+        Trigger = new EvidencePathTrigger { StatusCodes = [403] },
         Steps =
         [
             CreateStep(PtnNodeKindCodes.ScopeRequired, PtnEvidenceSourceCodes.ApiFailureIdentity),
@@ -127,7 +127,7 @@ public class EvidenceChainManagerTests
     };
 
     // Tek kanit yolu adimini kaynak ve istege bagli kavram koduyla olusturur.
-    private static PtnEvidencePathStep CreateStep(string nodeKindCode, string sourceCode, string? conceptCode = null) => new()
+    private static EvidencePathStep CreateStep(string nodeKindCode, string sourceCode, string? conceptCode = null) => new()
     {
         NodeKindCode = nodeKindCode,
         SourceCode = sourceCode,
@@ -135,7 +135,7 @@ public class EvidenceChainManagerTests
     };
 
     // 403 teshis tetikleyicisi bulunan access tuple olusturur.
-    private static PtnAccessTuple CreateTuple() => new()
+    private static AccessTuple CreateTuple() => new()
     {
         ConnectionId = Guid.NewGuid(),
         SpecSnapshotId = Guid.NewGuid(),
@@ -146,7 +146,7 @@ public class EvidenceChainManagerTests
     };
 
     // Aciklama agacini kokten tek-cocuk zinciri boyunca enumerable dugum listesine cevirir.
-    private static IEnumerable<PtnExplanationNode> Flatten(PtnExplanationNode? root)
+    private static IEnumerable<ExplanationNode> Flatten(ExplanationNode? root)
     {
         while (root is not null)
         {

@@ -9,6 +9,15 @@ using ApiHypothesisKindCodes = Ptn.ApiContractChecker.Constants.Diagnosis.Hypoth
 using DatabaseAssertionOutcomeCodes = Ptn.DatabaseChecker.Constants.Comparison.Assertions.AssertionOutcomeCodes;
 using DatabaseDiagnosisConfidenceCodes = Ptn.DatabaseChecker.Constants.Diagnosis.DiagnosisConfidenceCodes;
 using DatabaseHypothesisKindCodes = Ptn.DatabaseChecker.Constants.Diagnosis.HypothesisKindCodes;
+using DatabaseFootprintStrengthCodes = Ptn.DatabaseChecker.Constants.Capabilities.FootprintStrengthCodes;
+using DatabaseCapabilityReasonCodes = Ptn.DatabaseChecker.Constants.Capabilities.CapabilityReasonCodes;
+using DatabaseProjectionOutcomeCodes = Ptn.DatabaseChecker.Constants.Comparison.Projections.ProjectionOutcomeCodes;
+using DatabaseAssertionDerivabilityCodes = Ptn.DatabaseChecker.Constants.Comparison.Assertions.AssertionDerivabilityCodes;
+using ApiOperationLinkSourceCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.OperationLinkSourceCodes;
+using ApiSampleKindCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.SampleKindCodes;
+using ApiSamplePositionCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.SamplePositionCodes;
+using ApiSampleExpectedOutcomeCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.SampleExpectedOutcomeCodes;
+using ApiConstraintCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.ConstraintCodes;
 using Shouldly;
 using Xunit;
 
@@ -42,6 +51,27 @@ public class VocabularyDriftTests
         ReadConstantValues(typeof(DatabaseHypothesisKindCodes)).ShouldBe(DatabaseHypotheses, ignoreOrder: true);
         ReadConstantValues(typeof(ApiDiagnosisConfidenceCodes)).ShouldBe(ConfidenceCodes, ignoreOrder: true);
         ReadConstantValues(typeof(DatabaseDiagnosisConfidenceCodes)).ShouldBe(ConfidenceCodes, ignoreOrder: true);
+    }
+
+    // Database capability, projection ve derivability kod kumelerini yayimlanan sozlesmeye kilitler.
+    [Fact]
+    public void Database_bridge_surface_vocabulary_should_not_drift()
+    {
+        DatabaseFootprintStrengthCodes.All.ShouldBe(FootprintStrengths, ignoreOrder: true);
+        DatabaseCapabilityReasonCodes.All.ShouldBe(CapabilityReasons, ignoreOrder: true);
+        DatabaseProjectionOutcomeCodes.All.ShouldBe(ProjectionOutcomes, ignoreOrder: true);
+        DatabaseAssertionDerivabilityCodes.All.ShouldBe(DatabaseDerivabilityOutcomes, ignoreOrder: true);
+    }
+
+    // API sample ve operation-link kod kumelerini yayimlanan sozlesmeye kilitler.
+    [Fact]
+    public void Api_authoring_surface_vocabulary_should_not_drift()
+    {
+        ApiOperationLinkSourceCodes.All.ShouldBe(OperationLinkSources, ignoreOrder: true);
+        ApiSampleKindCodes.All.ShouldBe(SampleKinds, ignoreOrder: true);
+        ApiSamplePositionCodes.All.ShouldBe(SamplePositions, ignoreOrder: true);
+        ApiSampleExpectedOutcomeCodes.All.ShouldBe(SampleExpectedOutcomes, ignoreOrder: true);
+        ApiConstraintCodes.All.ShouldBe(ConstraintKinds, ignoreOrder: true);
     }
 
     // Public string sabitlerinin degerlerini reflection ile kapali bir kumeye cevirir.
@@ -86,4 +116,32 @@ public class VocabularyDriftTests
 
     private static readonly string[] ConfidenceCodes =
         ["High", "Low", "Confirmed", "Likely", "Possible", "RuledOut"];
+
+    private static readonly string[] FootprintStrengths =
+        ["Exact", "RowAddressed", "Inferred", "Unavailable"];
+
+    private static readonly string[] CapabilityReasons =
+    [
+        "SharedEnvironment", "WalLevelNotLogical", "NoReplicationGrant",
+        "EngineNotSupported", "NoCapability", "SlotReleaseFailed"
+    ];
+
+    private static readonly string[] ProjectionOutcomes =
+        ["Projected", "TableNotFound", "ColumnNotFound", "KeyNotUnique", "NotAuthorized", "Truncated"];
+
+    private static readonly string[] DatabaseDerivabilityOutcomes =
+        ["Derivable", "TableNotFound", "ColumnNotFound", "KeyNotUnique", "MatcherTypeMismatch"];
+
+    private static readonly string[] OperationLinkSources =
+        ["DeclaredLink", "SchemaMatch", "LocationHeader"];
+
+    private static readonly string[] SampleKinds = ["Boundary", "Negative", "Both"];
+
+    private static readonly string[] SamplePositions =
+        ["BelowMin", "AtMin", "AboveMin", "BelowMax", "AtMax", "AboveMax", "Violation"];
+
+    private static readonly string[] SampleExpectedOutcomes = ["ShouldAccept", "ShouldReject"];
+
+    private static readonly string[] ConstraintKinds =
+        ["MinLength", "MaxLength", "Minimum", "Maximum", "Pattern", "Enum", "Required", "Type", "Format"];
 }

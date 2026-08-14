@@ -19,7 +19,8 @@
   <PropertyGroup>
     <AbpVersion>10.6.0</AbpVersion>
     <AuthenticatorVersion>2.0.0</AuthenticatorVersion>
-    <CheckNexusVersion>0.2.0-alpha.2</CheckNexusVersion>
+    <CheckNexusApiContractsVersion>0.2.0-alpha.5</CheckNexusApiContractsVersion>
+    <CheckNexusDatabaseComparisonVersion>0.2.0-alpha.6</CheckNexusDatabaseComparisonVersion>
     <NotificationsVersion>0.1.0-alpha.1</NotificationsVersion>
     <PitonEmailingVersion>1.5.0</PitonEmailingVersion>
     <SystemStandardsCoreVersion>2.0.0</SystemStandardsCoreVersion>
@@ -31,7 +32,6 @@
     <MicrosoftExtensionsVersion>10.0.10</MicrosoftExtensionsVersion>
     <EfCoreNamingConventionsVersion>10.0.1</EfCoreNamingConventionsVersion>
     <YamlDotNetVersion>18.1.0</YamlDotNetVersion>
-    <NpgsqlVersion>10.0.0</NpgsqlVersion>
   </PropertyGroup>
 
   <ItemGroup>

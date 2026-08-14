@@ -1,3 +1,4 @@
+using Ptn.TestModule.Dtos.Bridge;
 using Ptn.TestModule.Dtos.Bridge.Api;
 using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Api;
@@ -13,6 +14,7 @@ using CheckerOperationQueryDto = Ptn.ApiContractChecker.Dtos.Conformance.Operati
 using CheckerOperationSuggestionDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationBindingSuggestionDto;
 using CheckerRequestExampleDto = Ptn.ApiContractChecker.Dtos.Conformance.RequestExampleDto;
 using CheckerResponseObservationDto = Ptn.ApiContractChecker.Dtos.Conformance.ResponseConformanceDto;
+using CheckerCorrelationRefDto = Ptn.ApiContractChecker.Dtos.Correlation.CorrelationRefDto;
 
 namespace Ptn.TestModule.Mappers.Bridge;
 
@@ -21,22 +23,26 @@ namespace Ptn.TestModule.Mappers.Bridge;
 [Mapper]
 public partial class ApiOracleMapper
 {
-    public partial PtnOperationQuery Map(OperationQueryDto input);
-    public partial OperationBindingDto Map(PtnOperationBinding input);
-    public partial RequestExampleDto Map(PtnRequestExample input);
-    public partial PtnDerivabilityRequest Map(DerivabilityRequestDto input);
-    public partial DerivabilityResultDto Map(PtnDerivabilityResult input);
-    public partial PtnResponseObservation Map(ResponseObservationDto input);
-    public partial ConformanceResultDto Map(PtnConformanceResult input);
-    public partial CheckerOperationQueryDto Map(PtnApiOperationRequest input);
-    public partial CheckerDerivabilityRequestDto Map(PtnDerivabilityRequest input);
-    public partial CheckerResponseObservationDto Map(PtnApiResponseRequest input);
-    public partial PtnOperationBinding Map(CheckerOperationBindingDto input);
-    public partial PtnRequestExample Map(CheckerRequestExampleDto input);
-    public partial PtnDerivabilityResult Map(CheckerDerivabilityResultDto input);
-    public partial PtnConformanceResult Map(CheckerConformanceResultDto input);
-    public partial PtnOperationSuggestion MapSuggestion(CheckerOperationSuggestionDto input);
-    public partial PtnFieldBinding MapFieldBinding(CheckerFieldBindingDto input);
-    public partial PtnDerivabilityItem MapDerivabilityItem(CheckerDerivabilityItemDto input);
-    public partial PtnConformanceViolation MapViolation(CheckerConformanceViolationDto input);
+    public partial OperationQuery Map(OperationQueryDto input);
+    public partial OperationBindingDto Map(OperationBinding input);
+    public partial RequestExampleDto Map(RequestExample input);
+    public partial DerivabilityRequest Map(DerivabilityRequestDto input);
+    public partial DerivabilityResultDto Map(DerivabilityResult input);
+    public partial ResponseObservation Map(ResponseObservationDto input);
+    public partial ConformanceResultDto Map(ConformanceResult input);
+    public partial CheckerOperationQueryDto Map(ApiOperationRequest input);
+    public partial CheckerDerivabilityRequestDto Map(DerivabilityRequest input);
+    public partial CheckerResponseObservationDto Map(ApiResponseRequest input);
+    public partial OperationBinding Map(CheckerOperationBindingDto input);
+    public partial RequestExample Map(CheckerRequestExampleDto input);
+    public partial DerivabilityResult Map(CheckerDerivabilityResultDto input);
+    public partial ConformanceResult Map(CheckerConformanceResultDto input);
+    public partial OperationSuggestion MapSuggestion(CheckerOperationSuggestionDto input);
+    public partial FieldBinding MapFieldBinding(CheckerFieldBindingDto input);
+    public partial DerivabilityItem MapDerivabilityItem(CheckerDerivabilityItemDto input);
+    public partial ConformanceViolation MapViolation(CheckerConformanceViolationDto input);
+    private partial CorrelationRef Map(CheckerCorrelationRefDto input);
+    private partial CheckerCorrelationRefDto Map(CorrelationRef input);
+    private partial CorrelationRef Map(CorrelationRefDto input);
+    private partial CorrelationRefDto MapToDto(CorrelationRef input);
 }

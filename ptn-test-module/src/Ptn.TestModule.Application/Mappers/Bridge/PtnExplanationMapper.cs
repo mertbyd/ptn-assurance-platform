@@ -3,6 +3,7 @@ using Ptn.TestModule.Dtos.Bridge.Diagnosis;
 using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Agent;
 using Riok.Mapperly.Abstractions;
+using BridgeEvidenceDto = Ptn.TestModule.Dtos.Bridge.EvidenceDto;
 
 namespace Ptn.TestModule.Mappers.Bridge;
 
@@ -11,11 +12,11 @@ namespace Ptn.TestModule.Mappers.Bridge;
 [Mapper]
 public partial class PtnExplanationMapper
 {
-    public partial PtnExplainResultDto Map(PtnExplainResult input);
-    public partial PtnExplanationNodeDto Map(PtnExplanationNode input);
-    public partial PtnEvidenceDto Map(PtnEvidence input);
-    public partial LocationDto Map(PtnLocation input);
-    public partial FindingRefDto Map(PtnFindingRef input);
-    public partial PtnCoverageReportDto Map(PtnCoverageReport input);
-    public partial PtnClosedQuestionDto Map(PtnClosedQuestion input);
+    public partial ExplainResultDto Map(ExplainResult input);
+    public partial ExplanationNodeDto Map(ExplanationNode input);
+    public partial BridgeEvidenceDto Map(Evidence input);
+    public partial LocationDto Map(Location input);
+    public partial FindingRefDto Map(FindingRef input);
+    public partial CoverageReportDto Map(CoverageReport input);
+    public partial ClosedQuestionDto Map(ClosedQuestion input);
 }

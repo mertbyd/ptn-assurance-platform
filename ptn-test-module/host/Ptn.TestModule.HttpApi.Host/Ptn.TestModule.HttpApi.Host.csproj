@@ -16,8 +16,8 @@
        Checker'lar tek DependsOn noktasi olan composition paketleriyle gelir (ADR-0002),
        Notifications tek bildirim owner'idir, Emailing ortak email sozlesmesinin sahibidir. -->
   <ItemGroup>
-    <PackageReference Include="CheckNexus.ApiContracts" Version="$(CheckNexusVersion)" />
-    <PackageReference Include="CheckNexus.DatabaseComparison" Version="$(CheckNexusVersion)" />
+    <PackageReference Include="CheckNexus.ApiContracts" Version="$(CheckNexusApiContractsVersion)" />
+    <PackageReference Include="CheckNexus.DatabaseComparison" Version="$(CheckNexusDatabaseComparisonVersion)" />
     <PackageReference Include="Pintern.SaaS.Notifications.HttpApi" Version="$(NotificationsVersion)" />
     <PackageReference Include="Piton.Emailing.Application" Version="$(PitonEmailingVersion)" />
     <PackageReference Include="Piton.Emailing.HttpApi" Version="$(PitonEmailingVersion)" />

@@ -25,7 +25,7 @@ namespace Ptn.TestModule.Managers.Bridge;
 public class FailureDiagnosisManager : TestModuleDomainService
 {
     // Ortak Bridge sinyalinden API checker'a gidecek kaynak-ozgul modeli kurar.
-    public PtnApiDiagnosisRequest CreateApiRequest(PtnDiagnosisRequest request) =>
+    public ApiDiagnosisRequest CreateApiRequest(DiagnosisRequest request) =>
         new()
         {
             SnapshotId = RequireSnapshotId(request.SpecSnapshotId),
@@ -37,38 +37,46 @@ public class FailureDiagnosisManager : TestModuleDomainService
             ContentType = request.ContentType,
             ConformanceOutcomeCode = ToApiOutcome(request.OutcomeCode),
             TransportErrorCode = request.TransportErrorCode,
-            ObservedAtMs = request.ObservedAtMs
+            ObservedAtMs = request.ObservedAtMs,
+            Correlation = request.Correlation
         };
 
     // Ortak Bridge sinyalinden Database checker'in dogru union kolunu kurar.
-    public PtnDatabaseDiagnosisRequest CreateDatabaseRequest(PtnDiagnosisRequest request)
+    public DatabaseDiagnosisRequest CreateDatabaseRequest(DiagnosisRequest request)
     {
-        return new PtnDatabaseDiagnosisRequest
+        return new DatabaseDiagnosisRequest
         {
             ConnectionId = request.ConnectionId,
             Assertion = string.IsNullOrWhiteSpace(request.OutcomeCode) ? null : CreateAssertion(request),
-            DbException = string.IsNullOrWhiteSpace(request.OutcomeCode) ? CreateException(request) : null
+            DbException = string.IsNullOrWhiteSpace(request.OutcomeCode) ? CreateException(request) : null,
+            Correlation = request.Correlation
         };
     }
 
     // API teshis raporuna kaynak, konum, identity olgulari ve normalize referanslari uygular.
-    public PtnDiagnosisReport NormalizeApiReport(PtnApiDiagnosisReportSource source)
+    public DiagnosisReport NormalizeApiReport(
+        DiagnosisRequest request,
+        ApiDiagnosisReportSource source)
     {
+        EnsureCorrelation(request.Correlation, source.Correlation);
         var report = CreateApiReport(source);
         NormalizeHypotheses(report, ApiHypothesisMap, ApiFactMap);
         return report;
     }
 
     // Database teshis raporuna kaynak, konum ve normalize referanslari uygular.
-    public PtnDiagnosisReport NormalizeDatabaseReport(PtnDatabaseDiagnosisReportSource source)
+    public DiagnosisReport NormalizeDatabaseReport(
+        DiagnosisRequest request,
+        DatabaseDiagnosisReportSource source)
     {
+        EnsureCorrelation(request.Correlation, source.Correlation);
         var report = CreateDatabaseReport(source);
         NormalizeHypotheses(report, DatabaseHypothesisMap, DatabaseFactMap);
         return report;
     }
 
     // API kaynak raporunu ortak RFC, konum, olgu ve hipotez modeline cevirir.
-    private static PtnDiagnosisReport CreateApiReport(PtnApiDiagnosisReportSource source) =>
+    private static DiagnosisReport CreateApiReport(ApiDiagnosisReportSource source) =>
         new()
         {
             SourceCheckerCode = PtnSourceCheckerCodes.ApiContract,
@@ -80,11 +88,12 @@ public class FailureDiagnosisManager : TestModuleDomainService
             Location = CreateApiLocation(source.Location),
             Facts = CreateApiFacts(source.Identity),
             Hypotheses = source.Hypotheses.Select(CreateApiHypothesis).ToList(),
-            NextChecks = source.NextChecks
+            NextChecks = source.NextChecks,
+            Correlation = source.Correlation
         };
 
     // Database kaynak raporunu ortak RFC, konum ve hipotez modeline cevirir.
-    private static PtnDiagnosisReport CreateDatabaseReport(PtnDatabaseDiagnosisReportSource source) =>
+    private static DiagnosisReport CreateDatabaseReport(DatabaseDiagnosisReportSource source) =>
         new()
         {
             SourceCheckerCode = PtnSourceCheckerCodes.DatabaseComparison,
@@ -95,8 +104,18 @@ public class FailureDiagnosisManager : TestModuleDomainService
             Instance = source.Instance,
             Location = CreateDatabaseLocation(source.Location),
             Hypotheses = source.Hypotheses.Select(CreateDatabaseHypothesis).ToList(),
-            NextChecks = source.NextChecks
+            NextChecks = source.NextChecks,
+            Correlation = source.Correlation
         };
+
+    // Istenen ve echo edilen korelasyon alanlari ayrisinca checker cagrisi fail-closed kapanir.
+    private static void EnsureCorrelation(CorrelationRef? expected, CorrelationRef? actual)
+    {
+        if (expected?.TraceId != actual?.TraceId || expected?.StepKey != actual?.StepKey)
+        {
+            throw CheckerCallFailed();
+        }
+    }
 
     // Nullable snapshot kimligini API checker'in zorunlu kimligine cevirir.
     public Guid RequireSnapshotId(Guid? snapshotId) => snapshotId ?? throw CheckerCallFailed();
@@ -109,7 +128,7 @@ public class FailureDiagnosisManager : TestModuleDomainService
         ReverseNormalize(code, DatabaseOutcomeMap) ?? throw CheckerCallFailed();
 
     // Ortak sinyalin database assertion kolunu kaynak-ozgul modele cevirir.
-    private PtnDatabaseAssertionSignal CreateAssertion(PtnDiagnosisRequest request) =>
+    private DatabaseAssertionSignal CreateAssertion(DiagnosisRequest request) =>
         new()
         {
             SchemaName = request.Location.DbSchemaName ?? string.Empty,
@@ -120,7 +139,7 @@ public class FailureDiagnosisManager : TestModuleDomainService
         };
 
     // Ortak sinyalin database exception kolunu kaynak-ozgul modele cevirir.
-    private static PtnDatabaseExceptionSignal CreateException(PtnDiagnosisRequest request) =>
+    private static DatabaseExceptionSignal CreateException(DiagnosisRequest request) =>
         new()
         {
             EngineCode = request.EngineCode ?? string.Empty,
@@ -129,7 +148,7 @@ public class FailureDiagnosisManager : TestModuleDomainService
         };
 
     // API checker konumunu ortak modelde API semasi olarak aciklar.
-    private static PtnLocation CreateApiLocation(PtnApiDiagnosisLocation source) =>
+    private static Location CreateApiLocation(ApiDiagnosisLocation source) =>
         new()
         {
             ApiSchemaName = source.SchemaName,
@@ -140,7 +159,7 @@ public class FailureDiagnosisManager : TestModuleDomainService
         };
 
     // Database checker konumunu ortak modelde DB semasi ve tablosu olarak aciklar.
-    private static PtnLocation CreateDatabaseLocation(PtnDatabaseDiagnosisLocation source) =>
+    private static Location CreateDatabaseLocation(DatabaseDiagnosisLocation source) =>
         new()
         {
             DbSchemaName = source.SchemaName,
@@ -149,7 +168,7 @@ public class FailureDiagnosisManager : TestModuleDomainService
         };
 
     // API kaynak hipotezini normalize oncesi ortak veri kabuguna cevirir.
-    private static PtnDiagnosisHypothesis CreateApiHypothesis(PtnApiDiagnosisHypothesis source) =>
+    private static DiagnosisHypothesis CreateApiHypothesis(ApiDiagnosisHypothesis source) =>
         new()
         {
             HypothesisKindCode = source.HypothesisKindCode,
@@ -162,7 +181,7 @@ public class FailureDiagnosisManager : TestModuleDomainService
         };
 
     // Database kaynak hipotezini normalize oncesi ortak veri kabuguna cevirir.
-    private static PtnDiagnosisHypothesis CreateDatabaseHypothesis(PtnDatabaseDiagnosisHypothesis source) =>
+    private static DiagnosisHypothesis CreateDatabaseHypothesis(DatabaseDiagnosisHypothesis source) =>
         new()
         {
             HypothesisKindCode = source.HypothesisKindCode,
@@ -175,7 +194,7 @@ public class FailureDiagnosisManager : TestModuleDomainService
         };
 
     // API kaynak kanitini ortak kanit veri kabuguna cevirir.
-    private static PtnEvidence CreateApiEvidence(PtnApiDiagnosisEvidence source) =>
+    private static Evidence CreateApiEvidence(ApiDiagnosisEvidence source) =>
         new()
         {
             ProbeKindCode = source.ProbeKindCode,
@@ -186,7 +205,7 @@ public class FailureDiagnosisManager : TestModuleDomainService
         };
 
     // Database kaynak kanitini ortak kanit veri kabuguna cevirir.
-    private static PtnEvidence CreateDatabaseEvidence(PtnDatabaseDiagnosisEvidence source) =>
+    private static Evidence CreateDatabaseEvidence(DatabaseDiagnosisEvidence source) =>
         new()
         {
             ProbeKindCode = source.ProbeKindCode,
@@ -197,7 +216,7 @@ public class FailureDiagnosisManager : TestModuleDomainService
 
     // Hipotez ve evidence kodlarini tek sozluge cevirip kaynakli fingerprint baglar.
     private static void NormalizeHypotheses(
-        PtnDiagnosisReport report,
+        DiagnosisReport report,
         IReadOnlyDictionary<string, string> hypothesisMap,
         IReadOnlyDictionary<string, string> factMap)
     {
@@ -211,7 +230,7 @@ public class FailureDiagnosisManager : TestModuleDomainService
     }
 
     // API identity'nin kanit yolunda kullanilan kapali olgu alanlarini ayiklar.
-    private static Dictionary<string, List<string>> CreateApiFacts(PtnApiFailureIdentity identity) =>
+    private static Dictionary<string, List<string>> CreateApiFacts(ApiFailureIdentity identity) =>
         new(StringComparer.Ordinal)
         {
             [PtnDiagnosisFactCodes.ChallengeScopes] = identity.ChallengeScopes,
@@ -222,10 +241,10 @@ public class FailureDiagnosisManager : TestModuleDomainService
         };
 
     // Kaynak checker ve kanit govdesinden kararli sha256 bulgu referansi uretir.
-    private static PtnFindingRef CreateFindingRef(
+    private static FindingRef CreateFindingRef(
         string sourceCheckerCode,
-        PtnDiagnosisHypothesis hypothesis,
-        PtnLocation location)
+        DiagnosisHypothesis hypothesis,
+        Location location)
     {
         var canonical = JsonSerializer.Serialize(new
         {
@@ -236,7 +255,7 @@ public class FailureDiagnosisManager : TestModuleDomainService
             hypothesis.Evidence
         });
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
-        return new PtnFindingRef
+        return new FindingRef
         {
             SourceCheckerCode = sourceCheckerCode,
             Fingerprint = PtnBridgeSettingNames.FingerprintPrefix + hash

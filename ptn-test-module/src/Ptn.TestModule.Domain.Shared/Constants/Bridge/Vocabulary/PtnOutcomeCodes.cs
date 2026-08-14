@@ -27,6 +27,8 @@ public static class PtnOutcomeCodes
     public const string Derivable = nameof(Derivable);
     public const string AssertionNotInContract = nameof(AssertionNotInContract);
     public const string DerivableButOptional = nameof(DerivableButOptional);
+    public const string Unavailable = nameof(Unavailable);
+    public const string MatcherTypeMismatch = nameof(MatcherTypeMismatch);
 
     public static IReadOnlyCollection<string> All { get; } =
     [
@@ -34,6 +36,7 @@ public static class PtnOutcomeCodes
         RequiredHeaderMissing, UndocumentedProperty, ServerError, OperationNotResolved,
         SnapshotNotFound, PolicySuppressed, SchemaNotResolved, RowNotFound, ValueMismatch,
         CardinalityMismatch, TimedOut, KeyNotUnique, TableNotFound, ColumnNotFound,
-        Derivable, AssertionNotInContract, DerivableButOptional
+        Derivable, AssertionNotInContract, DerivableButOptional, Unavailable,
+        MatcherTypeMismatch
     ];
 }

@@ -21,4 +21,9 @@ public interface IDatabaseOracleAppService : IApplicationService
 
     // Izinli kolonlar icin redaksiyonlu projeksiyon ister.
     Task<ProjectionResultDto> ProjectAsync(ProjectionRequestDto input, CancellationToken cancellationToken);
+
+    // DB assertion adreslerini canli katalog ve matcher tiplerine karsi dogrular.
+    Task<DatabaseDerivabilityResultDto> ValidateDerivabilityAsync(
+        DatabaseDerivabilityRequestDto input,
+        CancellationToken cancellationToken);
 }

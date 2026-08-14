@@ -7,12 +7,12 @@ namespace Ptn.TestModule.Services.Bridge;
 // sistemdeki gorevi: Domain port uygulamasini public DTO'larla composition hostuna sunar.
 public interface IWriteSetCapabilityService : IApplicationService
 {
-    Task<PtnCapabilityLevelDto> ProbeCapabilityAsync(
+    Task<CapabilityLevelDto> ProbeCapabilityAsync(
         Guid connectionId,
         bool hasExclusiveSandbox,
         CancellationToken cancellationToken);
 
-    Task<PtnFootprintResultDto> CaptureWriteSetAsync(
+    Task<FootprintResultDto> CaptureWriteSetAsync(
         Guid connectionId,
         Guid captureId,
         CancellationToken cancellationToken);

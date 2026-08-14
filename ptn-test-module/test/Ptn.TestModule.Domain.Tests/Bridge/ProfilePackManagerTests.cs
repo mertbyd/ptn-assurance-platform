@@ -65,16 +65,16 @@ public class ProfilePackManagerTests
     }
 
     // Gecerli kapali kodlar ve ifadeler iceren en kucuk profil paketini olusturur.
-    private static PtnProfilePack CreatePack()
+    private static ProfilePack CreatePack()
     {
-        return new PtnProfilePack
+        return new ProfilePack
         {
             ProfileKey = "unit-profile",
             Revision = "1",
             DbSchemaFingerprint = "sha256:profile",
             Bindings =
             [
-                new PtnConceptBinding
+                new ConceptBinding
                 {
                     ConceptCode = PtnConceptCodes.Subject,
                     DbSchemaName = "identity",
@@ -89,15 +89,15 @@ public class ProfilePackManagerTests
     }
 
     // Manager ifade dili kapisindan gecen tek adimli kanit yolu olusturur.
-    private static PtnEvidencePathDefinition CreatePath()
+    private static EvidencePathDefinition CreatePath()
     {
-        return new PtnEvidencePathDefinition
+        return new EvidencePathDefinition
         {
             PathKey = "unit-path",
-            Trigger = new PtnEvidencePathTrigger { StatusCodes = [403] },
+            Trigger = new EvidencePathTrigger { StatusCodes = [403] },
             Steps =
             [
-                new PtnEvidencePathStep
+                new EvidencePathStep
                 {
                     NodeKindCode = PtnNodeKindCodes.ScopeRequired,
                     SourceCode = PtnEvidenceSourceCodes.ApiFailureIdentity
@@ -110,5 +110,5 @@ public class ProfilePackManagerTests
 
     // islevi: Manager ve ayni testte kullanilan profil paketini birlikte tasir.
     // sistemdeki gorevi: Test kurulumunun iki bagimli sonucunu adlandirilmis modelde tutar.
-    private sealed record Fixture(ProfilePackManager Rules, PtnProfilePack Pack);
+    private sealed record Fixture(ProfilePackManager Rules, ProfilePack Pack);
 }
