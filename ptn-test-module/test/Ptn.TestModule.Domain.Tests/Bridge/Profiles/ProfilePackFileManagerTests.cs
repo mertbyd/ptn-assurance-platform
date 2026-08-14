@@ -15,9 +15,9 @@ using Xunit;
 
 namespace Ptn.TestModule.Domain.Tests.Bridge.Profiles;
 
-// islevi: YAML profil saglayicisinin kok siniri, sema cevirisi ve SHA-256 muhrunu dogrular.
+// islevi: YAML profil manager'inin kok siniri, sema cevirisi ve SHA-256 muhrunu dogrular.
 // sistemdeki gorevi: Profil dosyasi okumasinin traversal, boyut ve kimlik hatalarina acik olmamasini saglar.
-public class ProfilePackFileProviderTests
+public class ProfilePackFileManagerTests
 {
     // Gecerli YAML profilini domain modeline cevirip sha256 icerik fingerprint'i ekler.
     [Fact]
@@ -62,14 +62,14 @@ public class ProfilePackFileProviderTests
         }
     }
 
-    // Teste ozel ayar ve host kokunu gercek provider'a verir.
-    private static ProfilePackFileProvider CreateProvider(string profileRoot)
+    // Teste ozel ayar ve host kokunu gercek manager'a verir.
+    private static ProfilePackFileManager CreateProvider(string profileRoot)
     {
         var settings = Substitute.For<ISettingProvider>();
         settings.GetOrNullAsync(PtnBridgeSettingNames.ProfilePackPath).Returns(profileRoot);
         var host = Substitute.For<IHostEnvironment>();
         host.ContentRootPath.Returns(profileRoot);
-        return new ProfilePackFileProvider(settings, host);
+        return new ProfilePackFileManager(settings, host);
     }
 
     // Her test icin kullanici verisinden bagimsiz benzersiz profil klasoru olusturur.

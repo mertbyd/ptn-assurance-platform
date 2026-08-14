@@ -1,6 +1,18 @@
-using Ptn.ApiContractChecker.Dtos.Conformance;
+using Ptn.TestModule.Dtos.Bridge.Api;
 using Ptn.TestModule.Models.Bridge;
+using Ptn.TestModule.Models.Bridge.Api;
 using Riok.Mapperly.Abstractions;
+using CheckerConformanceResultDto = Ptn.ApiContractChecker.Dtos.Conformance.ConformanceResultDto;
+using CheckerConformanceViolationDto = Ptn.ApiContractChecker.Dtos.Conformance.ConformanceViolationDto;
+using CheckerDerivabilityItemDto = Ptn.ApiContractChecker.Dtos.Conformance.AssertionDerivabilityItemDto;
+using CheckerDerivabilityRequestDto = Ptn.ApiContractChecker.Dtos.Conformance.AssertionDerivabilityDto;
+using CheckerDerivabilityResultDto = Ptn.ApiContractChecker.Dtos.Conformance.AssertionDerivabilityResultDto;
+using CheckerFieldBindingDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationFieldBindingDto;
+using CheckerOperationBindingDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationBindingResultDto;
+using CheckerOperationQueryDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationSelectionDto;
+using CheckerOperationSuggestionDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationBindingSuggestionDto;
+using CheckerRequestExampleDto = Ptn.ApiContractChecker.Dtos.Conformance.RequestExampleDto;
+using CheckerResponseObservationDto = Ptn.ApiContractChecker.Dtos.Conformance.ResponseConformanceDto;
 
 namespace Ptn.TestModule.Mappers.Bridge;
 
@@ -9,15 +21,22 @@ namespace Ptn.TestModule.Mappers.Bridge;
 [Mapper]
 public partial class ApiOracleMapper
 {
-    public partial OperationSelectionDto Map(PtnOperationQuery input);
-    public partial AssertionDerivabilityDto Map(PtnDerivabilityRequest input);
-    public partial ResponseConformanceDto Map(PtnResponseObservation input);
-    public partial PtnOperationBinding Map(OperationBindingResultDto input);
-    public partial PtnRequestExample Map(RequestExampleDto input);
-    public partial PtnDerivabilityResult Map(AssertionDerivabilityResultDto input);
-    public partial PtnConformanceResult Map(ConformanceResultDto input);
-    private partial PtnOperationSuggestion MapSuggestion(OperationBindingSuggestionDto input);
-    private partial PtnFieldBinding MapFieldBinding(OperationFieldBindingDto input);
-    private partial PtnDerivabilityItem MapDerivabilityItem(AssertionDerivabilityItemDto input);
-    private partial PtnConformanceViolation MapViolation(ConformanceViolationDto input);
+    public partial PtnOperationQuery Map(OperationQueryDto input);
+    public partial OperationBindingDto Map(PtnOperationBinding input);
+    public partial RequestExampleDto Map(PtnRequestExample input);
+    public partial PtnDerivabilityRequest Map(DerivabilityRequestDto input);
+    public partial DerivabilityResultDto Map(PtnDerivabilityResult input);
+    public partial PtnResponseObservation Map(ResponseObservationDto input);
+    public partial ConformanceResultDto Map(PtnConformanceResult input);
+    public partial CheckerOperationQueryDto Map(PtnApiOperationRequest input);
+    public partial CheckerDerivabilityRequestDto Map(PtnDerivabilityRequest input);
+    public partial CheckerResponseObservationDto Map(PtnApiResponseRequest input);
+    public partial PtnOperationBinding Map(CheckerOperationBindingDto input);
+    public partial PtnRequestExample Map(CheckerRequestExampleDto input);
+    public partial PtnDerivabilityResult Map(CheckerDerivabilityResultDto input);
+    public partial PtnConformanceResult Map(CheckerConformanceResultDto input);
+    public partial PtnOperationSuggestion MapSuggestion(CheckerOperationSuggestionDto input);
+    public partial PtnFieldBinding MapFieldBinding(CheckerFieldBindingDto input);
+    public partial PtnDerivabilityItem MapDerivabilityItem(CheckerDerivabilityItemDto input);
+    public partial PtnConformanceViolation MapViolation(CheckerConformanceViolationDto input);
 }

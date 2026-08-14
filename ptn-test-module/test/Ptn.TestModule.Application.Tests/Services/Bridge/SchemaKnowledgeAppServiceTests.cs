@@ -7,9 +7,11 @@ using Ptn.TestModule.Services.Bridge;
 using Ptn.DatabaseChecker.Dtos.SchemaDiscovery;
 using Ptn.DatabaseChecker.Services.SchemaDiscovery;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
+using Ptn.TestModule.FluentValidation.Bridge.Database;
 using Ptn.TestModule.Managers.Bridge;
 using Shouldly;
 using Xunit;
+using BridgeTableQueryDto = Ptn.TestModule.Dtos.Bridge.Database.TableQueryDto;
 
 namespace Ptn.TestModule.Application.Tests.Services.Bridge;
 
@@ -24,7 +26,10 @@ public class SchemaKnowledgeAppServiceTests
         var service = new SchemaDiscoveryFake(
             CreateSnapshot(reverse: false),
             CreateSnapshot(reverse: true));
-        var schemaService = new SchemaKnowledgeAppService(service, new SchemaKnowledgeManager());
+        var schemaService = new SchemaKnowledgeAppService(
+            service,
+            new SchemaKnowledgeManager(),
+            new TableQueryDtoValidator());
 
         var first = await schemaService.GetSchemaFingerprintAsync(Guid.NewGuid(), CancellationToken.None);
         var second = await schemaService.GetSchemaFingerprintAsync(Guid.NewGuid(), CancellationToken.None);
@@ -46,10 +51,18 @@ public class SchemaKnowledgeAppServiceTests
                 PrimaryKey = new TableKeyDefinitionDto { Columns = ["id"] }
             }
         };
-        var schemaService = new SchemaKnowledgeAppService(service, new SchemaKnowledgeManager());
+        var schemaService = new SchemaKnowledgeAppService(
+            service,
+            new SchemaKnowledgeManager(),
+            new TableQueryDtoValidator());
 
         var result = await schemaService.DescribeTableAsync(
-            new() { DbSchemaName = "identity", TableName = "users" },
+            new BridgeTableQueryDto
+            {
+                ConnectionId = Guid.NewGuid(),
+                DbSchemaName = "identity",
+                TableName = "users"
+            },
             CancellationToken.None);
 
         result.DbSchemaName.ShouldBe("identity");

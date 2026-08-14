@@ -22,5 +22,6 @@ public class TestModuleDomainModule : AbpModule
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        context.Services.AddTransient<IProfilePackProvider, ProfilePackFileManager>();
     }
 }

@@ -18,14 +18,14 @@ using YamlDotNet.Serialization.NamingConventions;
 namespace Ptn.TestModule.Managers.Bridge.Profiles;
 
 // islevi: Profil paketini ayarli dosya kokunden guvenli bicimde okur ve SHA-256 ile muhurlar.
-// sistemdeki gorevi: Profil yukleme davranisini EF Core'dan ayirip Domain manager sinirinda tutar.
-public class ProfilePackFileProvider : IProfilePackProvider
+// sistemdeki gorevi: Dosya, YAML, kok siniri ve fingerprint kurallarini tek Domain Manager'da tutar.
+public class ProfilePackFileManager : TestModuleDomainService, IProfilePackProvider
 {
     private readonly ISettingProvider _settingProvider;
     private readonly IHostEnvironment _hostEnvironment;
 
     // Ayar ve host kokunu guvenli profil dosyasi cozumlemesi icin baglar.
-    public ProfilePackFileProvider(ISettingProvider settingProvider, IHostEnvironment hostEnvironment)
+    public ProfilePackFileManager(ISettingProvider settingProvider, IHostEnvironment hostEnvironment)
     {
         _settingProvider = settingProvider;
         _hostEnvironment = hostEnvironment;
@@ -91,6 +91,22 @@ public class ProfilePackFileProvider : IProfilePackProvider
         {
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .WithAttributeOverride(
+                    typeof(PtnEvidencePathStep),
+                    nameof(PtnEvidencePathStep.NodeKindCode),
+                    new YamlMemberAttribute { Alias = "nodeKind" })
+                .WithAttributeOverride(
+                    typeof(PtnEvidencePathStep),
+                    nameof(PtnEvidencePathStep.SourceCode),
+                    new YamlMemberAttribute { Alias = "source" })
+                .WithAttributeOverride(
+                    typeof(PtnEvidencePathStep),
+                    nameof(PtnEvidencePathStep.ConceptCode),
+                    new YamlMemberAttribute { Alias = "concept" })
+                .WithAttributeOverride(
+                    typeof(PtnEvidencePathStep),
+                    nameof(PtnEvidencePathStep.JoinFromNodeKindCode),
+                    new YamlMemberAttribute { Alias = "joinFrom" })
                 .Build();
             using var reader = new StreamReader(new MemoryStream(bytes));
             return deserializer.Deserialize<PtnProfilePack>(reader);

@@ -3,8 +3,9 @@ using System.Threading.Tasks;
 using NSubstitute;
 using Ptn.TestModule.Services.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
+using Ptn.TestModule.Dtos.Bridge.Diagnosis;
+using Ptn.TestModule.FluentValidation.Bridge.Diagnosis;
 using Ptn.TestModule.Managers.Bridge;
-using Ptn.TestModule.Models.Bridge;
 using Shouldly;
 using Xunit;
 using ApiDiagnoseRequestDto = Ptn.ApiContractChecker.Dtos.Diagnosis.DiagnoseRequestDto;
@@ -33,10 +34,15 @@ public class FailureDiagnosisAppServiceTests
         var diagnosisService = new FailureDiagnosisAppService(
             api,
             Substitute.For<DatabaseDiagnosisService>(),
-            new FailureDiagnosisManager());
+            new FailureDiagnosisManager(),
+            new DiagnosisRequestDtoValidator());
 
         var result = await diagnosisService.DiagnoseApiAsync(
-            new PtnDiagnosisRequest { SpecSnapshotId = System.Guid.NewGuid() },
+            new DiagnosisRequestDto
+            {
+                SpecSnapshotId = System.Guid.NewGuid(),
+                Location = new LocationDto { Path = "/users" }
+            },
             CancellationToken.None);
 
         result.Location.ApiSchemaName.ShouldBe("ProblemDetails");
@@ -57,10 +63,20 @@ public class FailureDiagnosisAppServiceTests
         var diagnosisService = new FailureDiagnosisAppService(
             Substitute.For<ApiDiagnosisService>(),
             database,
-            new FailureDiagnosisManager());
+            new FailureDiagnosisManager(),
+            new DiagnosisRequestDtoValidator());
 
         var result = await diagnosisService.DiagnoseDatabaseAsync(
-            new PtnDiagnosisRequest { OutcomeCode = PtnOutcomeCodes.RowNotFound },
+            new DiagnosisRequestDto
+            {
+                ConnectionId = System.Guid.NewGuid(),
+                OutcomeCode = PtnOutcomeCodes.RowNotFound,
+                Location = new LocationDto
+                {
+                    DbSchemaName = "identity",
+                    DbTableName = "users"
+                }
+            },
             CancellationToken.None);
 
         result.Location.DbSchemaName.ShouldBe("identity");

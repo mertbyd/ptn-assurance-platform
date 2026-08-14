@@ -1,6 +1,9 @@
 using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Api;
 using Ptn.TestModule.Models.Bridge.Database;
+using Ptn.TestModule.Models.Bridge.Diagnosis;
+using BridgeDiagnosisReportDto = Ptn.TestModule.Dtos.Bridge.Diagnosis.DiagnosisReportDto;
+using BridgeDiagnosisRequestDto = Ptn.TestModule.Dtos.Bridge.Diagnosis.DiagnosisRequestDto;
 using Riok.Mapperly.Abstractions;
 using ApiDiagnoseRequestDto = Ptn.ApiContractChecker.Dtos.Diagnosis.DiagnoseRequestDto;
 using ApiDiagnosisReportDto = Ptn.ApiContractChecker.Dtos.Diagnosis.DiagnosisReportDto;
@@ -20,17 +23,19 @@ namespace Ptn.TestModule.Mappers.Bridge;
 [Mapper]
 public partial class FailureDiagnosisMapper
 {
+    public partial PtnDiagnosisRequest Map(BridgeDiagnosisRequestDto input);
+    public partial BridgeDiagnosisReportDto Map(PtnDiagnosisReport input);
     public partial ApiDiagnoseRequestDto Map(PtnApiDiagnosisRequest input);
     public partial DatabaseDiagnoseRequestDto Map(PtnDatabaseDiagnosisRequest input);
-    public partial PtnDiagnosisReport Map(ApiDiagnosisReportDto input);
-    public partial PtnDiagnosisReport Map(DatabaseDiagnosisReportDto input);
+    public partial PtnApiDiagnosisReportSource Map(ApiDiagnosisReportDto input);
+    public partial PtnDatabaseDiagnosisReportSource Map(DatabaseDiagnosisReportDto input);
     public partial PtnApiFailureIdentity Map(ApiIdentityDto input);
-    private partial ApiProblemErrorDto Map(PtnProblemError input);
-    private partial DatabaseDiagnoseRequestDto.AssertionSignalDto Map(PtnDatabaseAssertionSignal input);
-    private partial DatabaseDiagnoseRequestDto.DatabaseExceptionSignalDto Map(PtnDatabaseExceptionSignal input);
-    private partial Ptn.DatabaseChecker.Dtos.Assertions.FailedExpectationDto Map(PtnFailedExpectation input);
-    private partial PtnDiagnosisHypothesis Map(ApiHypothesisDto input);
-    private partial PtnDiagnosisHypothesis Map(DatabaseHypothesisDto input);
-    private partial PtnEvidence Map(ApiEvidenceDto input);
-    private partial PtnEvidence Map(DatabaseEvidenceDto input);
+    public partial ApiProblemErrorDto Map(PtnProblemError input);
+    public partial DatabaseDiagnoseRequestDto.AssertionSignalDto Map(PtnDatabaseAssertionSignal input);
+    public partial DatabaseDiagnoseRequestDto.DatabaseExceptionSignalDto Map(PtnDatabaseExceptionSignal input);
+    public partial Ptn.DatabaseChecker.Dtos.Assertions.FailedExpectationDto Map(PtnFailedExpectation input);
+    private partial PtnApiDiagnosisHypothesis Map(ApiHypothesisDto input);
+    private partial PtnDatabaseDiagnosisHypothesis Map(DatabaseHypothesisDto input);
+    private partial PtnApiDiagnosisEvidence Map(ApiEvidenceDto input);
+    private partial PtnDatabaseDiagnosisEvidence Map(DatabaseEvidenceDto input);
 }

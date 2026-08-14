@@ -7,8 +7,9 @@ using Ptn.ApiContractChecker.Constants.Conformance.Lookups;
 using Ptn.ApiContractChecker.Dtos.Conformance;
 using Ptn.ApiContractChecker.Services.Conformance;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
+using Ptn.TestModule.Dtos.Bridge.Api;
+using Ptn.TestModule.FluentValidation.Bridge.Api;
 using Ptn.TestModule.Managers.Bridge;
-using Ptn.TestModule.Models.Bridge;
 using Shouldly;
 using Xunit;
 
@@ -38,10 +39,20 @@ public class ApiOracleAppServiceTests
                     }
                 ]
             });
-        var oracleService = new ApiOracleAppService(service, new ApiOracleManager());
+        var oracleService = new ApiOracleAppService(
+            service,
+            new ApiOracleManager(),
+            new OperationQueryDtoValidator(),
+            new DerivabilityRequestDtoValidator(),
+            new ResponseObservationDtoValidator());
 
         var result = await oracleService.SuggestOperationBindingsAsync(
-            new PtnOperationQuery { Method = "GET", Path = "/tickets/{id}" },
+            new OperationQueryDto
+            {
+                SnapshotId = System.Guid.NewGuid(),
+                Method = "GET",
+                Path = "/tickets/{id}"
+            },
             CancellationToken.None);
 
         result.OutcomeCode.ShouldBe(PtnOutcomeCodes.Passed);
