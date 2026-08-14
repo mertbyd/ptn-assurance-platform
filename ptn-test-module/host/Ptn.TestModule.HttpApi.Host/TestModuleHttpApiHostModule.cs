@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CheckNexus.ApiContracts;
 using CheckNexus.DatabaseComparison;
+using CheckNexus.Vault;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -48,6 +49,7 @@ namespace Ptn.TestModule;
     typeof(TestModuleHttpApiModule),
     typeof(ApiContractCheckerModule),
     typeof(DatabaseCheckerModule),
+    typeof(CheckNexusVaultModule),
     typeof(NotificationsHttpApiModule),
     typeof(EmailingApplicationModule),
     typeof(EmailingHttpApiModule),

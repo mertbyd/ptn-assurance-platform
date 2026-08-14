@@ -21,6 +21,7 @@
     <AuthenticatorVersion>2.0.0</AuthenticatorVersion>
     <CheckNexusApiContractsVersion>0.2.0-alpha.5</CheckNexusApiContractsVersion>
     <CheckNexusDatabaseComparisonVersion>0.2.0-alpha.6</CheckNexusDatabaseComparisonVersion>
+    <CheckNexusVaultVersion>0.2.0-alpha.2</CheckNexusVaultVersion>
     <NotificationsVersion>0.1.0-alpha.1</NotificationsVersion>
     <PitonEmailingVersion>1.5.0</PitonEmailingVersion>
     <SystemStandardsCoreVersion>2.0.0</SystemStandardsCoreVersion>

@@ -18,6 +18,7 @@
   <ItemGroup>
     <PackageReference Include="CheckNexus.ApiContracts" Version="$(CheckNexusApiContractsVersion)" />
     <PackageReference Include="CheckNexus.DatabaseComparison" Version="$(CheckNexusDatabaseComparisonVersion)" />
+    <PackageReference Include="CheckNexus.Vault" Version="$(CheckNexusVaultVersion)" />
     <PackageReference Include="Pintern.SaaS.Notifications.HttpApi" Version="$(NotificationsVersion)" />
     <PackageReference Include="Piton.Emailing.Application" Version="$(PitonEmailingVersion)" />
     <PackageReference Include="Piton.Emailing.HttpApi" Version="$(PitonEmailingVersion)" />
