@@ -5,7 +5,7 @@ namespace Ptn.TestModule.Services.Bridge;
 
 // islevi: Yazma kumesi capability yoklama, yakalama ve birakma entegrasyon kontratini tanimlar.
 // sistemdeki gorevi: Domain port uygulamasini public DTO'larla composition hostuna sunar.
-public interface IWriteSetCapabilityService : IApplicationService
+public interface IWriteSetCapabilityAppService : IApplicationService
 {
     Task<CapabilityLevelDto> ProbeCapabilityAsync(
         Guid connectionId,

@@ -25,7 +25,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     private readonly ProfilePackFileManager _profilePackFileManager;
     private readonly ToolCatalogManager _toolCatalogManager;
     private readonly ISchemaKnowledgeAppService _schemaKnowledgeAppService;
-    private readonly IWriteSetCapabilityService _writeSetCapabilityService;
+    private readonly IWriteSetCapabilityAppService _writeSetCapabilityService;
     private readonly IDatabaseOracleAppService _databaseOracleAppService;
     private readonly IValidator<GroundRequestDto> _groundValidator;
     private readonly IValidator<ExplainRequestDto> _explainValidator;
@@ -40,7 +40,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         ProfilePackFileManager profilePackFileManager,
         ToolCatalogManager toolCatalogManager,
         ISchemaKnowledgeAppService schemaKnowledgeAppService,
-        IWriteSetCapabilityService writeSetCapabilityService,
+        IWriteSetCapabilityAppService writeSetCapabilityService,
         IDatabaseOracleAppService databaseOracleAppService,
         IValidator<GroundRequestDto> groundValidator,
         IValidator<ExplainRequestDto> explainValidator,

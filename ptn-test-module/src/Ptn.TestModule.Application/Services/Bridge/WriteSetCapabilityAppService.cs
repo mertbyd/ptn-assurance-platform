@@ -12,7 +12,7 @@ namespace Ptn.TestModule.Services.Bridge;
 // islevi: Database checker yazma kumesi yuzeyini Bridge capability sozlesmesine baglar.
 // sistemdeki gorevi: Checker cagrisi, Manager karari ve Mapperly eslemesini duz Application akisinda siralar.
 [RemoteService(IsEnabled = false)]
-public class WriteSetCapabilityAppService : TestModuleAppService, IWriteSetCapabilityService
+public class WriteSetCapabilityAppService : TestModuleAppService, IWriteSetCapabilityAppService
 {
     private static readonly PtnBridgeMapper Mapper = new();
     private readonly CheckerWriteSetCapabilityAppService _appService;
