@@ -49,6 +49,9 @@ public static class WorkflowRunnerConsts
     /// <summary>Runner JSON ozetinin satir ici tutulan azami karakter sayisidir.</summary>
     public const int MaxJsonSummaryLength = 16_384;
 
+    /// <summary>Kosum surecinin gecici calisma klasoru ad bolumudur.</summary>
+    public const string WorkspaceName = "arazzo-run";
+
     /// <summary>Belgenin salt-okunur baglandigi calisma klasoru bolumudur.</summary>
     public const string DocumentDirectoryName = "spec";
 

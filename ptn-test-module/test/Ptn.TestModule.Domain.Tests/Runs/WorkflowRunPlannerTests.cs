@@ -68,11 +68,15 @@ public class WorkflowRunPlannerTests
         var planner = CreatePlanner();
         var request = await planner.CreateRequestAsync(CreateContext(CreateFacts()));
 
-        var plan = await planner.CreatePlanAsync(request, "/tmp/run");
+        var plan = await planner.CreatePlanAsync(request);
 
-        plan.EnvironmentVariables[WorkflowRunnerConsts.InputEnvironmentVariableName].ShouldContain(SecretValue);
-        plan.Arguments.Any(argument => argument.Contains(SecretValue, StringComparison.Ordinal)).ShouldBeFalse();
-        plan.Arguments.ShouldContain(WorkflowRunnerConsts.InputEnvironmentVariableName);
+        plan.Process.EnvironmentVariables[WorkflowRunnerConsts.InputEnvironmentVariableName]
+            .ShouldContain(SecretValue);
+        plan.Process.Arguments
+            .Any(argument => argument.Contains(SecretValue, StringComparison.Ordinal))
+            .ShouldBeFalse();
+        plan.Process.Arguments.ShouldContain(WorkflowRunnerConsts.InputEnvironmentVariableName);
+        plan.Process.InputFiles.ShouldHaveSingleItem().Content.ShouldBe("arazzo: 1.0.1");
     }
 
     // Maskeleme hicbir kod yolunda kapatilmamali (ADR-0015 §G).
@@ -82,13 +86,15 @@ public class WorkflowRunPlannerTests
         var planner = CreatePlanner();
         var request = await planner.CreateRequestAsync(CreateContext(CreateFacts()));
 
-        var plan = await planner.CreatePlanAsync(request, "/tmp/run");
+        var plan = await planner.CreatePlanAsync(request);
 
-        plan.Arguments
+        plan.Process.Arguments
             .Any(argument => argument.Contains("no-secrets-masking", StringComparison.OrdinalIgnoreCase))
             .ShouldBeFalse();
-        plan.Arguments.ShouldContain($"--execution-timeout={WorkflowRunnerConsts.DefaultExecutionTimeoutSeconds}");
-        plan.Arguments.ShouldContain($"--max-fetch-timeout={WorkflowRunnerConsts.DefaultMaxFetchTimeoutSeconds}");
+        plan.Process.Arguments
+            .ShouldContain($"--execution-timeout={WorkflowRunnerConsts.DefaultExecutionTimeoutSeconds}");
+        plan.Process.Arguments
+            .ShouldContain($"--max-fetch-timeout={WorkflowRunnerConsts.DefaultMaxFetchTimeoutSeconds}");
     }
 
     // Sert kill butcesi runner butcesinin uzerine ek sure taniyarak asili surec birakmamali.
@@ -98,10 +104,11 @@ public class WorkflowRunPlannerTests
         var planner = CreatePlanner();
         var request = await planner.CreateRequestAsync(CreateContext(CreateFacts()));
 
-        var plan = await planner.CreatePlanAsync(request, "/tmp/run");
+        var plan = await planner.CreatePlanAsync(request);
 
-        plan.HardKillMs.ShouldBe(
+        plan.Process.TimeoutMs.ShouldBe(
             (WorkflowRunnerConsts.DefaultExecutionTimeoutSeconds * 1_000) + WorkflowRunnerConsts.HardKillGraceMs);
+        plan.Process.TimeoutErrorCode.ShouldBe(TestModuleRunErrorCodes.RunnerTimedOut);
         plan.RunnerRef.ShouldContain(WorkflowRunnerConsts.RedoclyCliImage);
     }
 

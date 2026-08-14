@@ -2,6 +2,7 @@ using System;
 using NSubstitute;
 using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.ExceptionCodes.Runs;
+using Ptn.TestModule.Interface.Shared;
 using Ptn.TestModule.Managers.Runs;
 using Ptn.TestModule.Services.Runs;
 using Shouldly;
@@ -47,12 +48,14 @@ public class WorkflowRunnerServiceTests
         exception.Code.ShouldBe(TestModuleRunErrorCodes.ArazzoVersionUnsupported);
     }
 
-    // Surec sinirini varsayilan ayarlarla calisan planner'a baglar.
+    // Belge sinirini varsayilan ayarlarla calisan planner ve ortak surec sinirina baglar.
     private static WorkflowRunnerService CreateService()
     {
         var settingProvider = Substitute.For<ISettingProvider>();
         settingProvider.GetOrNullAsync(Arg.Any<string>()).Returns((string?)null);
-        return new WorkflowRunnerService(new WorkflowRunPlanner(settingProvider));
+        return new WorkflowRunnerService(
+            new WorkflowRunPlanner(settingProvider),
+            Substitute.For<IProcessBoundaryPort>());
     }
 
     private const string ArazzoDocument = """

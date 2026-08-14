@@ -14,6 +14,9 @@ public partial class TestRunMapper
     /// <summary>Create DTO'sunu Manager girdisi olan domain modeline cevirir.</summary>
     public partial TestRunCreateModel Map(CreateTestRunDto source);
 
+    /// <summary>Cozumlenmis Arazzo wire belgesini Manager girdisi olan domain modeline cevirir.</summary>
+    public partial WorkflowDocument Map(ArazzoDocumentDto source);
+
     /// <summary>Terminal DTO'sunu Manager girdisi olan domain modeline cevirir.</summary>
     [MapperIgnoreTarget(nameof(TestRunTerminalModel.RunStatusCode))]
     public partial TestRunTerminalModel Map(WriteTestRunTerminalDto source);

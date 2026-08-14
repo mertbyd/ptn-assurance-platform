@@ -1,23 +1,26 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.Constants.Runs.Lookups;
+using Ptn.TestModule.Constants.Shared;
 using Ptn.TestModule.ExceptionCodes.Runs;
 using Ptn.TestModule.Models.Runs;
+using Ptn.TestModule.Models.Shared;
 using Volo.Abp;
 using Volo.Abp.Settings;
 
 namespace Ptn.TestModule.Managers.Runs;
 
-// islevi: Kosum belgesini kabul kapisindan gecirir, dort kontrolun severity'sini acikca set eder ve runner cagri planini kurar.
-// sistemdeki gorevi: Arazzo surumu, XPath yasagi, girdi tasima yolu ve zaman asimi butcesinin tek domain sahibidir (ADR-0015 §A/§E/§G).
+// islevi: Belgeyi kabul kapisindan gecirir, dort kontrolun severity'sini acikca set eder ve runner surec planinin tamamini kurar.
+// sistemdeki gorevi: Imaj, bayrak, mount, girdi tasima yolu, butce ve cikis kodu siniflandirmasinin tek domain sahibidir (ADR-0015 §A/§E/§G).
 /// <summary>
-/// Dis runner cagrisinin dogrulanmis istegini ve surec planini uretir.
+/// Dis runner cagrisinin dogrulanmis istegini, surec planini ve sonuc yorumunu uretir.
 /// </summary>
 public class WorkflowRunPlanner : TestModuleDomainService
 {
@@ -38,6 +41,21 @@ public class WorkflowRunPlanner : TestModuleDomainService
     public WorkflowRunPlanner(ISettingProvider settingProvider)
     {
         _settingProvider = settingProvider;
+    }
+
+    // Cozumlenmis belgeden kosulabilirlik kararlarinin dayandigi uc olguyu cikarir.
+    /// <summary>Kosum belgesinin surum, kriter ve adim kimligi olgularini uretir.</summary>
+    public WorkflowDocumentFacts ReadFacts(WorkflowDocument document)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        var steps = ReadSteps(document);
+
+        return new WorkflowDocumentFacts
+        {
+            ArazzoVersion = document.Arazzo ?? string.Empty,
+            HasXPathCriterion = ReadCriteria(steps).Any(IsXPathCriterion),
+            StepKeys = ReadStepKeys(steps)
+        };
     }
 
     // Belgeyi kosulabilirlik kapisindan gecirir ve severity ile butceyi acikca doldurur.
@@ -65,34 +83,28 @@ public class WorkflowRunPlanner : TestModuleDomainService
         };
     }
 
-    // Imaji ayardan cozer, mount ve bayraklari kurar, girdileri argument yerine ortama tasir.
-    /// <summary>Kosum istegini pinli imaj, mount ve bayraklardan olusan surec planina cevirir.</summary>
+    // Imaji ayardan cozer, mount ve bayraklari kurar, belgeyi girdi dosyasi olarak plana koyar.
+    /// <summary>Kosum istegini surec sinirinin oldugu gibi kosacagi plana cevirir.</summary>
     public async Task<WorkflowRunPlan> CreatePlanAsync(
         WorkflowRunRequest request,
-        string workingDirectory,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentException.ThrowIfNullOrWhiteSpace(workingDirectory);
         cancellationToken.ThrowIfCancellationRequested();
         var image = await ResolveImageAsync();
 
         return new WorkflowRunPlan
         {
-            Executable = WorkflowRunnerConsts.DockerExecutable,
-            Arguments = BuildArguments(request, workingDirectory, image),
-            EnvironmentVariables = BuildEnvironmentVariables(request),
-            DocumentFileName = WorkflowRunnerConsts.RunDocumentFileName,
-            HarFileName = WorkflowRunnerConsts.HarOutputFileName,
-            JsonFileName = WorkflowRunnerConsts.JsonOutputFileName,
-            HardKillMs = ResolveHardKillMs(request.ExecutionTimeoutSeconds),
-            RunnerRef = CreateRunnerRef(image)
+            Process = CreateProcessPlan(request, image),
+            RunnerRef = CreateRunnerRef(image),
+            HarFilePath = HarFilePath,
+            JsonFilePath = JsonFilePath
         };
     }
 
     // Cikis kodunu once altyapi hatasi olarak eler, ardindan artefakt varligini ve boyutunu dogrular.
     /// <summary>Ham surec gozlemini dogrulanmis kosum ciktisina cevirir.</summary>
-    public WorkflowRunOutcome Interpret(WorkflowRunProcessOutcome outcome, WorkflowRunPlan plan)
+    public WorkflowRunOutcome Interpret(ProcessExecutionOutcome outcome, WorkflowRunPlan plan)
     {
         ArgumentNullException.ThrowIfNull(outcome);
         ArgumentNullException.ThrowIfNull(plan);
@@ -101,8 +113,8 @@ public class WorkflowRunPlanner : TestModuleDomainService
         return new WorkflowRunOutcome
         {
             ExitCode = outcome.ExitCode,
-            HarContent = EnsureHarIsUsable(outcome.HarContent),
-            JsonSummary = BoundJsonSummary(outcome.JsonSummary),
+            HarContent = EnsureHarIsUsable(ReadArtifact(outcome, plan.HarFilePath)),
+            JsonSummary = BoundJsonSummary(ReadArtifact(outcome, plan.JsonFilePath)),
             DurationMs = outcome.DurationMs,
             RunnerRef = plan.RunnerRef
         };
@@ -119,6 +131,84 @@ public class WorkflowRunPlanner : TestModuleDomainService
             tenantId?.ToString("N") ?? HarArtifactConsts.HostTenantSegment,
             runId.ToString("N"),
             traceId);
+    }
+
+    /// <summary>Kosum belgesinin calisma klasorune gore yoludur.</summary>
+    private static string DocumentFilePath =>
+        $"{WorkflowRunnerConsts.DocumentDirectoryName}/{WorkflowRunnerConsts.RunDocumentFileName}";
+
+    /// <summary>HAR artefaktinin calisma klasorune gore yoludur.</summary>
+    private static string HarFilePath =>
+        $"{WorkflowRunnerConsts.OutputDirectoryName}/{WorkflowRunnerConsts.HarOutputFileName}";
+
+    /// <summary>JSON ozet artefaktinin calisma klasorune gore yoludur.</summary>
+    private static string JsonFilePath =>
+        $"{WorkflowRunnerConsts.OutputDirectoryName}/{WorkflowRunnerConsts.JsonOutputFileName}";
+
+    // Belgeyi, artefakt yollarini, bayraklari ve butceyi tek surec planinda toplar.
+    /// <summary>Runner surecinin tam cagri planini kurar.</summary>
+    private static ProcessExecutionPlan CreateProcessPlan(WorkflowRunRequest request, string image)
+    {
+        return new ProcessExecutionPlan
+        {
+            Executable = WorkflowRunnerConsts.DockerExecutable,
+            Arguments = BuildArguments(request, image),
+            EnvironmentVariables = BuildEnvironmentVariables(request),
+            WorkspaceName = WorkflowRunnerConsts.WorkspaceName,
+            InputFiles = [CreateDocumentFile(request)],
+            OutputFilePaths = [HarFilePath, JsonFilePath],
+            TimeoutMs = ResolveHardKillMs(request.ExecutionTimeoutSeconds),
+            StartFailureErrorCode = TestModuleRunErrorCodes.RunnerImageUnavailable,
+            TimeoutErrorCode = TestModuleRunErrorCodes.RunnerTimedOut
+        };
+    }
+
+    // Kosum belgesini surec sinirinin yazacagi girdi dosyasina cevirir.
+    /// <summary>Belgeyi calisma klasorune yazilacak girdi dosyasi olarak kurar.</summary>
+    private static ProcessInputFile CreateDocumentFile(WorkflowRunRequest request)
+    {
+        return new ProcessInputFile
+        {
+            RelativePath = DocumentFilePath,
+            Content = request.Document
+        };
+    }
+
+    // Tum is akislarindaki adimlari kaynak sirasini koruyarak toplar.
+    /// <summary>Belgedeki tum adimlari getirir.</summary>
+    private static IReadOnlyList<WorkflowDocumentStep> ReadSteps(WorkflowDocument document)
+    {
+        return document.Workflows.SelectMany(workflow => workflow.Steps).ToList();
+    }
+
+    // Adim kimliklerini kaynak sirasini koruyarak toplar.
+    /// <summary>Belgede bildirilen tum adim kimliklerini getirir.</summary>
+    private static IReadOnlyList<string> ReadStepKeys(IReadOnlyList<WorkflowDocumentStep> steps)
+    {
+        return steps
+            .Select(step => step.StepId)
+            .Where(stepId => !string.IsNullOrWhiteSpace(stepId))
+            .Select(stepId => stepId!)
+            .ToList();
+    }
+
+    // Basari, basari-sonrasi ve basarisizlik dallarindaki tum kriterleri tek listede toplar.
+    /// <summary>Adimlarin her dalindaki kriterleri getirir.</summary>
+    private static IEnumerable<WorkflowDocumentCriterion> ReadCriteria(IReadOnlyList<WorkflowDocumentStep> steps)
+    {
+        return steps.SelectMany(step => step.SuccessCriteria)
+            .Concat(steps.SelectMany(step => step.OnSuccess).SelectMany(action => action.Criteria))
+            .Concat(steps.SelectMany(step => step.OnFailure).SelectMany(action => action.Criteria));
+    }
+
+    // Runner'in desteklemedigi kriter turunu tanir.
+    /// <summary>Kriterin XPath turunde olup olmadigini bildirir.</summary>
+    private static bool IsXPathCriterion(WorkflowDocumentCriterion criterion)
+    {
+        return string.Equals(
+            criterion.Type,
+            WorkflowRunnerConsts.XPathCriterionType,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     // Desteklenmeyen surumu ve XPath kriterini kosum baslamadan once reddeder.
@@ -152,10 +242,7 @@ public class WorkflowRunPlanner : TestModuleDomainService
 
     // Belgeyi salt-okunur, artefakt klasorunu yazilabilir baglayip resmi respect komutunu kurar.
     /// <summary>Runner surecinin kararli argument listesini olusturur.</summary>
-    private static IReadOnlyList<string> BuildArguments(
-        WorkflowRunRequest request,
-        string workingDirectory,
-        string image)
+    private static IReadOnlyList<string> BuildArguments(WorkflowRunRequest request, string image)
     {
         return
         [
@@ -164,9 +251,9 @@ public class WorkflowRunPlanner : TestModuleDomainService
             "--env",
             WorkflowRunnerConsts.InputEnvironmentVariableName,
             "--mount",
-            $"type=bind,source={workingDirectory}/{WorkflowRunnerConsts.DocumentDirectoryName},target={WorkflowRunnerConsts.DocumentMountTarget},readonly",
+            $"type=bind,source={ProcessBoundaryConsts.WorkspaceToken}/{WorkflowRunnerConsts.DocumentDirectoryName},target={WorkflowRunnerConsts.DocumentMountTarget},readonly",
             "--mount",
-            $"type=bind,source={workingDirectory}/{WorkflowRunnerConsts.OutputDirectoryName},target={WorkflowRunnerConsts.OutputMountTarget}",
+            $"type=bind,source={ProcessBoundaryConsts.WorkspaceToken}/{WorkflowRunnerConsts.OutputDirectoryName},target={WorkflowRunnerConsts.OutputMountTarget}",
             image,
             "respect",
             $"{WorkflowRunnerConsts.DocumentMountTarget}/{WorkflowRunnerConsts.RunDocumentFileName}",
@@ -200,6 +287,13 @@ public class WorkflowRunPlanner : TestModuleDomainService
     private static string CreateRunnerRef(string image)
     {
         return string.Format(CultureInfo.InvariantCulture, WorkflowRunnerConsts.RunnerRefFormat, image);
+    }
+
+    // Surec sinirinin geri okudugu artefakti plandaki yoluyla alir.
+    /// <summary>Verilen yoldaki artefakt icerigini getirir.</summary>
+    private static string? ReadArtifact(ProcessExecutionOutcome outcome, string filePath)
+    {
+        return outcome.OutputFiles.TryGetValue(filePath, out var content) ? content : null;
     }
 
     // Kontrol basarisizligini normal sonuc kabul eder, altyapi ve bilinmeyen kodu ayirir.
