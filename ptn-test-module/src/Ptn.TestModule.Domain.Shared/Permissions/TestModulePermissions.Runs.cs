@@ -1,0 +1,26 @@
+namespace Ptn.TestModule.Permissions;
+
+// islevi: Test kosumu okuma, tetikleme, claim ve terminal yazim permission sabitlerini tanimlar.
+// sistemdeki gorevi: Application ve HTTP policy adlarini kararli Domain.Shared sozlesmesine baglar.
+/// <summary>Test kosumu use-case permission adlarini tasir.</summary>
+public partial class TestModulePermissions
+{
+    /// <summary>Test kosumu permission agacini tasir.</summary>
+    public static class Runs
+    {
+        /// <summary>Test kosumu alanina erisim permission'idir.</summary>
+        public const string Default = GroupName + ".Runs";
+
+        /// <summary>Kosum ve bulgulu sonuc okuma permission'idir.</summary>
+        public const string View = Default + ".View";
+
+        /// <summary>Yeni Pending kosum olusturma permission'idir.</summary>
+        public const string Trigger = Default + ".Trigger";
+
+        /// <summary>Pending kosumu Running durumuna claim etme permission'idir.</summary>
+        public const string Start = Default + ".Start";
+
+        /// <summary>Terminal sonuc ve bulgulari atomik yazma permission'idir.</summary>
+        public const string WriteResult = Default + ".WriteResult";
+    }
+}

@@ -5,7 +5,9 @@ using Pintern.Authenticator.EntityFrameworkCore;
 using Pintern.Notifications.EntityFrameworkCore;
 using Ptn.TestModule.Constants;
 using Ptn.TestModule.Entities.Lookups;
+using Ptn.TestModule.Entities.Runs;
 using Ptn.TestModule.EntityFrameworkCore.Repository.Lookups;
+using Ptn.TestModule.EntityFrameworkCore.Repository.Runs;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.PostgreSql;
 using Volo.Abp.Modularity;
@@ -53,6 +55,8 @@ public class TestModuleEntityFrameworkCoreModule : AbpModule
             options.AddRepository<TestFailureCategory, EfCoreTestFailureCategoryRepository>();
             options.AddRepository<TestTriggerKind, EfCoreTestTriggerKindRepository>();
             options.AddRepository<TestScenarioState, EfCoreTestScenarioStateRepository>();
+            options.AddRepository<TestRun, EfCoreTestRunRepository>();
+            options.AddRepository<TestRunResult, EfCoreTestRunResultRepository>();
         });
     }
 
