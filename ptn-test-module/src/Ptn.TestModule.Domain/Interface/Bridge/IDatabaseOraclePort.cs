@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Ptn.TestModule.Models.Bridge.Database;
 using Ptn.TestModule.Models.Bridge;
 
 namespace Ptn.TestModule.Interface.Bridge;
@@ -10,17 +11,17 @@ namespace Ptn.TestModule.Interface.Bridge;
 public interface IDatabaseOraclePort
 {
     // Anahtarla secilen satirin kolon beklentilerini checker'a hukmettirir.
-    Task<PtnAssertionResult> AssertRowAsync(PtnAssertionRequest request, CancellationToken cancellationToken);
+    Task<PtnAssertionResult> AssertRowAsync(PtnDatabaseAssertionRequest request, CancellationToken cancellationToken);
 
     // Anahtarla secilen satir kumesinin cardinality beklentisini checker'a hukmettirir.
-    Task<PtnAssertionResult> AssertCountAsync(PtnAssertionRequest request, CancellationToken cancellationToken);
+    Task<PtnAssertionResult> AssertCountAsync(PtnDatabaseAssertionRequest request, CancellationToken cancellationToken);
 
     // Anahtarla secilen satirin bulunmadigini checker'a hukmettirir.
-    Task<PtnAssertionResult> AssertAbsentAsync(PtnAssertionRequest request, CancellationToken cancellationToken);
+    Task<PtnAssertionResult> AssertAbsentAsync(PtnDatabaseAssertionRequest request, CancellationToken cancellationToken);
 
     // Birden cok assertion'i tek checker cagrisi icinde bagimsiz sonuclariyla calistirir.
     Task<IReadOnlyList<PtnAssertionResult>> AssertBatchAsync(
-        IReadOnlyList<PtnAssertionRequest> requests,
+        IReadOnlyList<PtnDatabaseAssertionRequest> requests,
         CancellationToken cancellationToken);
 
     // Serbest SQL icermeyen salt-okunur projeksiyon yuzeyinden redaksiyonlu kanit ister.

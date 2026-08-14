@@ -6,7 +6,7 @@ namespace Ptn.TestModule.Models.Bridge;
 // sistemdeki gorevi: Alintisiz veya kaynaksiz hipotezin birlesik rapora girmesini engeller.
 public sealed class PtnDiagnosisHypothesis
 {
-    public string HypothesisCode { get; set; } = string.Empty;
+    public string HypothesisKindCode { get; set; } = string.Empty;
     public int Priority { get; set; }
     public string ConfidenceCode { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;

@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Pintern.Authenticator;
 using Pintern.Notifications;
+using Ptn.TestModule.Interface.Bridge;
+using Ptn.TestModule.Services.Bridge;
 using Volo.Abp.Application;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Mapperly;
@@ -24,5 +26,9 @@ public class TestModuleApplicationModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddMapperlyObjectMapper<TestModuleApplicationModule>();
+        context.Services.AddTransient<IApiOraclePort, ApiOracleAppService>();
+        context.Services.AddTransient<IDatabaseOraclePort, DatabaseOracleAppService>();
+        context.Services.AddTransient<IFailureDiagnosisPort, FailureDiagnosisAppService>();
+        context.Services.AddTransient<ISchemaKnowledgePort, SchemaKnowledgeAppService>();
     }
 }

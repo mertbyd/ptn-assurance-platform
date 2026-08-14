@@ -5,7 +5,6 @@ namespace Ptn.TestModule.Models.Bridge;
 public sealed class PtnTableColumn
 {
     public string Name { get; set; } = string.Empty;
-    public string DataTypeCode { get; set; } = string.Empty;
+    public string CanonicalDataTypeCode { get; set; } = string.Empty;
     public bool IsNullable { get; set; }
-    public bool IsGenerated { get; set; }
 }

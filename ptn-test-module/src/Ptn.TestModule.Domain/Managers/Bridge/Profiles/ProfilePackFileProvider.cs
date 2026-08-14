@@ -6,10 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Ptn.TestModule.Constants.Bridge;
-using Ptn.TestModule.Documents.Bridge.Profiles;
 using Ptn.TestModule.ExceptionCodes.Bridge;
 using Ptn.TestModule.Interface.Bridge;
-using Ptn.TestModule.Mappers.Bridge.Profiles;
 using Ptn.TestModule.Models.Bridge;
 using Volo.Abp;
 using Volo.Abp.Settings;
@@ -17,26 +15,23 @@ using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace Ptn.TestModule.Adapters;
+namespace Ptn.TestModule.Managers.Bridge.Profiles;
 
-// islevi: Profil paketini ayarli dosya kokunden guvenli bicimde okur, YAML'i cevirir ve SHA-256 ile muhurlar.
-// sistemdeki gorevi: Domain profil portunu tablo veya yeni katman acmadan dosya tabanli adapter olarak uygular.
+// islevi: Profil paketini ayarli dosya kokunden guvenli bicimde okur ve SHA-256 ile muhurlar.
+// sistemdeki gorevi: Profil yukleme davranisini EF Core'dan ayirip Domain manager sinirinda tutar.
 public class ProfilePackFileProvider : IProfilePackProvider
 {
-    private static readonly ProfilePackMapper Mapper = new();
     private readonly ISettingProvider _settingProvider;
     private readonly IHostEnvironment _hostEnvironment;
 
     // Ayar ve host kokunu guvenli profil dosyasi cozumlemesi icin baglar.
-    public ProfilePackFileProvider(
-        ISettingProvider settingProvider,
-        IHostEnvironment hostEnvironment)
+    public ProfilePackFileProvider(ISettingProvider settingProvider, IHostEnvironment hostEnvironment)
     {
         _settingProvider = settingProvider;
         _hostEnvironment = hostEnvironment;
     }
 
-    // Profil dosyasini boyut butcesiyle okur, semasini cevirir ve icerik fingerprint'ini ekler.
+    // Profil dosyasini boyut butcesiyle okur, domain modeline cevirir ve icerik fingerprint'ini ekler.
     public async Task<PtnProfilePack> LoadAsync(
         string profileKey,
         CancellationToken cancellationToken)
@@ -44,8 +39,7 @@ public class ProfilePackFileProvider : IProfilePackProvider
         EnsureProfileKeyIsSafe(profileKey);
         var filePath = await ResolveFilePathAsync(profileKey);
         var bytes = await ReadProfileBytesAsync(filePath, cancellationToken);
-        var document = Deserialize(bytes);
-        var pack = Mapper.Map(document);
+        var pack = Deserialize(bytes);
         EnsureProfileMatchesRequest(pack, profileKey);
         pack.ContentFingerprint = ComputeFingerprint(bytes);
         return pack;
@@ -59,9 +53,7 @@ public class ProfilePackFileProvider : IProfilePackProvider
         var root = Path.IsPathRooted(configured)
             ? Path.GetFullPath(configured)
             : Path.GetFullPath(Path.Combine(_hostEnvironment.ContentRootPath, configured));
-        var filePath = Path.GetFullPath(Path.Combine(
-            root,
-            profileKey + PtnBridgeSettingNames.ProfilePackExtension));
+        var filePath = Path.GetFullPath(Path.Combine(root, profileKey + PtnBridgeSettingNames.ProfilePackExtension));
         var rootedPrefix = root.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
         if (!filePath.StartsWith(rootedPrefix, StringComparison.OrdinalIgnoreCase))
         {
@@ -92,8 +84,8 @@ public class ProfilePackFileProvider : IProfilePackProvider
         return bytes;
     }
 
-    // YAML belgesini bilinmeyen alanlari reddeden dar transport modeline cevirir.
-    private static ProfilePackDocument Deserialize(byte[] bytes)
+    // YAML belgesini ara transport sinifi veya elle property kopyalama olmadan domain modeline cevirir.
+    private static PtnProfilePack Deserialize(byte[] bytes)
     {
         try
         {
@@ -101,7 +93,7 @@ public class ProfilePackFileProvider : IProfilePackProvider
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
                 .Build();
             using var reader = new StreamReader(new MemoryStream(bytes));
-            return deserializer.Deserialize<ProfilePackDocument>(reader);
+            return deserializer.Deserialize<PtnProfilePack>(reader);
         }
         catch (YamlException exception)
         {
@@ -120,7 +112,7 @@ public class ProfilePackFileProvider : IProfilePackProvider
         }
     }
 
-    // Dosya icerigi ile YAML icindeki profil anahtarinin ayni kaydi gostermesini zorunlu kilar.
+    // Dosya icerigi ile istenen profil anahtarinin ayni kaydi gostermesini zorunlu kilar.
     private static void EnsureProfileMatchesRequest(PtnProfilePack pack, string profileKey)
     {
         if (pack.ProfileKey != profileKey)
@@ -135,5 +127,4 @@ public class ProfilePackFileProvider : IProfilePackProvider
         return PtnBridgeSettingNames.FingerprintPrefix +
                Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
     }
-
 }

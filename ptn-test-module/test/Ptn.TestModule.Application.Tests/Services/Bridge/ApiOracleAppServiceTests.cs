@@ -2,19 +2,21 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
+using Ptn.TestModule.Services.Bridge;
 using Ptn.ApiContractChecker.Constants.Conformance.Lookups;
 using Ptn.ApiContractChecker.Dtos.Conformance;
 using Ptn.ApiContractChecker.Services.Conformance;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
+using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Models.Bridge;
 using Shouldly;
 using Xunit;
 
-namespace Ptn.TestModule.Adapters;
+namespace Ptn.TestModule.Application.Tests.Services.Bridge;
 
 // islevi: API oracle adapter'inin outcome casing'i ve operasyon baglama DTO cevirisini dogrular.
 // sistemdeki gorevi: API checker ham sozlugunun domain portundan sizmasini test kapisiyla engeller.
-public class ApiOracleAdapterTests
+public class ApiOracleAppServiceTests
 {
     // Lowercase checker outcome'unu PascalCase kopru outcome'una cevirir.
     [Fact]
@@ -36,9 +38,9 @@ public class ApiOracleAdapterTests
                     }
                 ]
             });
-        var adapter = new ApiOracleAdapter(service);
+        var oracleService = new ApiOracleAppService(service, new ApiOracleManager());
 
-        var result = await adapter.SuggestOperationBindingsAsync(
+        var result = await oracleService.SuggestOperationBindingsAsync(
             new PtnOperationQuery { Method = "GET", Path = "/tickets/{id}" },
             CancellationToken.None);
 

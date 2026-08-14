@@ -23,7 +23,7 @@ public class EvidenceChainManagerTests
     {
         var fixture = CreateFixture(CreateProjectionResult);
 
-        var result = await fixture.Manager.RunAsync(
+        var result = await fixture.Engine.RunAsync(
             CreateTuple(),
             fixture.Pack.ProfileKey,
             CancellationToken.None);
@@ -45,7 +45,7 @@ public class EvidenceChainManagerTests
             StateCode = PtnEvidenceStateCodes.Unavailable
         });
 
-        var result = await fixture.Manager.RunAsync(
+        var result = await fixture.Engine.RunAsync(
             CreateTuple(),
             fixture.Pack.ProfileKey,
             CancellationToken.None);
@@ -68,7 +68,7 @@ public class EvidenceChainManagerTests
             }).ToList();
         var fixture = CreateFixture(CreateProjectionResult, pack);
 
-        var result = await fixture.Manager.RunAsync(
+        var result = await fixture.Engine.RunAsync(
             CreateTuple(),
             fixture.Pack.ProfileKey,
             CancellationToken.None);
@@ -273,7 +273,7 @@ public class EvidenceChainManagerTests
     // islevi: Manager, profil ve teshis mock'unu adlandirilmis test kurulumunda tasir.
     // sistemdeki gorevi: Uc iliskili fixture degerini tuple yerine tek tipte toplar.
     private sealed record Fixture(
-        EvidenceChainManager Manager,
+        EvidenceChainManager Engine,
         PtnProfilePack Pack,
         IFailureDiagnosisPort Diagnosis);
 }

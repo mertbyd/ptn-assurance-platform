@@ -1,7 +1,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
+using Ptn.TestModule.Services.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
+using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Models.Bridge;
 using Shouldly;
 using Xunit;
@@ -16,11 +18,11 @@ using DatabaseDiagnosisService = Ptn.DatabaseChecker.Services.Diagnosis.IDiagnos
 using DatabaseHypothesisCodes = Ptn.DatabaseChecker.Constants.Diagnosis.HypothesisKindCodes;
 using DatabaseProbeKindCodes = Ptn.DatabaseChecker.Constants.Diagnosis.ProbeKindCodes;
 
-namespace Ptn.TestModule.Adapters;
+namespace Ptn.TestModule.Application.Tests.Services.Bridge;
 
 // islevi: Teshis adapter'inin schema anlamlarini, hipotez gramerini ve kaynakli fingerprint'leri dogrular.
 // sistemdeki gorevi: Iki checker raporunun ham kod veya ciplak fingerprint ile birlesmesini engeller.
-public class FailureDiagnosisAdapterTests
+public class FailureDiagnosisAppServiceTests
 {
     // API SchemaName alanini ApiSchemaName'e ve H-AU-03 kodunu tek kopru hipotezine cevirir.
     [Fact]
@@ -28,15 +30,18 @@ public class FailureDiagnosisAdapterTests
     {
         var api = Substitute.For<ApiDiagnosisService>();
         api.DiagnoseAsync(Arg.Any<ApiDiagnoseRequestDto>()).Returns(CreateApiReport());
-        var adapter = new FailureDiagnosisAdapter(api, Substitute.For<DatabaseDiagnosisService>());
+        var diagnosisService = new FailureDiagnosisAppService(
+            api,
+            Substitute.For<DatabaseDiagnosisService>(),
+            new FailureDiagnosisManager());
 
-        var result = await adapter.DiagnoseApiAsync(
+        var result = await diagnosisService.DiagnoseApiAsync(
             new PtnDiagnosisRequest { SpecSnapshotId = System.Guid.NewGuid() },
             CancellationToken.None);
 
         result.Location.ApiSchemaName.ShouldBe("ProblemDetails");
         result.Location.DbSchemaName.ShouldBeNull();
-        result.Hypotheses[0].HypothesisCode.ShouldBe(PtnHypothesisCodes.InsufficientScope);
+        result.Hypotheses[0].HypothesisKindCode.ShouldBe(PtnHypothesisCodes.InsufficientScope);
         result.Hypotheses[0].Evidence[0].FactCode.ShouldBe(PtnFactCodes.Match);
         result.Hypotheses[0].Ref.SourceCheckerCode.ShouldBe(PtnSourceCheckerCodes.ApiContract);
         result.Hypotheses[0].Ref.Fingerprint.ShouldStartWith("sha256:");
@@ -49,15 +54,18 @@ public class FailureDiagnosisAdapterTests
         var database = Substitute.For<DatabaseDiagnosisService>();
         database.DiagnoseAsync(Arg.Any<DatabaseDiagnoseRequestDto>(), Arg.Any<CancellationToken>())
             .Returns(CreateDatabaseReport());
-        var adapter = new FailureDiagnosisAdapter(Substitute.For<ApiDiagnosisService>(), database);
+        var diagnosisService = new FailureDiagnosisAppService(
+            Substitute.For<ApiDiagnosisService>(),
+            database,
+            new FailureDiagnosisManager());
 
-        var result = await adapter.DiagnoseDatabaseAsync(
+        var result = await diagnosisService.DiagnoseDatabaseAsync(
             new PtnDiagnosisRequest { OutcomeCode = PtnOutcomeCodes.RowNotFound },
             CancellationToken.None);
 
         result.Location.DbSchemaName.ShouldBe("identity");
         result.Location.ApiSchemaName.ShouldBeNull();
-        result.Hypotheses[0].HypothesisCode.ShouldBe(PtnHypothesisCodes.ResourceNeverCreated);
+        result.Hypotheses[0].HypothesisKindCode.ShouldBe(PtnHypothesisCodes.ResourceNeverCreated);
         result.Hypotheses[0].Evidence[0].FactCode.ShouldBe(PtnFactCodes.Match);
         result.Hypotheses[0].Ref.SourceCheckerCode.ShouldBe(PtnSourceCheckerCodes.DatabaseComparison);
     }

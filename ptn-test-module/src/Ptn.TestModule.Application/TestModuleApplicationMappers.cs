@@ -1,6 +1,8 @@
 using Riok.Mapperly.Abstractions;
 using Volo.Abp.Mapperly;
 
+[assembly: MapperDefaults(RequiredMappingStrategy = RequiredMappingStrategy.Target)]
+
 namespace Ptn.TestModule;
 
 [Mapper]

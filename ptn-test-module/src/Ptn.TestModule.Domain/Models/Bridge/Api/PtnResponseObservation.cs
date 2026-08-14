@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace Ptn.TestModule.Models.Bridge;
 
@@ -14,5 +15,5 @@ public sealed class PtnResponseObservation
     public int StatusCode { get; set; }
     public string? ContentType { get; set; }
     public Dictionary<string, string> Headers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
-    public string? BodyJson { get; set; }
+    public JsonElement? Body { get; set; }
 }

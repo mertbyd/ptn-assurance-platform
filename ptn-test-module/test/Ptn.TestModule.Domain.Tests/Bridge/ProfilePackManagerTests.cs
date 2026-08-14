@@ -24,7 +24,7 @@ public class ProfilePackManagerTests
     {
         var fixture = CreateFixture("sha256:current");
 
-        var pack = await fixture.Manager.GetValidatedAsync(
+        var pack = await fixture.Rules.GetValidatedAsync(
             fixture.Pack.ProfileKey,
             Guid.NewGuid(),
             CancellationToken.None);
@@ -40,7 +40,7 @@ public class ProfilePackManagerTests
         var fixture = CreateFixture("sha256:profile");
 
         var exception = Should.Throw<BusinessException>(() =>
-            fixture.Manager.ResolveConcept(fixture.Pack, PtnConceptCodes.Quota));
+            fixture.Rules.ResolveConcept(fixture.Pack, PtnConceptCodes.Quota));
 
         exception.Code.ShouldBe(TestModuleBridgeErrorCodes.ConceptNotBound);
     }
@@ -51,7 +51,7 @@ public class ProfilePackManagerTests
     {
         var fixture = CreateFixture("sha256:profile");
 
-        var coverage = fixture.Manager.BuildCoverage(
+        var coverage = fixture.Rules.BuildCoverage(
             fixture.Pack,
             [PtnConceptCodes.Subject, PtnConceptCodes.Quota]);
 
@@ -119,5 +119,5 @@ public class ProfilePackManagerTests
 
     // islevi: Manager ve ayni testte kullanilan profil paketini birlikte tasir.
     // sistemdeki gorevi: Test kurulumunun iki bagimli sonucunu adlandirilmis modelde tutar.
-    private sealed record Fixture(ProfilePackManager Manager, PtnProfilePack Pack);
+    private sealed record Fixture(ProfilePackManager Rules, PtnProfilePack Pack);
 }

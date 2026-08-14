@@ -3,17 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Ptn.TestModule.Services.Bridge;
 using Ptn.DatabaseChecker.Dtos.SchemaDiscovery;
 using Ptn.DatabaseChecker.Services.SchemaDiscovery;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
+using Ptn.TestModule.Managers.Bridge;
 using Shouldly;
 using Xunit;
 
-namespace Ptn.TestModule.Adapters;
+namespace Ptn.TestModule.Application.Tests.Services.Bridge;
 
 // islevi: Schema adapter'inin DB konum semantigi, anahtar cevirisi ve kanonik fingerprint'ini dogrular.
 // sistemdeki gorevi: Provider liste sirasi degistiginde profil muhrunun yanlis drift uretmesini engeller.
-public class SchemaKnowledgeAdapterTests
+public class SchemaKnowledgeAppServiceTests
 {
     // Ayni tablo ve kolon kumeleri farkli sirada geldiginde ayni SHA-256 fingerprint'i uretir.
     [Fact]
@@ -22,10 +24,10 @@ public class SchemaKnowledgeAdapterTests
         var service = new SchemaDiscoveryFake(
             CreateSnapshot(reverse: false),
             CreateSnapshot(reverse: true));
-        var adapter = new SchemaKnowledgeAdapter(service);
+        var schemaService = new SchemaKnowledgeAppService(service, new SchemaKnowledgeManager());
 
-        var first = await adapter.GetSchemaFingerprintAsync(Guid.NewGuid(), CancellationToken.None);
-        var second = await adapter.GetSchemaFingerprintAsync(Guid.NewGuid(), CancellationToken.None);
+        var first = await schemaService.GetSchemaFingerprintAsync(Guid.NewGuid(), CancellationToken.None);
+        var second = await schemaService.GetSchemaFingerprintAsync(Guid.NewGuid(), CancellationToken.None);
 
         first.ShouldBe(second);
         first.ShouldStartWith("sha256:");
@@ -44,14 +46,14 @@ public class SchemaKnowledgeAdapterTests
                 PrimaryKey = new TableKeyDefinitionDto { Columns = ["id"] }
             }
         };
-        var adapter = new SchemaKnowledgeAdapter(service);
+        var schemaService = new SchemaKnowledgeAppService(service, new SchemaKnowledgeManager());
 
-        var result = await adapter.DescribeTableAsync(
+        var result = await schemaService.DescribeTableAsync(
             new() { DbSchemaName = "identity", TableName = "users" },
             CancellationToken.None);
 
-        result.Location.DbSchemaName.ShouldBe("identity");
-        result.Keys.Single().KindCode.ShouldBe(PtnTableKeyKindCodes.Primary);
+        result.DbSchemaName.ShouldBe("identity");
+        result.PrimaryKey!.Columns.Single().ShouldBe("id");
     }
 
     // Ayni semayi tablo ve kolon siralari ters iki checker snapshot'i olarak olusturur.

@@ -2,20 +2,23 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
+using Ptn.TestModule.Services.Bridge;
 using Ptn.DatabaseChecker.Constants.Comparison.Assertions;
 using Ptn.DatabaseChecker.Dtos.Assertions;
 using Ptn.DatabaseChecker.Services.Assertions;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
+using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Models.Bridge;
+using Ptn.TestModule.Models.Bridge.Database;
 using Shouldly;
 using Xunit;
 
-namespace Ptn.TestModule.Adapters;
+namespace Ptn.TestModule.Application.Tests.Services.Bridge;
 
 // islevi: Database oracle adapter'inin outcome casing'i, redaksiyon ve projeksiyon dususunu dogrular.
 // sistemdeki gorevi: Ham satir degerlerinin sizmasini ve olmayan projeksiyon yuzeyinin taklit edilmesini engeller.
-public class DatabaseOracleAdapterTests
+public class DatabaseOracleAppServiceTests
 {
     // Checker satir sonucunu normalize eder ve tum deger alanlarini redakte eder.
     [Fact]
@@ -38,9 +41,9 @@ public class DatabaseOracleAdapterTests
                     }
                 ]
             });
-        var adapter = new DatabaseOracleAdapter(service);
+        var oracleService = new DatabaseOracleAppService(service, new DatabaseOracleManager());
 
-        var result = await adapter.AssertRowAsync(new PtnAssertionRequest(), CancellationToken.None);
+        var result = await oracleService.AssertRowAsync(new PtnDatabaseAssertionRequest(), CancellationToken.None);
 
         result.OutcomeCode.ShouldBe(PtnOutcomeCodes.ValueMismatch);
         result.RowSummary!["email"].ShouldBe(PtnRedactionCodes.Redacted);
@@ -51,9 +54,11 @@ public class DatabaseOracleAdapterTests
     [Fact]
     public async Task Should_return_unavailable_when_projection_surface_is_missing()
     {
-        var adapter = new DatabaseOracleAdapter(Substitute.For<IDatabaseAssertionAppService>());
+        var oracleService = new DatabaseOracleAppService(
+            Substitute.For<IDatabaseAssertionAppService>(),
+            new DatabaseOracleManager());
 
-        var result = await adapter.ProjectAsync(new PtnProjectionRequest(), CancellationToken.None);
+        var result = await oracleService.ProjectAsync(new PtnProjectionRequest(), CancellationToken.None);
 
         result.StateCode.ShouldBe(PtnEvidenceStateCodes.Unavailable);
     }

@@ -6,6 +6,6 @@ namespace Ptn.TestModule.Models.Bridge;
 // sistemdeki gorevi: KeyUnique kararini serbest SQL veya satir denemesi olmadan destekler.
 public sealed class PtnTableKey
 {
-    public string KindCode { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
     public List<string> Columns { get; set; } = [];
 }

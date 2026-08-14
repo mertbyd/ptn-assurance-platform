@@ -5,15 +5,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using NSubstitute;
-using Ptn.TestModule.Adapters;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.ExceptionCodes.Bridge;
+using Ptn.TestModule.Managers.Bridge.Profiles;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Settings;
 using Xunit;
 
-namespace Ptn.TestModule.Adapters;
+namespace Ptn.TestModule.Domain.Tests.Bridge.Profiles;
 
 // islevi: YAML profil saglayicisinin kok siniri, sema cevirisi ve SHA-256 muhrunu dogrular.
 // sistemdeki gorevi: Profil dosyasi okumasinin traversal, boyut ve kimlik hatalarina acik olmamasini saglar.

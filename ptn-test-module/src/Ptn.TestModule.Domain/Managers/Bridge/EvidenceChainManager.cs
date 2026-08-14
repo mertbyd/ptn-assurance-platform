@@ -200,7 +200,7 @@ public class EvidenceChainManager : DomainService
             CreateOperationQuery(context.Tuple),
             cancellationToken);
         List<string> values = result.IsComplete
-            ? [result.BodyJson ?? result.ContentType ?? result.OutcomeCode]
+            ? [result.Body?.ToJsonString() ?? result.ContentType ?? result.OutcomeCode]
             : [];
         var evidence = CreateValueEvidence(
             PtnProbeKindCodes.RequestExample,
@@ -248,7 +248,11 @@ public class EvidenceChainManager : DomainService
             PtnProbeKindCodes.TableDescription,
             values,
             CreateBridgeRef(context));
-        return CreateNode(context, StateFor(values.Count), evidence, table.Location);
+        return CreateNode(context, StateFor(values.Count), evidence, new PtnLocation
+        {
+            DbSchemaName = table.DbSchemaName,
+            DbTableName = table.TableName
+        });
     }
 
     // Profil baglamasi ve onceki dugum anahtariyla salt-okunur projeksiyon kaniti toplar.

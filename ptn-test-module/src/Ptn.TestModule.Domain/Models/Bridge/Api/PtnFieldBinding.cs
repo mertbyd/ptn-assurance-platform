@@ -6,7 +6,7 @@ public sealed class PtnFieldBinding
 {
     public string SourcePointer { get; set; } = string.Empty;
     public string TargetPointer { get; set; } = string.Empty;
-    public string? TypeCode { get; set; }
+    public string? Type { get; set; }
     public int Score { get; set; }
     public string Expression { get; set; } = string.Empty;
 }
