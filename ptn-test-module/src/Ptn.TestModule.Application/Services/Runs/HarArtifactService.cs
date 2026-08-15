@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,5 +59,19 @@ public sealed class HarArtifactService : IHarArtifactStore, ITransientDependency
     {
         _planner.EnsureArtifactIsValid(blobName);
         return _blobContainer.DeleteAsync(blobName, cancellationToken);
+    }
+
+    // Toplu purge teslimindeki adlari Manager ile dogrulayip BLOB adapter'ine birlikte iletir.
+    public Task DeleteManyAsync(
+        IReadOnlyCollection<string> blobNames,
+        CancellationToken cancellationToken = default)
+    {
+        foreach (var blobName in blobNames)
+        {
+            _planner.EnsureArtifactIsValid(blobName);
+        }
+
+        return Task.WhenAll(blobNames.Select(blobName =>
+            _blobContainer.DeleteAsync(blobName, cancellationToken)));
     }
 }

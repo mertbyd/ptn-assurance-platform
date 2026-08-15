@@ -97,6 +97,9 @@ public static class TestModuleRunErrorCodes
     /// <summary>Ortam kilidi bekleme ayarinin pozitif saniye olmadigini bildirir.</summary>
     public const string RunConcurrencyWaitInvalid = $"{Prefix}:RunConcurrencyWaitInvalid";
 
+    /// <summary>Kosum saklama suresi veya purge batch ayarinin pozitif sayi olmadigini bildirir.</summary>
+    public const string RunRetentionSettingInvalid = $"{Prefix}:RunRetentionSettingInvalid";
+
     /// <summary>Public kosum girdilerinin kararli FluentValidation hata kodlarini tasir.</summary>
     public static class Validation
     {

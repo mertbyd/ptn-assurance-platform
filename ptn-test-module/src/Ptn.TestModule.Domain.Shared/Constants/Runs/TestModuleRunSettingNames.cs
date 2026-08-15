@@ -46,6 +46,12 @@ public static class TestModuleRunSettingNames
     /// <summary>HAR artefaktlarinin gun cinsinden saklama suresi ayar adidir.</summary>
     public const string HarRetentionDays = "TestModule.Runs.HarRetentionDays";
 
+    /// <summary>Tamamlanmis kosum satirlarinin gun cinsinden saklama suresi ayar adidir.</summary>
+    public const string RunRetentionDays = "TestModule.Runs.RunRetentionDays";
+
+    /// <summary>Tek purge tesliminde silinebilecek azami kosum sayisinin ayar adidir.</summary>
+    public const string RunPurgeBatchSize = "TestModule.Runs.PurgeBatchSize";
+
     /// <summary>Asili Running kosularinin kurtarilma esigi dakika ayar adidir.</summary>
     public const string StaleRunThresholdMinutes = "TestModule.Runs.StaleRunThresholdMinutes";
 
@@ -71,7 +77,13 @@ public static class TestModuleRunSettingNames
     public const string HostTenantLockSegment = "host";
 
     /// <summary>Varsayilan HAR saklama suresidir.</summary>
-    public const string DefaultHarRetentionDays = "30";
+    public const string DefaultHarRetentionDays = "90";
+
+    /// <summary>Varsayilan tamamlanmis kosum saklama suresidir.</summary>
+    public const string DefaultRunRetentionDays = "90";
+
+    /// <summary>Varsayilan parcali purge buyuklugudur.</summary>
+    public const string DefaultRunPurgeBatchSize = "10000";
 
     /// <summary>Varsayilan asili kosum kurtarma esigidir.</summary>
     public const string DefaultStaleRunThresholdMinutes = "120";

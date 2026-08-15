@@ -28,6 +28,28 @@ public interface ITestRunRepository : IBaseRepository<TestRun, Guid>
         DateTime startedBefore,
         CancellationToken cancellationToken = default);
 
+    /// <summary>HAR suresi dolmus tamamlanmis kosumlari sinirli bir dilim halinde getirir.</summary>
+    Task<IReadOnlyList<TestRun>> GetExpiredHarArtifactsAsync(
+        DateTime completedBefore,
+        int maxResultCount,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Kosum saklama suresi dolmus tamamlanmis satirlari sinirli bir dilim halinde getirir.</summary>
+    Task<IReadOnlyList<TestRun>> GetExpiredRunsAsync(
+        DateTime completedBefore,
+        int maxResultCount,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Silinen HAR blob'larinin kosum satirlarindaki referanslarini topluca temizler.</summary>
+    Task ClearHarArtifactNamesAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Saklama suresi dolmus kosumlari sonuclari ve bulgulariyla cascade siler.</summary>
+    Task DeleteExpiredRunsAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default);
+
     // Kosumu ve en son terminal denemesini bulgulariyla birlikte tek Include sorgusunda getirir.
     /// <summary>Kosumun bulgulu ve teshisli terminal raporunu getirir.</summary>
     Task<TestRunReport?> GetReportAsync(

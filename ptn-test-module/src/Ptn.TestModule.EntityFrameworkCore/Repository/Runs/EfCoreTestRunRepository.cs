@@ -57,6 +57,72 @@ public class EfCoreTestRunRepository
             .ToListAsync(GetCancellationToken(cancellationToken));
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<TestRun>> GetExpiredHarArtifactsAsync(
+        DateTime completedBefore,
+        int maxResultCount,
+        CancellationToken cancellationToken = default)
+    {
+        var queryable = await GetQueryableAsync();
+        return await queryable
+            .AsNoTracking()
+            .Where(entity => entity.CompletedAt.HasValue &&
+                             entity.CompletedAt.Value < completedBefore &&
+                             entity.HarBlobName != null)
+            .OrderBy(entity => entity.CompletedAt)
+            .Take(maxResultCount)
+            .ToListAsync(GetCancellationToken(cancellationToken));
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<TestRun>> GetExpiredRunsAsync(
+        DateTime completedBefore,
+        int maxResultCount,
+        CancellationToken cancellationToken = default)
+    {
+        var queryable = await GetQueryableAsync();
+        return await queryable
+            .AsNoTracking()
+            .Where(entity => entity.CompletedAt.HasValue && entity.CompletedAt.Value < completedBefore)
+            .OrderBy(entity => entity.CompletedAt)
+            .Take(maxResultCount)
+            .ToListAsync(GetCancellationToken(cancellationToken));
+    }
+
+    /// <inheritdoc />
+    public async Task ClearHarArtifactNamesAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+        {
+            return;
+        }
+
+        var queryable = await GetQueryableAsync();
+        await queryable
+            .Where(entity => ids.Contains(entity.Id))
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(entity => entity.HarBlobName, (string?)null),
+                GetCancellationToken(cancellationToken));
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteExpiredRunsAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+        {
+            return;
+        }
+
+        var queryable = await GetQueryableAsync();
+        await queryable
+            .Where(entity => ids.Contains(entity.Id))
+            .ExecuteDeleteAsync(GetCancellationToken(cancellationToken));
+    }
+
     // Kosumu ve en son denemeyi getirir; bulgular tek Include ile gelir, bulgu basina sorgu acilmaz.
     /// <summary>Kosumun bulgulu ve teshisli terminal raporunu getirir.</summary>
     public async Task<TestRunReport?> GetReportAsync(

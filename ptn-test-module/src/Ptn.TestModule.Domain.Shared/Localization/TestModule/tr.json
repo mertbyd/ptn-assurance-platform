@@ -80,6 +80,7 @@
     "TestModule.Run:SandboxResetStrategyUnsupported": "Yapilandirilan sandbox reset stratejisi desteklenmiyor; transaction rollback kullanilamaz.",
     "TestModule.Run:SandboxEnvironmentKeyInvalid": "Ortam anahtari ayri sandbox baglantisini tanimlayamiyor.",
     "TestModule.Run:RunConcurrencyWaitInvalid": "Kosum eszamanlilik bekleme suresi pozitif saniye olmalidir.",
+    "TestModule.Run:RunRetentionSettingInvalid": "Kosum saklama ve purge batch ayarlari pozitif tam sayi olmalidir.",
     "TestModule.Compilation:InvalidDocument": "Arazzo belgesi gecersizdir.",
     "TestModule.Compilation:UnsupportedVersion": "Yalniz Arazzo 1.0.1 belgeleri desteklenir.",
     "TestModule.Compilation:XPathCriteriaUnsupported": "Secilen workflow runner XPath kriterlerini desteklemiyor.",

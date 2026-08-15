@@ -80,6 +80,7 @@
     "TestModule.Run:SandboxResetStrategyUnsupported": "The configured sandbox reset strategy is not supported; transaction rollback is not allowed.",
     "TestModule.Run:SandboxEnvironmentKeyInvalid": "The environment key cannot identify a dedicated sandbox connection.",
     "TestModule.Run:RunConcurrencyWaitInvalid": "The run concurrency wait must be a positive number of seconds.",
+    "TestModule.Run:RunRetentionSettingInvalid": "Run retention and purge batch settings must be positive whole numbers.",
     "TestModule.Compilation:InvalidDocument": "The Arazzo document is invalid.",
     "TestModule.Compilation:UnsupportedVersion": "Only Arazzo 1.0.1 documents are supported.",
     "TestModule.Compilation:XPathCriteriaUnsupported": "XPath criteria are not supported by the selected workflow runner.",
