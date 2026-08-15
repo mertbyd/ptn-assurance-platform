@@ -36,6 +36,9 @@ public class ExecuteTestRunJob
     // Adim hukumlerini ve beklenmeyen hatalari terminal hukme ceviren Manager'dir.
     private readonly RunOutcomeResolver _outcomeResolver;
 
+    // SUT test verisini checker kimliginden ayri yazma yetkili baglantiyla sifirlayan porttur.
+    private readonly ITestDataSandbox _testDataSandbox;
+
     public ExecuteTestRunJob(
         TestRunExecutionManager executionManager,
         WorkflowRunPlanner planner,
@@ -43,6 +46,7 @@ public class ExecuteTestRunJob
         IHarArtifactStore harArtifactStore,
         IOracleDispatchPort dispatchPort,
         RunOutcomeResolver outcomeResolver,
+        ITestDataSandbox testDataSandbox,
         ICurrentTenant currentTenant,
         IUnitOfWorkManager unitOfWorkManager,
         ICancellationTokenProvider cancellationTokenProvider)
@@ -54,6 +58,7 @@ public class ExecuteTestRunJob
         _harArtifactStore = harArtifactStore;
         _dispatchPort = dispatchPort;
         _outcomeResolver = outcomeResolver;
+        _testDataSandbox = testDataSandbox;
     }
 
     // Kosumu claim eder, UoW disinda icra ve yargi yapar, hukmu ayri yeni UoW'da kalicilastirir.
@@ -92,6 +97,9 @@ public class ExecuteTestRunJob
             return _outcomeResolver.ResolveMaterialDrift(context.MaterialDrift);
         }
 
+        await _testDataSandbox.ResetAsync(
+            context.EnvironmentBinding.EnvironmentKey,
+            JobCancellationToken);
         var outcome = await ExecuteAsync(context);
         var harBlobName = await StoreHarAsync(context, outcome);
         return await _dispatchPort.JudgeAsync(context, outcome, harBlobName, JobCancellationToken);

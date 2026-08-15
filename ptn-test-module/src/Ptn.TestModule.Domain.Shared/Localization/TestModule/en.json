@@ -77,6 +77,8 @@
     "TestModule.Run:RunFailedUnexpectedly": "The test run stopped with an unexpected error.",
     "TestModule.Run:MaterialDriftDetected": "The scenario materials drifted, so the run verified nothing.",
     "TestModule.Run:AssertionResponseUnreadable": "The database assertion response could not be read.",
+    "TestModule.Run:SandboxResetStrategyUnsupported": "The configured sandbox reset strategy is not supported; transaction rollback is not allowed.",
+    "TestModule.Run:SandboxEnvironmentKeyInvalid": "The environment key cannot identify a dedicated sandbox connection.",
     "TestModule.Compilation:InvalidDocument": "The Arazzo document is invalid.",
     "TestModule.Compilation:UnsupportedVersion": "Only Arazzo 1.0.1 documents are supported.",
     "TestModule.Compilation:XPathCriteriaUnsupported": "XPath criteria are not supported by the selected workflow runner.",

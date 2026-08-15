@@ -35,6 +35,8 @@
     <SerilogAspNetCoreVersion>9.0.0</SerilogAspNetCoreVersion>
     <SerilogSinksAsyncVersion>2.1.0</SerilogSinksAsyncVersion>
     <YamlDotNetVersion>18.1.0</YamlDotNetVersion>
+    <NpgsqlVersion>10.0.0</NpgsqlVersion>
+    <RespawnVersion>7.0.0</RespawnVersion>
   </PropertyGroup>
 
   <ItemGroup>

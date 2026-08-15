@@ -77,6 +77,8 @@
     "TestModule.Run:RunFailedUnexpectedly": "Test kosumu beklenmeyen bir hatayla durdu.",
     "TestModule.Run:MaterialDriftDetected": "Senaryo malzemeleri kaydigi icin kosum hicbir seyi dogrulamadi.",
     "TestModule.Run:AssertionResponseUnreadable": "Veritabani assertion yaniti okunamadi.",
+    "TestModule.Run:SandboxResetStrategyUnsupported": "Yapilandirilan sandbox reset stratejisi desteklenmiyor; transaction rollback kullanilamaz.",
+    "TestModule.Run:SandboxEnvironmentKeyInvalid": "Ortam anahtari ayri sandbox baglantisini tanimlayamiyor.",
     "TestModule.Compilation:InvalidDocument": "Arazzo belgesi gecersizdir.",
     "TestModule.Compilation:UnsupportedVersion": "Yalniz Arazzo 1.0.1 belgeleri desteklenir.",
     "TestModule.Compilation:XPathCriteriaUnsupported": "Secilen workflow runner XPath kriterlerini desteklemiyor.",

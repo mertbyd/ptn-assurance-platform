@@ -49,9 +49,24 @@ public static class TestModuleRunSettingNames
     /// <summary>Asili Running kosularinin kurtarilma esigi dakika ayar adidir.</summary>
     public const string StaleRunThresholdMinutes = "TestModule.Runs.StaleRunThresholdMinutes";
 
+    /// <summary>Sandbox verisini kosumdan once temizleyen stratejinin ayar adidir.</summary>
+    public const string SandboxResetStrategy = "TestModule.Runs.SandboxResetStrategy";
+
+    /// <summary>Desteklenen iliskisel sandbox temizleme stratejisidir.</summary>
+    public const string RespawnResetStrategy = "Respawn";
+
+    /// <summary>Ortam bazli ayri sandbox connection-string adinin bicimidir.</summary>
+    public const string SandboxConnectionStringNameFormat = "TestModuleSandbox.{0}";
+
+    /// <summary>Connection-string adina guvenle tasinabilen ortam anahtari bicimidir.</summary>
+    public const string SandboxEnvironmentKeyPattern = "^[A-Za-z0-9._-]+$";
+
     /// <summary>Varsayilan HAR saklama suresidir.</summary>
     public const string DefaultHarRetentionDays = "30";
 
     /// <summary>Varsayilan asili kosum kurtarma esigidir.</summary>
     public const string DefaultStaleRunThresholdMinutes = "120";
+
+    /// <summary>Varsayilan sandbox temizleme stratejisidir.</summary>
+    public const string DefaultSandboxResetStrategy = RespawnResetStrategy;
 }

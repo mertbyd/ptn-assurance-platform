@@ -40,5 +40,8 @@ public class TestModuleSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(new SettingDefinition(
             TestModuleSettings.StaleRunThresholdMinutes,
             TestModuleRunSettingNames.DefaultStaleRunThresholdMinutes));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.SandboxResetStrategy,
+            TestModuleRunSettingNames.DefaultSandboxResetStrategy));
     }
 }

@@ -36,4 +36,7 @@ public static class TestModuleSettings
 
     /// <summary>Asili Running kosularinin kurtarilma esigi ayar adidir.</summary>
     public const string StaleRunThresholdMinutes = TestModuleRunSettingNames.StaleRunThresholdMinutes;
+
+    /// <summary>Sandbox verisini kosumdan once temizleyen strateji ayar adidir.</summary>
+    public const string SandboxResetStrategy = TestModuleRunSettingNames.SandboxResetStrategy;
 }
