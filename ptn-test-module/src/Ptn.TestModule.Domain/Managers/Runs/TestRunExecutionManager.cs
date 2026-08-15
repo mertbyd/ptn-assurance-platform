@@ -49,6 +49,9 @@ public class TestRunExecutionManager : TestModuleDomainService
     /// <summary>Terminal zaman damgalarini ureten ABP saatidir.</summary>
     private readonly IClock _clock;
 
+    /// <summary>Kosum span'lerini ve hukum olcumlerini yayan Manager'dir.</summary>
+    private readonly RunTelemetryManager _runTelemetryManager;
+
     // Kosum yasam dongusunun tum domain sahiplerini tek icra kapisina baglar.
     /// <summary>Icra manager'ini Manager, repository ve saat bagimliliklariyla kurar.</summary>
     public TestRunExecutionManager(
@@ -60,8 +63,10 @@ public class TestRunExecutionManager : TestModuleDomainService
         ITestRunRepository testRunRepository,
         ITestRunResultRepository testRunResultRepository,
         ITestScenarioRepository testScenarioRepository,
-        IClock clock)
+        IClock clock,
+        RunTelemetryManager runTelemetryManager)
     {
+        _runTelemetryManager = runTelemetryManager;
         _testRunManager = testRunManager;
         _testRunResultManager = testRunResultManager;
         _environmentBindingManager = environmentBindingManager;
@@ -94,6 +99,7 @@ public class TestRunExecutionManager : TestModuleDomainService
         CancellationToken cancellationToken = default)
     {
         var entity = await _testRunManager.EnsureExistsAsync(testRunId, cancellationToken: cancellationToken);
+        using var span = _runTelemetryManager.StartExecution(entity);
         var scenario = await GetScenarioAsync(entity.ScenarioId, cancellationToken);
         var binding = await _environmentBindingManager.ResolveAsync(entity.EnvironmentKey, cancellationToken);
         var document = EnsureDocumentExists(scenario);
@@ -122,6 +128,7 @@ public class TestRunExecutionManager : TestModuleDomainService
     {
         ArgumentNullException.ThrowIfNull(terminal);
         var entity = await _testRunManager.EnsureExistsAsync(testRunId, cancellationToken: cancellationToken);
+        using var span = _runTelemetryManager.StartJudgement(entity);
         var result = await _testRunResultManager.WriteAsync(
             entity,
             terminal,
@@ -132,6 +139,7 @@ public class TestRunExecutionManager : TestModuleDomainService
 
         await _testRunRepository.UpdateAsync(entity, cancellationToken: cancellationToken);
         await _testRunResultRepository.InsertAsync(result, autoSave: true, cancellationToken: cancellationToken);
+        _runTelemetryManager.RecordTerminal(entity, terminal);
     }
 
     // Esik dakikayi saat uzerinden mutlak zamana cevirip asili Running kosumlari kurtarir.
