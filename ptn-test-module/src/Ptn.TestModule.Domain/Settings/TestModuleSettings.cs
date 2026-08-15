@@ -20,6 +20,9 @@ public static class TestModuleSettings
     /// <summary>Yayin aninda derlemeye malzeme olan aktif profil paketi anahtari ayar adidir.</summary>
     public const string ProfilePackKey = PtnBridgeSettingNames.ProfilePackKey;
 
+    /// <summary>Test edilecek yazilimin is kurali belgesinin kok yolu ayar adidir.</summary>
+    public const string BusinessRulesPath = PtnBridgeSettingNames.BusinessRulesPath;
+
     /// <summary>Tenant-scoped test ortami baglama haritasi ayar adidir.</summary>
     public const string EnvironmentBindings = TestModuleRunSettingNames.EnvironmentBindings;
 

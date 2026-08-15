@@ -24,6 +24,9 @@ public class TestModuleSettingDefinitionProvider : SettingDefinitionProvider
             TestModuleSettings.ProfilePackKey,
             PtnBridgeSettingNames.DefaultProfilePackKey));
         context.Add(new SettingDefinition(
+            TestModuleSettings.BusinessRulesPath,
+            PtnBridgeSettingNames.DefaultBusinessRulesPath));
+        context.Add(new SettingDefinition(
             TestModuleSettings.EnvironmentBindings,
             TestModuleRunSettingNames.DefaultEnvironmentBindings));
         context.Add(new SettingDefinition(

@@ -28,7 +28,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Authoring\kurallar.md" />
+    <EmbeddedResource Include="Authoring\agent-policy.md" LogicalName="Ptn.TestModule.Authoring.agent-policy.md" />
+    <EmbeddedResource Include="Authoring\kurallar.md" LogicalName="Ptn.TestModule.Authoring.kurallar.md" />
   </ItemGroup>
 
   <ItemGroup>

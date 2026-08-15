@@ -9,6 +9,8 @@ public static class TestModuleBridgeErrorCodes
     public const string ProfilePackNotFound = $"{Prefix}:ProfilePackNotFound";
     public const string ProfilePackInvalid = $"{Prefix}:ProfilePackInvalid";
     public const string ProfileFingerprintMismatch = $"{Prefix}:ProfileFingerprintMismatch";
+    public const string BusinessRulesNotFound = $"{Prefix}:BusinessRulesNotFound";
+    public const string BusinessRulesInvalid = $"{Prefix}:BusinessRulesInvalid";
     public const string ConceptNotBound = $"{Prefix}:ConceptNotBound";
     public const string EvidencePathNotFound = $"{Prefix}:EvidencePathNotFound";
     public const string HopBudgetExceeded = $"{Prefix}:HopBudgetExceeded";
