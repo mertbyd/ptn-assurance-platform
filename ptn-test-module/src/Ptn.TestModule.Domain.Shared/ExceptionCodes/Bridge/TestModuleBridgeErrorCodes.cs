@@ -40,6 +40,7 @@ public static class TestModuleBridgeErrorCodes
         public const string RequestRequired = $"{Prefix}:Validation:RequestRequired";
         public const string BatchRequired = $"{Prefix}:Validation:BatchRequired";
         public const string ProfileKeyRequired = $"{Prefix}:Validation:ProfileKeyRequired";
+        public const string InvariantPatternInvalid = $"{Prefix}:Validation:InvariantPatternInvalid";
         public const string OperationReferenceRequired = $"{Prefix}:Validation:OperationReferenceRequired";
         public const string SourceOperationIdRequired = $"{Prefix}:Validation:SourceOperationIdRequired";
         public const string OperationLinkCandidateLimitInvalid = $"{Prefix}:Validation:OperationLinkCandidateLimitInvalid";

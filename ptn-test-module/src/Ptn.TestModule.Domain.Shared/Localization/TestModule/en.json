@@ -11,6 +11,7 @@
     "Permission:Bridge.Profile": "Read authoring agent profiles",
     "Permission:Bridge.Task": "Read MCP task status",
     "Permission:Bridge.PatchSuggest": "Suggest review-only OpenAPI overlays",
+    "Permission:Bridge.Invariant": "Evaluate business invariants",
     "Permission:Scenarios": "Test scenarios",
     "Permission:Scenarios.Create": "Create test scenarios",
     "Permission:Scenarios.Update": "Update test scenarios",

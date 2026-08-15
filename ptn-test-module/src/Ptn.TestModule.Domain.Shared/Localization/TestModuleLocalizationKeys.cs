@@ -36,6 +36,7 @@ public static class TestModuleLocalizationKeys
         public const string BridgeProfile = "Permission:Bridge.Profile";
         public const string BridgeTask = "Permission:Bridge.Task";
         public const string BridgePatchSuggest = "Permission:Bridge.PatchSuggest";
+        public const string BridgeInvariant = "Permission:Bridge.Invariant";
 
         /// <summary>Senaryo permission adinin anahtaridir.</summary>
         public const string Scenarios = "Permission:Scenarios";
