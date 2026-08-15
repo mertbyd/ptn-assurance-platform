@@ -76,6 +76,9 @@ public static class TestModuleRunErrorCodes
     /// <summary>Terminal denemesi bulunmayan kosumun ihrac edilmeye calisildigini bildirir.</summary>
     public const string ExportRequiresTerminalResult = $"{Prefix}:ExportRequiresTerminalResult";
 
+    public const string ArtifactNotFound = $"{Prefix}:ArtifactNotFound";
+    public const string RunCancellationRejected = $"{Prefix}:RunCancellationRejected";
+
     /// <summary>Senaryonun son kullanma tarihi olmadan karantinaya alinmaya calisildigini bildirir.</summary>
     public const string QuarantineRequiresExpiry = $"{Prefix}:QuarantineRequiresExpiry";
 
@@ -237,5 +240,11 @@ public static class TestModuleRunErrorCodes
 
         /// <summary>Deneme sayisinin negatif oldugunu bildirir.</summary>
         public const string AttemptCountInvalid = $"{Prefix}:Validation:AttemptCountInvalid";
+
+        public const string DateRangeInvalid = $"{Prefix}:Validation:DateRangeInvalid";
+        public const string SortingInvalid = $"{Prefix}:Validation:SortingInvalid";
+        public const string FingerprintsRequired = $"{Prefix}:Validation:FingerprintsRequired";
+        public const string FingerprintLimitExceeded = $"{Prefix}:Validation:FingerprintLimitExceeded";
+        public const string SeverityInvalid = $"{Prefix}:Validation:SeverityInvalid";
     }
 }

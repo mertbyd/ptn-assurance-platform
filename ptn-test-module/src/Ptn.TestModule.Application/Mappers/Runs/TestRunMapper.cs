@@ -48,4 +48,14 @@ public partial class TestRunMapper
 
     /// <summary>Kuru kosum celiski modelini public ajan bildirimine cevirir.</summary>
     public partial DryRunContradictionReportDto Map(DryRunContradictionReport source);
+
+    public partial TestRunQuery Map(TestRunListInput source);
+    public partial TestFindingQuery Map(TestFindingListInput source);
+    public partial TestRunHeaderDto Map(TestRunHeader source);
+    public partial TestFindingHeaderDto Map(TestFindingHeader source);
+    public partial List<TestRunHeaderDto> Map(List<TestRunHeader> source);
+    public partial List<TestFindingHeaderDto> Map(List<TestFindingHeader> source);
+    public partial RunArtifactContentDto Map(RunArtifactContent source);
+    public partial TestEnvironmentBindingDto Map(TestRunEnvironmentBinding source);
+    public partial List<TestEnvironmentBindingDto> Map(List<TestRunEnvironmentBinding> source);
 }

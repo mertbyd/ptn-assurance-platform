@@ -35,6 +35,15 @@ public static class TestRunRoutes
     /// <summary>Kosumu standart rapor formatlarina ihrac eden rotadir.</summary>
     public const string Export = "{id:guid}/export";
 
+    /// <summary>Running kosuma kooperatif iptal talebi yazan rotadir.</summary>
+    public const string Cancel = "{id:guid}/cancel";
+
+    /// <summary>Terminal sonuc artefakt govdesini formatla okuyan rotadir.</summary>
+    public const string ResultArtifactContent = "results/{id:guid}/artifacts/{format}";
+
+    /// <summary>Kosumun HAR artefakt govdesini okuyan rotadir.</summary>
+    public const string HarContent = "{id:guid}/har";
+
     /// <summary>Test kosumu endpoint'lerinin Swagger grup adidir.</summary>
     public const string SwaggerGroupName = "test-module-runs";
 }

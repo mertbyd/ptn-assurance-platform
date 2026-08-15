@@ -1,7 +1,7 @@
 # Ptn.TestModule agent contract
 
 Bu dosya kok `AGENTS.md`'yi ozelestirir; catisma halinde daha ozgul olan bu dosya kazanir.
-C# isinde once global `abp-backend-dev` skill'i, tamamlamadan once `backend-verify` gate'i calisir.
+C# isinde once global `backend-standards-router` ve `abp-coding-standards` skill'leri, tamamlamadan once `backend-verify` gate'i calisir.
 
 ## Bu modul nedir
 

@@ -24,6 +24,8 @@
     "Permission:Runs.Start": "Test kosumu claim et",
     "Permission:Runs.WriteResult": "Terminal test sonucu yaz",
     "Permission:Runs.Export": "Test kosumlarini standart rapor formatlarina ihrac et",
+    "Permission:Runs.Cancel": "Test kosumlari icin kooperatif iptal talep et",
+    "Permission:Runs.SandboxReset": "Test ortami sandbox verisini sifirla",
     "Permission:Lookups": "Test lookup satirlarini oku",
     "TestModule.Bridge:ProfilePackNotFound": "Istenen kopru profil paketi bulunamadi.",
     "TestModule.Bridge:ProfilePackInvalid": "Kopru profil paketi gecersiz.",

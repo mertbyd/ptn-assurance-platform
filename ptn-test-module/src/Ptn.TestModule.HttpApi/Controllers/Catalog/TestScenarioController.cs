@@ -20,6 +20,17 @@ public class TestScenarioController : TestModuleController
 {
     /// <summary>Senaryo katalogu AppService'ini lazy cozer.</summary>
     private ITestScenarioAppService AppService => LazyGetRequiredService<ITestScenarioAppService>();
+    private IScenarioCompilationAppService CompilationAppService =>
+        LazyGetRequiredService<IScenarioCompilationAppService>();
+
+    [HttpPost(TestScenarioRoutes.CompilePreview)]
+    [Authorize(TestModulePermissions.Scenarios.Update)]
+    public virtual async Task<Result<ScenarioCompilePreviewResultDto>> CompilePreview(
+        [FromBody] ScenarioCompilePreviewDto input)
+    {
+        var result = await CompilationAppService.CompilePreviewAsync(input);
+        return result;
+    }
 
     /// <summary>Kimligi verilen senaryo surumunu getirir.</summary>
     /// <param name="id">Okunacak senaryo surumu kimligi.</param>

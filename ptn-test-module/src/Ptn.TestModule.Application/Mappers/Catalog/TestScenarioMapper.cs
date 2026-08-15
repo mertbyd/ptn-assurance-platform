@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Ptn.TestModule.Dtos.Catalog;
 using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Models.Catalog;
+using Ptn.TestModule.Models.Compilation;
 using Riok.Mapperly.Abstractions;
 
 namespace Ptn.TestModule.Mappers.Catalog;
@@ -11,6 +12,7 @@ namespace Ptn.TestModule.Mappers.Catalog;
 [Mapper]
 public partial class TestScenarioMapper
 {
+    public partial ScenarioCompilePreviewResultDto Map(ArazzoCompilationResult source);
     public partial TestScenarioCreateModel Map(CreateTestScenarioDto source);
     public partial TestScenarioUpdateModel Map(UpdateTestScenarioDto source);
     public partial TestScenarioMaterialSeal Map(TestScenarioMaterialSealDto source);

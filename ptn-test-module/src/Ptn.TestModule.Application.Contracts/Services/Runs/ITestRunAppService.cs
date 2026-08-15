@@ -19,7 +19,16 @@ public interface ITestRunAppService : IApplicationService
     /// <summary>Test kosumlarini kararli siralama ve sayfalamayla getirir.</summary>
     /// <param name="input">Sayfalama girdisi.</param>
     /// <returns>Agir rapor kolonlari tasimayan kosum sayfasi.</returns>
-    Task<PagedResultDto<TestRunDto>> GetListAsync(TestRunListInput input);
+    Task<PagedResultDto<TestRunHeaderDto>> GetListAsync(TestRunListInput input);
+
+    /// <summary>Running kosuma kooperatif iptal talebi yazar.</summary>
+    Task CancelAsync(Guid id);
+
+    /// <summary>Terminal sonuc artefaktinin UTF-8 govdesini getirir.</summary>
+    Task<RunArtifactContentDto> GetArtifactContentAsync(Guid id, string format);
+
+    /// <summary>Kosumun HAR artefaktinin UTF-8 govdesini getirir.</summary>
+    Task<RunArtifactContentDto> GetHarContentAsync(Guid id);
 
     /// <summary>Kimligi verilen terminal sonucu tum bulgulariyla getirir.</summary>
     /// <param name="id">Okunacak TestRunResult aggregate kimligi.</param>

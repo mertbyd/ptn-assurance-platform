@@ -51,6 +51,7 @@ public class TestRunExecutionManager : TestModuleDomainService
 
     /// <summary>Kosum span'lerini ve hukum olcumlerini yayan Manager'dir.</summary>
     private readonly RunTelemetryManager _runTelemetryManager;
+    private readonly RunCancellationManager _runCancellationManager;
 
     // Kosum yasam dongusunun tum domain sahiplerini tek icra kapisina baglar.
     /// <summary>Icra manager'ini Manager, repository ve saat bagimliliklariyla kurar.</summary>
@@ -64,7 +65,8 @@ public class TestRunExecutionManager : TestModuleDomainService
         ITestRunResultRepository testRunResultRepository,
         ITestScenarioRepository testScenarioRepository,
         IClock clock,
-        RunTelemetryManager runTelemetryManager)
+        RunTelemetryManager runTelemetryManager,
+        RunCancellationManager runCancellationManager)
     {
         _runTelemetryManager = runTelemetryManager;
         _testRunManager = testRunManager;
@@ -76,6 +78,7 @@ public class TestRunExecutionManager : TestModuleDomainService
         _testRunResultRepository = testRunResultRepository;
         _testScenarioRepository = testScenarioRepository;
         _clock = clock;
+        _runCancellationManager = runCancellationManager;
     }
 
     // Ikinci teslimi exception yerine no-op yapan Pending -> Running claim'ini kalicilastirir.
@@ -115,6 +118,18 @@ public class TestRunExecutionManager : TestModuleDomainService
             TraceId = entity.TraceId ?? string.Empty,
             TenantId = entity.TenantId
         };
+    }
+
+    /// <summary>Persist edilmis kooperatif iptal talebini job sinirinda OperationCanceledException'a cevirir.</summary>
+    public async Task EnsureNotCancellationRequestedAsync(
+        Guid testRunId,
+        CancellationToken cancellationToken = default)
+    {
+        var entity = await _testRunManager.EnsureExistsAsync(testRunId, cancellationToken: cancellationToken);
+        if (_runCancellationManager.IsRequested(entity))
+        {
+            throw new OperationCanceledException(TestModuleRunErrorCodes.RunCancelled);
+        }
     }
 
     // Terminal hukmu ile kosum kaydini ayni yeni UoW icinde atomik olarak kalicilastirir.

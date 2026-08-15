@@ -120,10 +120,17 @@ public class ExecuteTestRunJob
             return _outcomeResolver.ResolveMaterialDrift(context.MaterialDrift);
         }
 
+        await RunInUnitOfWorkAsync(() =>
+            _executionManager.EnsureNotCancellationRequestedAsync(args.TestRunId, JobCancellationToken));
+
         await _testDataSandbox.ResetAsync(
             context.EnvironmentBinding.EnvironmentKey,
             JobCancellationToken);
+        await RunInUnitOfWorkAsync(() =>
+            _executionManager.EnsureNotCancellationRequestedAsync(args.TestRunId, JobCancellationToken));
         var outcome = await ExecuteAsync(context);
+        await RunInUnitOfWorkAsync(() =>
+            _executionManager.EnsureNotCancellationRequestedAsync(args.TestRunId, JobCancellationToken));
         var harBlobName = await StoreHarAsync(context, outcome);
         return await _dispatchPort.JudgeAsync(context, outcome, harBlobName, JobCancellationToken);
     }

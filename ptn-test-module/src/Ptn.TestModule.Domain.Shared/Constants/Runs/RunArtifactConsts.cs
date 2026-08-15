@@ -19,6 +19,11 @@ public static class RunArtifactConsts
     /// <summary>Bir ihracat artefaktinin uretebilecegi azami bayt sayisidir.</summary>
     public const int MaxArtifactBytes = 33_554_432;
 
+    public const string JsonContentType = "application/json";
+    public const string XmlContentType = "application/xml";
+    public const string HarFormat = "Har";
+    public const string CancellationRequestedProperty = "CancellationRequested";
+
     /// <summary>JUnit bag kolonunun kararli adidir; snake_case convention'i "j_unit_blob_name" uretir.</summary>
     public const string JUnitBlobColumnName = "junit_blob_name";
 

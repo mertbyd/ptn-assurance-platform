@@ -25,5 +25,11 @@ public partial class TestModulePermissions
 
         /// <summary>Kosumu standart formatlara ihrac etme permission'idir.</summary>
         public const string Export = Default + ".Export";
+
+        /// <summary>Running kosuma kooperatif iptal talebi yazma permission'idir.</summary>
+        public const string Cancel = Default + ".Cancel";
+
+        /// <summary>Yazma yetkili sandbox verisini sifirlama permission'idir.</summary>
+        public const string SandboxReset = Default + ".SandboxReset";
     }
 }

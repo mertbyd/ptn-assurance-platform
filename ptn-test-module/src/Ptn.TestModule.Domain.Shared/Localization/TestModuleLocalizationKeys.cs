@@ -76,6 +76,9 @@ public static class TestModuleLocalizationKeys
         /// <summary>Kosum ihracat permission adinin anahtaridir.</summary>
         public const string RunsExport = "Permission:Runs.Export";
 
+        public const string RunsCancel = "Permission:Runs.Cancel";
+        public const string RunsSandboxReset = "Permission:Runs.SandboxReset";
+
         /// <summary>Test lookup okuma permission adinin anahtaridir.</summary>
         public const string Lookups = "Permission:Lookups";
     }

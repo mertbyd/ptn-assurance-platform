@@ -5,6 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Nexum.Abp.Foundation.EntityFrameworkCore.Repositories;
+using Ptn.TestModule.Constants.Runs;
+using Ptn.TestModule.Constants.Runs.Lookups;
 using Ptn.TestModule.Entities.Lookups;
 using Ptn.TestModule.Entities.Runs;
 using Ptn.TestModule.Interface.Runs;
@@ -28,6 +30,127 @@ public class EfCoreTestRunRepository
     public EfCoreTestRunRepository(IDbContextProvider<TestModuleDbContext> dbContextProvider)
         : base(dbContextProvider)
     {
+    }
+
+    /// <summary>Filtrelenmis kosumlari lookup kodlari ve son deneme sayaclariyla projekte eder.</summary>
+    public async Task<TestRunHeaderPage> GetHeaderPageAsync(
+        TestRunQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var token = GetCancellationToken(cancellationToken);
+        var dbContext = await GetDbContextAsync();
+        var projected =
+            from run in dbContext.Set<TestRun>().AsNoTracking()
+            join status in dbContext.Set<TestRunStatus>() on run.RunStatusId equals status.Id
+            join trigger in dbContext.Set<TestTriggerKind>() on run.TriggerKindId equals trigger.Id
+            let latest = dbContext.Set<TestRunResult>()
+                .Where(result => result.TestRunId == run.Id)
+                .OrderByDescending(result => result.Attempt)
+                .FirstOrDefault()
+            where (query.RunStatusCode == null || status.Code == query.RunStatusCode) &&
+                  (query.EnvironmentKey == null || run.EnvironmentKey == query.EnvironmentKey) &&
+                  (query.ScenarioId == null || run.ScenarioId == query.ScenarioId) &&
+                  (query.TriggerKindCode == null || trigger.Code == query.TriggerKindCode) &&
+                  (query.CreatedFrom == null || run.CreationTime >= query.CreatedFrom) &&
+                  (query.CreatedTo == null || run.CreationTime <= query.CreatedTo) &&
+                  (query.IsDryRun == null || run.IsDryRun == query.IsDryRun)
+            select new TestRunHeader
+            {
+                Id = run.Id,
+                ScenarioId = run.ScenarioId,
+                TestKey = run.TestKey,
+                EnvironmentKey = run.EnvironmentKey,
+                RunStatusCode = status.Code,
+                OutcomeCode = latest == null
+                    ? null
+                    : dbContext.Set<TestOutcomeStatus>()
+                        .Where(outcome => outcome.Id == latest.OutcomeStatusId)
+                        .Select(outcome => outcome.Code)
+                        .FirstOrDefault(),
+                TriggerKindCode = trigger.Code,
+                DurationMs = latest == null ? null : latest.DurationMs,
+                FindingCount = latest == null ? 0 : latest.Findings.Count,
+                Attempt = latest == null ? null : latest.Attempt,
+                StartedAt = run.StartedAt,
+                CompletedAt = run.CompletedAt,
+                IsDryRun = run.IsDryRun,
+                CreationTime = run.CreationTime
+            };
+
+        var totalCount = await projected.LongCountAsync(token);
+        var ordered = query.Sorting switch
+        {
+            TestRunQueryFields.StartedAt => projected.OrderBy(item => item.StartedAt),
+            TestRunQueryFields.CompletedAt => projected.OrderBy(item => item.CompletedAt),
+            TestRunQueryFields.DurationMs => projected.OrderBy(item => item.DurationMs),
+            TestRunQueryFields.TestKey => projected.OrderBy(item => item.TestKey),
+            TestRunQueryFields.EnvironmentKey => projected.OrderBy(item => item.EnvironmentKey),
+            _ => projected.OrderByDescending(item => item.CreationTime)
+        };
+        return new TestRunHeaderPage
+        {
+            TotalCount = totalCount,
+            Items = await ordered.Skip(query.SkipCount).Take(query.MaxResultCount).ToListAsync(token)
+        };
+    }
+
+    /// <summary>Filtrelenmis bulgulari kosum ve hukum kodlariyla agir deger kolonlari olmadan projekte eder.</summary>
+    public async Task<TestFindingHeaderPage> GetFindingPageAsync(
+        TestFindingQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var token = GetCancellationToken(cancellationToken);
+        var dbContext = await GetDbContextAsync();
+        var projected =
+            from finding in dbContext.Set<TestResultFinding>().AsNoTracking()
+            join result in dbContext.Set<TestRunResult>() on finding.TestRunResultId equals result.Id
+            join run in dbContext.Set<TestRun>() on result.TestRunId equals run.Id
+            join outcome in dbContext.Set<TestOutcomeStatus>() on result.OutcomeStatusId equals outcome.Id
+            where (query.TestRunId == null || run.Id == query.TestRunId) &&
+                  (query.ScenarioId == null || run.ScenarioId == query.ScenarioId) &&
+                  (query.OutcomeCode == null || outcome.Code == query.OutcomeCode) &&
+                  (query.SeverityCode == null ||
+                   (query.SeverityCode == SarifReportConsts.Level.Error &&
+                    (outcome.Code == TestOutcomeStatusCodes.Failed ||
+                     outcome.Code == TestOutcomeStatusCodes.Broken ||
+                     outcome.Code == TestOutcomeStatusCodes.Inconclusive))) &&
+                  (query.SourceCheckerCode == null || finding.SourceCheckerCode == query.SourceCheckerCode) &&
+                  (query.RuleRef == null || finding.RuleRef == query.RuleRef) &&
+                  (query.Fingerprints.Count == 0 || query.Fingerprints.Contains(finding.Fingerprint)) &&
+                  (query.CreatedFrom == null || finding.CreationTime >= query.CreatedFrom) &&
+                  (query.CreatedTo == null || finding.CreationTime <= query.CreatedTo)
+            select new TestFindingHeader
+            {
+                Id = finding.Id,
+                TestRunId = run.Id,
+                ScenarioId = run.ScenarioId,
+                TestRunResultId = result.Id,
+                Attempt = result.Attempt,
+                OutcomeCode = outcome.Code,
+                SeverityCode = outcome.Code == TestOutcomeStatusCodes.Failed ||
+                               outcome.Code == TestOutcomeStatusCodes.Broken ||
+                               outcome.Code == TestOutcomeStatusCodes.Inconclusive
+                    ? SarifReportConsts.Level.Error
+                    : null,
+                Ordinal = finding.Ordinal,
+                Fingerprint = finding.Fingerprint,
+                SourceCheckerCode = finding.SourceCheckerCode,
+                ComparisonKindCode = finding.ComparisonKindCode,
+                RuleRef = finding.RuleRef,
+                Location = finding.Location,
+                Message = finding.Message,
+                CreationTime = finding.CreationTime
+            };
+
+        var totalCount = await projected.LongCountAsync(token);
+        var ordered = query.Sorting == TestRunQueryFields.Attempt
+            ? projected.OrderBy(item => item.Attempt).ThenBy(item => item.Ordinal)
+            : projected.OrderByDescending(item => item.CreationTime).ThenBy(item => item.Ordinal);
+        return new TestFindingHeaderPage
+        {
+            TotalCount = totalCount,
+            Items = await ordered.Skip(query.SkipCount).Take(query.MaxResultCount).ToListAsync(token)
+        };
     }
 
     // Trace kimligi sorgusunu veritabaninda tek satira indirger.
