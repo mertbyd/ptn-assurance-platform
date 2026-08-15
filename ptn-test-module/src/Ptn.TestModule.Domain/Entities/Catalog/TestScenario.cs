@@ -38,6 +38,15 @@ public class TestScenario : AuditedAggregateRoot<Guid>, IMultiTenant
 
     /// <summary>Karantinaya alma gerekcesinin kararli referansidir.</summary>
     public string? QuarantineReason { get; internal set; }
+
+    /// <summary>Yayinlanmis surumun UTC cron ifadesidir; zamanlama yoksa bostur.</summary>
+    public string? ScheduleCron { get; internal set; }
+
+    /// <summary>Zamanlamanin acik olup olmadigidir; cron dolu olsa da kapali tutulabilir.</summary>
+    public bool ScheduleEnabled { get; internal set; }
+
+    /// <summary>Worker'in vade kararini verdigi zaman damgasidir.</summary>
+    public DateTime? NextRunAt { get; internal set; }
     public Guid? TenantId { get; internal set; }
 
     // EF Core materializasyonu icin ayrilmis kurucudur.

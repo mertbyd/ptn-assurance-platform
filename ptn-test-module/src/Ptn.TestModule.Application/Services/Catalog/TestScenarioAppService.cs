@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentValidation;
 using Nexum.Abp.Foundation.Application.Services;
 using Nexum.Abp.Foundation.Querying;
 using Ptn.TestModule.Dtos.Catalog;
@@ -40,6 +41,7 @@ public class TestScenarioAppService : BaseApplicationService<
     private readonly ISchemaKnowledgeAppService _schemaKnowledgeAppService;
     private readonly IScenarioCompilationPort _compilationPort;
     private readonly ScenarioQuarantineManager _quarantineManager;
+    private readonly IValidator<UpdateScenarioScheduleDto> _scheduleValidator;
     private readonly IClock _clock;
 
     protected override string GetPolicyName => TestModulePermissions.Scenarios.Default;
@@ -53,12 +55,14 @@ public class TestScenarioAppService : BaseApplicationService<
         ISchemaKnowledgeAppService schemaKnowledgeAppService,
         IScenarioCompilationPort compilationPort,
         ScenarioQuarantineManager quarantineManager,
+        IValidator<UpdateScenarioScheduleDto> scheduleValidator,
         IClock clock)
     {
         _publicationGateManager = publicationGateManager;
         _schemaKnowledgeAppService = schemaKnowledgeAppService;
         _compilationPort = compilationPort;
         _quarantineManager = quarantineManager;
+        _scheduleValidator = scheduleValidator;
         _clock = clock;
     }
     // Senaryoyu sinirli sureyle karantinaya alir; sure kararini Manager verir.
@@ -81,6 +85,23 @@ public class TestScenarioAppService : BaseApplicationService<
         _quarantineManager.ReleaseExpired(entity, _clock.Now);
         var saved = await Repository.UpdateAsync(
             entity,
+            autoSave: true,
+            cancellationToken: CancellationTokenProvider.Token);
+        return Mapper.Map(saved);
+    }
+    // Yayinlanmis surume cron zamanlamasi yazar; vade ve dogrulama kararlarini Manager verir.
+    public async Task<TestScenarioDto> UpdateScheduleAsync(Guid id, UpdateScenarioScheduleDto input)
+    {
+        await CheckPolicyAsync(TestModulePermissions.Scenarios.Schedule);
+        await _scheduleValidator.ValidateAndThrowAsync(input, CancellationTokenProvider.Token);
+        var entity = await Manager.EnsureExistsAsync(id, cancellationToken: CancellationTokenProvider.Token);
+        var scheduled = await Manager.UpdateScheduleAsync(
+            entity,
+            Mapper.Map(input),
+            _clock.Now,
+            CancellationTokenProvider.Token);
+        var saved = await Repository.UpdateAsync(
+            scheduled,
             autoSave: true,
             cancellationToken: CancellationTokenProvider.Token);
         return Mapper.Map(saved);

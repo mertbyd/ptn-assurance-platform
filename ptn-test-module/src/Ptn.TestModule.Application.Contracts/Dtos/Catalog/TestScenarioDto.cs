@@ -37,5 +37,14 @@ public sealed class TestScenarioDto : AuditedEntityDto<Guid>
     /// <summary>Karantinaya alma gerekcesidir.</summary>
     public string? QuarantineReason { get; set; }
 
+    /// <summary>UTC olarak yorumlanan cron ifadesidir; zamanlama yoksa bostur.</summary>
+    public string? ScheduleCron { get; set; }
+
+    /// <summary>Zamanlamanin acik olup olmadigidir.</summary>
+    public bool ScheduleEnabled { get; set; }
+
+    /// <summary>Vade tarayicisinin bekledigi sonraki calisma anidir.</summary>
+    public DateTime? NextRunAt { get; set; }
+
     public Guid? TenantId { get; set; }
 }

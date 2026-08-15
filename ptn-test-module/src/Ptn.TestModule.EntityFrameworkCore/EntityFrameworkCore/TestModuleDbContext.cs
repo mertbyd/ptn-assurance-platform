@@ -43,6 +43,10 @@ public class TestModuleDbContext : AbpDbContext<TestModuleDbContext>, ITestModul
     /// <summary>Test sonucu bulgu cocuk kayitlarinin DbSet'idir.</summary>
     public DbSet<TestResultFinding> TestResultFindings { get; set; } = null!;
 
+    // Materialized view salt-okunurdur; tablo degildir ve migration'daki el yazimi SQL'e aittir (PLAN-0003 TM-27).
+    /// <summary>Senaryo saglik materialized view satirlarinin DbSet'idir.</summary>
+    public DbSet<ScenarioHealth> ScenarioHealth { get; set; } = null!;
+
     /// <summary>Context'i provider secenekleriyle kurar.</summary>
     public TestModuleDbContext(DbContextOptions<TestModuleDbContext> options)
         : base(options)

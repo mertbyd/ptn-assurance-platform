@@ -48,6 +48,11 @@ public sealed class TestScenarioConfiguration : IEntityTypeConfiguration<TestSce
             .HasMaxLength(TestScenarioConsts.MaxQuarantineReasonLength);
         builder.HasIndex(entity => entity.QuarantineUntil)
             .HasDatabaseName(TestScenarioConsts.QuarantineIndexName);
+        builder.Property(entity => entity.ScheduleCron)
+            .HasMaxLength(TestScenarioConsts.MaxScheduleCronLength);
+        builder.Property(entity => entity.ScheduleEnabled).IsRequired().HasDefaultValue(false);
+        builder.HasIndex(entity => new { entity.ScheduleEnabled, entity.NextRunAt })
+            .HasDatabaseName(TestScenarioConsts.ScheduleIndexName);
         builder.HasOne<TestScenarioState>()
             .WithMany()
             .HasForeignKey(entity => entity.StateId)

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,8 +7,11 @@ using Microsoft.EntityFrameworkCore;
 using Nexum.Abp.Foundation.EntityFrameworkCore.Repositories;
 using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Interface.Catalog;
+using Ptn.TestModule.Models.Catalog;
+using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EntityFrameworkCore;
+using Volo.Abp.MultiTenancy;
 
 namespace Ptn.TestModule.EntityFrameworkCore.Repository.Catalog;
 
@@ -17,10 +21,16 @@ namespace Ptn.TestModule.EntityFrameworkCore.Repository.Catalog;
 public class EfCoreTestScenarioRepository
     : BaseEfCoreRepository<TestModuleDbContext, TestScenario, Guid>, ITestScenarioRepository
 {
+    // Capraz tenant tarama sorgularinda ABP tenant filtresini yalniz sorgu omru boyunca kapatir.
+    private readonly IDataFilter<IMultiTenant> _multiTenantFilter;
+
     // DbContext provider'ini Foundation repository tabanina devreder.
-    public EfCoreTestScenarioRepository(IDbContextProvider<TestModuleDbContext> dbContextProvider)
+    public EfCoreTestScenarioRepository(
+        IDbContextProvider<TestModuleDbContext> dbContextProvider,
+        IDataFilter<IMultiTenant> multiTenantFilter)
         : base(dbContextProvider)
     {
+        _multiTenantFilter = multiTenantFilter;
     }
 
     // Senaryo anahtarinin en yuksek version numarali satirini getirir.
@@ -59,5 +69,128 @@ public class EfCoreTestScenarioRepository
             .Select(entity => (int?)entity.VersionNo)
             .MaxAsync(GetCancellationToken(cancellationToken));
         return latestVersion.GetValueOrDefault() + 1;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<TestScenario>> GetExpiredQuarantinesAsync(
+        DateTime expiredBefore,
+        int maxResultCount,
+        CancellationToken cancellationToken = default)
+    {
+        // Supurucu CurrentTenant olmadan calisir; ABP tenant filtresi bu sorguyu "TenantId == null"a indirger
+        // ve tarama bosalir. Capraz tenant okuma yalniz bu sorgunun omru boyunca ve yalniz tenant filtresi
+        // icin acilir; global filtreleri toptan kaldiran EF yolu kullanilmaz.
+        using (_multiTenantFilter.Disable())
+        {
+            var queryable = await GetQueryableAsync();
+            return await queryable
+                .Where(entity => entity.QuarantineUntil != null && entity.QuarantineUntil <= expiredBefore)
+                .OrderBy(entity => entity.QuarantineUntil)
+                .ThenBy(entity => entity.Id)
+                .Take(maxResultCount)
+                .ToListAsync(GetCancellationToken(cancellationToken));
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<DueScenarioModel>> GetDueScheduledAsync(
+        DateTime dueAt,
+        int maxResultCount,
+        CancellationToken cancellationToken = default)
+    {
+        // Vade tarayicisi de CurrentTenant olmadan calisir; capraz tenant okuma yalniz bu sorgunun omru
+        // boyunca ve yalniz tenant filtresi icin acilir.
+        using (_multiTenantFilter.Disable())
+        {
+            var queryable = await GetQueryableAsync();
+            return await queryable
+                .AsNoTracking()
+                .Where(entity => entity.ScheduleEnabled &&
+                                 entity.NextRunAt != null &&
+                                 entity.NextRunAt <= dueAt &&
+                                 (entity.QuarantineUntil == null || entity.QuarantineUntil <= dueAt))
+                .OrderBy(entity => entity.NextRunAt)
+                .ThenBy(entity => entity.Id)
+                .Take(maxResultCount)
+                .Select(entity => new DueScenarioModel
+                {
+                    ScenarioId = entity.Id,
+                    ScenarioKey = entity.ScenarioKey,
+                    CompiledHash = entity.CompiledHash,
+                    NextRunAt = entity.NextRunAt,
+                    TenantId = entity.TenantId
+                })
+                .ToListAsync(GetCancellationToken(cancellationToken));
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<TestScenario>> GetManyForScheduleAdvanceAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        // Vade ilerletme tik basina tek sorgudur; senaryo basina okuma acilmaz.
+        using (_multiTenantFilter.Disable())
+        {
+            var queryable = await GetQueryableAsync();
+            return await queryable
+                .Where(entity => ids.Contains(entity.Id))
+                .ToListAsync(GetCancellationToken(cancellationToken));
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ScenarioCoverageSource>> GetPublishedCoverageSourcesAsync(
+        Guid publishedStateId,
+        int maxResultCount,
+        CancellationToken cancellationToken = default)
+    {
+        var queryable = await GetQueryableAsync();
+        return await queryable
+            .AsNoTracking()
+            .Where(entity => entity.StateId == publishedStateId)
+            .OrderBy(entity => entity.ScenarioKey)
+            .ThenByDescending(entity => entity.VersionNo)
+            .Take(maxResultCount)
+            .Select(entity => new ScenarioCoverageSource
+            {
+                ScenarioId = entity.Id,
+                ScenarioKey = entity.ScenarioKey,
+                SpecSnapshotId = entity.SpecSnapshotId,
+                CompiledDocument = entity.CompiledDocument
+            })
+            .ToListAsync(GetCancellationToken(cancellationToken));
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<DueScenarioModel>> GetPublishedBySpecSnapshotAsync(
+        Guid specSnapshotId,
+        Guid publishedStateId,
+        DateTime now,
+        int maxResultCount,
+        CancellationToken cancellationToken = default)
+    {
+        var queryable = await GetQueryableAsync();
+        return await queryable
+            .AsNoTracking()
+            .Where(entity => entity.SpecSnapshotId == specSnapshotId &&
+                             entity.StateId == publishedStateId &&
+                             (entity.QuarantineUntil == null || entity.QuarantineUntil <= now))
+            .OrderBy(entity => entity.ScenarioKey)
+            .ThenBy(entity => entity.Id)
+            .Take(maxResultCount)
+            .Select(entity => new DueScenarioModel
+            {
+                ScenarioId = entity.Id,
+                ScenarioKey = entity.ScenarioKey,
+                CompiledHash = entity.CompiledHash,
+                TenantId = entity.TenantId
+            })
+            .ToListAsync(GetCancellationToken(cancellationToken));
     }
 }

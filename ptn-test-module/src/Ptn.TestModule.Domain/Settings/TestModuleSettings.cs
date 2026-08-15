@@ -1,4 +1,5 @@
 using Ptn.TestModule.Constants.Bridge;
+using Ptn.TestModule.Constants.Catalog;
 using Ptn.TestModule.Constants.Runs;
 
 namespace Ptn.TestModule.Settings;
@@ -48,4 +49,25 @@ public static class TestModuleSettings
 
     /// <summary>Ortam kilidini edinmek icin beklenecek azami sure ayar adidir.</summary>
     public const string RunConcurrencyWaitSeconds = TestModuleRunSettingNames.RunConcurrencyWaitSeconds;
+
+    /// <summary>Suresi dolmus karantinalarin tarandigi periyot ayar adidir.</summary>
+    public const string QuarantineSweepPeriodSeconds = TestModuleCatalogSettingNames.QuarantineSweepPeriodSeconds;
+
+    /// <summary>Tek karantina tikinde temizlenecek azami senaryo sayisi ayar adidir.</summary>
+    public const string QuarantineSweepBatchSize = TestModuleCatalogSettingNames.QuarantineSweepBatchSize;
+
+    /// <summary>Saglik materialized view'inin yenilendigi periyot ayar adidir.</summary>
+    public const string ScenarioHealthRefreshPeriodSeconds = TestModuleRunSettingNames.ScenarioHealthRefreshPeriodSeconds;
+
+    /// <summary>Vadesi gelmis zamanlanmis senaryolarin tarandigi periyot ayar adidir.</summary>
+    public const string ScheduleSweepPeriodSeconds = TestModuleCatalogSettingNames.ScheduleSweepPeriodSeconds;
+
+    /// <summary>Tek zamanlama tikinde kuyruklanacak azami senaryo sayisi ayar adidir.</summary>
+    public const string MaxScenariosPerTick = TestModuleCatalogSettingNames.MaxScenariosPerTick;
+
+    /// <summary>Otomatik tetikleyicilerin kullandigi mantiksal ortam anahtari ayar adidir.</summary>
+    public const string AutomationEnvironmentKey = TestModuleRunSettingNames.AutomationEnvironmentKey;
+
+    /// <summary>Gelen webhook cagrilarinin dogrulandigi paylasilan sir ayar adidir.</summary>
+    public const string WebhookSecret = TestModuleRunSettingNames.WebhookSecret;
 }

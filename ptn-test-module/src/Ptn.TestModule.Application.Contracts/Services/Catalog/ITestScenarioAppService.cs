@@ -47,4 +47,10 @@ public interface ITestScenarioAppService : IApplicationService
     /// <param name="id">Karantinasi degerlendirilecek senaryo kimligi.</param>
     /// <returns>Guncel senaryo gorunumu.</returns>
     Task<TestScenarioDto> ReleaseQuarantineAsync(Guid id);
+
+    /// <summary>Yayinlanmis senaryo surumunun cron zamanlamasini gunceller.</summary>
+    /// <param name="id">Zamanlamasi guncellenecek yayinlanmis senaryo kimligi.</param>
+    /// <param name="input">Cron ifadesi ve zamanlamanin acik olup olmadigi.</param>
+    /// <returns>Guncel vade bilgisini tasiyan senaryo gorunumu.</returns>
+    Task<TestScenarioDto> UpdateScheduleAsync(Guid id, UpdateScenarioScheduleDto input);
 }

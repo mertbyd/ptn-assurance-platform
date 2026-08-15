@@ -38,6 +38,8 @@
     <ModelContextProtocolVersion>2.2.0</ModelContextProtocolVersion>
     <NpgsqlVersion>10.0.0</NpgsqlVersion>
     <RespawnVersion>7.0.0</RespawnVersion>
+    <!-- Cron ifadesi ayristirma ve sonraki vade hesabi; MIT, bagimliliksiz (KBP-110 Dilim 3). -->
+    <CronosVersion>0.13.0</CronosVersion>
   </PropertyGroup>
 
   <ItemGroup>

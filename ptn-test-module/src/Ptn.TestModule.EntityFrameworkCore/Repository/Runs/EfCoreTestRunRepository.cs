@@ -7,9 +7,11 @@ using Microsoft.EntityFrameworkCore;
 using Nexum.Abp.Foundation.EntityFrameworkCore.Repositories;
 using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.Constants.Runs.Lookups;
+using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Entities.Lookups;
 using Ptn.TestModule.Entities.Runs;
 using Ptn.TestModule.Interface.Runs;
+using Ptn.TestModule.Models.Catalog;
 using Ptn.TestModule.Models.Runs;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EntityFrameworkCore;
@@ -286,6 +288,57 @@ public class EfCoreTestRunRepository
         await queryable
             .Where(entity => ids.Contains(entity.Id))
             .ExecuteDeleteAsync(GetCancellationToken(cancellationToken));
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ScenarioCoverageRuleGroup>> GetRuleCoverageAsync(
+        Guid publishedStateId,
+        CancellationToken cancellationToken = default)
+    {
+        var token = GetCancellationToken(cancellationToken);
+        var dbContext = await GetDbContextAsync();
+        var projected =
+            from finding in dbContext.Set<TestResultFinding>().AsNoTracking()
+            join result in dbContext.Set<TestRunResult>() on finding.TestRunResultId equals result.Id
+            join run in dbContext.Set<TestRun>() on result.TestRunId equals run.Id
+            join scenario in dbContext.Set<TestScenario>() on run.ScenarioId equals scenario.Id
+            where scenario.StateId == publishedStateId && finding.RuleRef != null
+            select new { finding.RuleRef, scenario.ScenarioKey };
+
+        return await projected
+            .GroupBy(item => item.RuleRef!)
+            .Select(group => new ScenarioCoverageRuleGroup
+            {
+                RuleRef = group.Key,
+                ScenarioCount = group.Select(item => item.ScenarioKey).Distinct().Count(),
+                FindingCount = group.Count()
+            })
+            .OrderBy(group => group.RuleRef)
+            .ToListAsync(token);
+    }
+
+    /// <inheritdoc />
+    public async Task<TestRun?> FindByTriggerAsync(
+        string triggerKindCode,
+        string triggerRef,
+        Guid? scenarioId,
+        CancellationToken cancellationToken = default)
+    {
+        var token = GetCancellationToken(cancellationToken);
+        var dbContext = await GetDbContextAsync();
+        return await dbContext.Set<TestRun>()
+            .AsNoTracking()
+            .Join(
+                dbContext.Set<TestTriggerKind>(),
+                run => run.TriggerKindId,
+                trigger => trigger.Id,
+                (run, trigger) => new { Run = run, Trigger = trigger })
+            .Where(item => item.Trigger.Code == triggerKindCode &&
+                           item.Run.TriggerRef == triggerRef &&
+                           (scenarioId == null || item.Run.ScenarioId == scenarioId))
+            .OrderBy(item => item.Run.CreationTime)
+            .Select(item => item.Run)
+            .FirstOrDefaultAsync(token);
     }
 
     // Kosumu ve en son denemeyi getirir; bulgular tek Include ile gelir, bulgu basina sorgu acilmaz.

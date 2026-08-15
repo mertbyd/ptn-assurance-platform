@@ -211,6 +211,76 @@ public class ArazzoCompilerManager : TestModuleDomainService
                result.UnresolvedApiAssertionCount;
     }
 
+    // Kapsam raporu icin belgenin dokundugu API operasyon adreslerini kararli sirada okur.
+    // Belge okuma bu modulde tek sahiplidir; kapsam Manager'i YAML tipine hic dokunmaz (KBP-110 Dilim 5).
+    /// <summary>Derlenmis belgenin dokundugu operasyon adreslerini tekil ve sirali getirir.</summary>
+    public static IReadOnlyList<string> ReadTouchedOperations(string? compiledDocument)
+    {
+        var root = TryLoadDocumentRoot(compiledDocument);
+        if (root is null)
+        {
+            return [];
+        }
+
+        var operations = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var workflow in ReadOptionalSequence(root, ArazzoCompilationConsts.Fields.Workflows))
+        {
+            foreach (var step in ReadOptionalSequence(workflow, ArazzoCompilationConsts.Fields.Steps))
+            {
+                AddTouchedOperation(step, operations);
+            }
+        }
+
+        return [.. operations];
+    }
+
+    // Database Checker adimlari API operasyonu saymaz; adres olarak yalniz sozlesme adimlari alinir.
+    /// <summary>Tek adimin operasyon adresini kumeye ekler.</summary>
+    private static void AddTouchedOperation(YamlMappingNode step, SortedSet<string> operations)
+    {
+        if (TryGetScalar(step, ArazzoCompilationConsts.Fields.OperationId, out var operationId) &&
+            !string.IsNullOrWhiteSpace(operationId))
+        {
+            operations.Add(operationId);
+            return;
+        }
+
+        if (TryGetScalar(step, ArazzoCompilationConsts.Fields.OperationPath, out var operationPath) &&
+            !string.IsNullOrWhiteSpace(operationPath) &&
+            !operationPath.Contains(ArazzoCompilationConsts.DatabaseSourceDescriptionName, StringComparison.Ordinal))
+        {
+            operations.Add(operationPath);
+        }
+    }
+
+    // Rapor akislarinda eksik alan hata degildir; dizi yoksa bos kume dondurulur.
+    /// <summary>Mapping alanini varsa nesne dizisi olarak okur.</summary>
+    private static IEnumerable<YamlMappingNode> ReadOptionalSequence(YamlMappingNode mapping, string field)
+    {
+        return TryGetSequence(mapping, field, out var sequence)
+            ? sequence.Children.OfType<YamlMappingNode>()
+            : [];
+    }
+
+    // Derlenmis belgeyi okuyan raporlama akislari icin hata firlatmayan tek yukleme yolunu acar.
+    /// <summary>Arazzo belgesini kok nesneye cevirmeyi dener; bozuk belge icin null doner.</summary>
+    private static YamlMappingNode? TryLoadDocumentRoot(string? document)
+    {
+        if (string.IsNullOrWhiteSpace(document))
+        {
+            return null;
+        }
+
+        try
+        {
+            return LoadRoot(document);
+        }
+        catch (BusinessException)
+        {
+            return null;
+        }
+    }
+
     // YAML kutuphanesiyle tek ve butceli Arazzo kok nesnesini okur.
     private static YamlMappingNode LoadRoot(string sourceDocument)
     {

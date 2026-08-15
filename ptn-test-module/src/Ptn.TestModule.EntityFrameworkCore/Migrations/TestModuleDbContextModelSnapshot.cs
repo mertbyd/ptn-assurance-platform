@@ -118,6 +118,10 @@ namespace Ptn.TestModule.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<DateTime?>("NextRunAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_run_at");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)")
@@ -147,6 +151,17 @@ namespace Ptn.TestModule.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)")
                         .HasColumnName("scenario_key");
+
+                    b.Property<string>("ScheduleCron")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("schedule_cron");
+
+                    b.Property<bool>("ScheduleEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("schedule_enabled");
 
                     b.Property<string>("SourceDocument")
                         .IsRequired()
@@ -202,6 +217,9 @@ namespace Ptn.TestModule.Migrations
                     b.HasIndex("ScenarioKey", "VersionNo")
                         .IsUnique()
                         .HasDatabaseName("ux_scenarios_version");
+
+                    b.HasIndex("ScheduleEnabled", "NextRunAt")
+                        .HasDatabaseName("ix_scenarios_schedule");
 
                     b.ToTable("test_scenarios", "test_catalog");
                 });
@@ -435,6 +453,58 @@ namespace Ptn.TestModule.Migrations
                         .HasDatabaseName("ix_test_trigger_kinds_code");
 
                     b.ToTable("test_trigger_kinds", "test_lookup");
+                });
+
+            modelBuilder.Entity("Ptn.TestModule.Entities.Runs.ScenarioHealth", b =>
+                {
+                    b.Property<long>("FailedRunCount")
+                        .HasColumnType("bigint")
+                        .HasColumnName("failed_run_count");
+
+                    b.Property<long>("FlakyHistoryCount")
+                        .HasColumnType("bigint")
+                        .HasColumnName("flaky_history_count");
+
+                    b.Property<double>("FlakyRatio")
+                        .HasColumnType("double precision")
+                        .HasColumnName("flaky_ratio");
+
+                    b.Property<long>("HistoryCount")
+                        .HasColumnType("bigint")
+                        .HasColumnName("history_count");
+
+                    b.Property<DateTime?>("LastRunAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_run_at");
+
+                    b.Property<double>("P95DurationMs")
+                        .HasColumnType("double precision")
+                        .HasColumnName("p95_duration_ms");
+
+                    b.Property<double>("PassRatio")
+                        .HasColumnType("double precision")
+                        .HasColumnName("pass_ratio");
+
+                    b.Property<long>("PassedRunCount")
+                        .HasColumnType("bigint")
+                        .HasColumnName("passed_run_count");
+
+                    b.Property<string>("ScenarioKey")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("scenario_key");
+
+                    b.Property<Guid>("TenantKey")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_key");
+
+                    b.Property<long>("TotalRunCount")
+                        .HasColumnType("bigint")
+                        .HasColumnName("total_run_count");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("scenario_health", "test_run");
                 });
 
             modelBuilder.Entity("Ptn.TestModule.Entities.Runs.TestResultFinding", b =>
