@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.Interface.Runs;
 using Volo.Abp.BlobStoring;
 using Volo.Abp.DependencyInjection;
@@ -12,13 +13,13 @@ namespace Ptn.TestModule.Services.Runs;
 // sistemdeki gorevi: Artefakti satirdan cikaran kalicilik siniridir; test_runs uzerinde yalniz har_blob_name kalir (ADR-0016 §H).
 public sealed class HarArtifactService : IHarArtifactStore, ITransientDependency
 {
-    // HAR artefaktlarinin tipli BLOB Storing container'idir.
-    private readonly IBlobContainer<HarArtifactContainer> _blobContainer;
+    // HAR artefaktlarinin adiyla cozulmus BLOB Storing container'idir.
+    private readonly IBlobContainer _blobContainer;
 
-    // Artefakt sinirini tipli container'a baglar.
-    public HarArtifactService(IBlobContainer<HarArtifactContainer> blobContainer)
+    // Artefakt sinirini Domain.Shared'daki container adina bir kez baglar.
+    public HarArtifactService(IBlobContainerFactory blobContainerFactory)
     {
-        _blobContainer = blobContainer;
+        _blobContainer = blobContainerFactory.Create(HarArtifactConsts.ContainerName);
     }
 
     // Manager'in urettigi blob adiyla artefakti yazar ve adi cagirana geri verir.
