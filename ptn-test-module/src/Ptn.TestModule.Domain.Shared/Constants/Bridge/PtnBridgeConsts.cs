@@ -11,6 +11,8 @@ public static class PtnBridgeConsts
     public const int MaxProfilePackBytes = 262144;
     public const int MaxReportBytes = 4096;
     public const int MinimumOperationScore = 70;
+    public const int DefaultOperationLinkCandidates = 5;
+    public const int MaxOperationLinkCandidates = 5;
     public const string ReferenceIdFormat = "D";
     public const string EvidenceReferenceSeparator = ":";
 }

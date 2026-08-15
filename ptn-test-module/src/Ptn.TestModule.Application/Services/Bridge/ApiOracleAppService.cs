@@ -19,6 +19,7 @@ public class ApiOracleAppService : TestModuleAppService, IApiOracleAppService
     private readonly IResponseConformanceAppService _appService;
     private readonly ApiOracleManager _manager;
     private readonly IValidator<OperationQueryDto> _operationQueryValidator;
+    private readonly IValidator<OperationLinkRequestDto> _operationLinkValidator;
     private readonly IValidator<DerivabilityRequestDto> _derivabilityValidator;
     private readonly IValidator<ResponseObservationDto> _responseValidator;
     // API checker public servisini anti-corruption sinirina baglar.
@@ -26,14 +27,27 @@ public class ApiOracleAppService : TestModuleAppService, IApiOracleAppService
         IResponseConformanceAppService appService,
         ApiOracleManager manager,
         IValidator<OperationQueryDto> operationQueryValidator,
+        IValidator<OperationLinkRequestDto> operationLinkValidator,
         IValidator<DerivabilityRequestDto> derivabilityValidator,
         IValidator<ResponseObservationDto> responseValidator)
     {
         _appService = appService;
         _manager = manager;
         _operationQueryValidator = operationQueryValidator;
+        _operationLinkValidator = operationLinkValidator;
         _derivabilityValidator = derivabilityValidator;
         _responseValidator = responseValidator;
+    }
+    // Secili operasyonun OpenAPI links tabanli sonraki adim adaylarini normalize eder.
+    public async Task<OperationLinkResultDto> SuggestOperationLinksAsync(
+        OperationLinkRequestDto input,
+        CancellationToken cancellationToken)
+    {
+        await _operationLinkValidator.ValidateAndThrowAsync(input, cancellationToken);
+        var request = Mapper.Map(input);
+        return Mapper.Map(_manager.Normalize(Mapper.Map(
+            await _appService.SuggestOperationLinksAsync(
+                Mapper.Map(_manager.PrepareOperationLinkRequest(request, cancellationToken))))));
     }
     // Public operasyon sorgusunu Domain modeline map edip normalize DTO sonucu dondurur.
     public async Task<OperationBindingDto> SuggestOperationBindingsAsync(

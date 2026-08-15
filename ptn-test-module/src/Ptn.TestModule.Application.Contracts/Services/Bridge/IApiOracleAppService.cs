@@ -10,6 +10,9 @@ public interface IApiOracleAppService : IApplicationService
     // Operasyon baglama adaylarini normalize public sonuc olarak getirir.
     Task<OperationBindingDto> SuggestOperationBindingsAsync(OperationQueryDto input, CancellationToken cancellationToken);
 
+    // Secili kaynak operasyon icin kanitli sonraki adim adaylarini getirir.
+    Task<OperationLinkResultDto> SuggestOperationLinksAsync(OperationLinkRequestDto input, CancellationToken cancellationToken);
+
     // Secili operasyon icin placeholder-isaretli request ornegi uretir.
     Task<RequestExampleDto> BuildRequestExampleAsync(OperationQueryDto input, CancellationToken cancellationToken);
 

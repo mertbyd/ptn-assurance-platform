@@ -10,6 +10,10 @@ using CheckerDerivabilityRequestDto = Ptn.ApiContractChecker.Dtos.Conformance.As
 using CheckerDerivabilityResultDto = Ptn.ApiContractChecker.Dtos.Conformance.AssertionDerivabilityResultDto;
 using CheckerFieldBindingDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationFieldBindingDto;
 using CheckerOperationBindingDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationBindingResultDto;
+using CheckerOperationLinkCandidateDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkCandidateDto;
+using CheckerOperationLinkParameterBindingDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkParameterBindingDto;
+using CheckerOperationLinkRequestDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkRequestDto;
+using CheckerOperationLinkResultDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkResultDto;
 using CheckerOperationQueryDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationSelectionDto;
 using CheckerOperationSuggestionDto = Ptn.ApiContractChecker.Dtos.Conformance.OperationBindingSuggestionDto;
 using CheckerRequestExampleDto = Ptn.ApiContractChecker.Dtos.Conformance.RequestExampleDto;
@@ -25,6 +29,8 @@ public partial class ApiOracleMapper
 {
     public partial OperationQuery Map(OperationQueryDto input);
     public partial OperationBindingDto Map(OperationBinding input);
+    public partial OperationLinkRequest Map(OperationLinkRequestDto input);
+    public partial OperationLinkResultDto Map(OperationLinkResult input);
     public partial RequestExampleDto Map(RequestExample input);
     public partial DerivabilityRequest Map(DerivabilityRequestDto input);
     public partial DerivabilityRequestDto MapToDto(DerivabilityRequest input);
@@ -35,9 +41,13 @@ public partial class ApiOracleMapper
     public partial ConformanceResultDto Map(ConformanceResult input);
     public partial ConformanceResult MapResult(ConformanceResultDto input);
     public partial CheckerOperationQueryDto Map(ApiOperationRequest input);
+    public partial CheckerOperationLinkRequestDto Map(OperationLinkRequest input);
     public partial CheckerDerivabilityRequestDto Map(DerivabilityRequest input);
     public partial CheckerResponseObservationDto Map(ApiResponseRequest input);
     public partial OperationBinding Map(CheckerOperationBindingDto input);
+    public partial OperationLinkResult Map(CheckerOperationLinkResultDto input);
+    public partial OperationLinkCandidate MapOperationLinkCandidate(CheckerOperationLinkCandidateDto input);
+    public partial OperationLinkParameterBinding MapOperationLinkParameterBinding(CheckerOperationLinkParameterBindingDto input);
     public partial RequestExample Map(CheckerRequestExampleDto input);
     public partial DerivabilityResult Map(CheckerDerivabilityResultDto input);
     public partial ConformanceResult Map(CheckerConformanceResultDto input);

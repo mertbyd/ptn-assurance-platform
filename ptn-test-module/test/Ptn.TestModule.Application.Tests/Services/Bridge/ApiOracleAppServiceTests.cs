@@ -43,6 +43,7 @@ public class ApiOracleAppServiceTests
             service,
             new ApiOracleManager(),
             new OperationQueryDtoValidator(),
+            new OperationLinkRequestDtoValidator(),
             new DerivabilityRequestDtoValidator(),
             new ResponseObservationDtoValidator());
 
@@ -57,5 +58,56 @@ public class ApiOracleAppServiceTests
 
         result.OutcomeCode.ShouldBe(PtnOutcomeCodes.Passed);
         result.Suggestions.Single().Score.ShouldBe(95);
+    }
+
+    // OpenAPI links adaylarini kaynak sozlugu ve parametre eslemeleriyle Bridge'e tasir.
+    [Fact]
+    public async Task Should_expose_operation_link_candidates_without_guessing()
+    {
+        var service = Substitute.For<IResponseConformanceAppService>();
+        service.SuggestOperationLinksAsync(
+            Arg.Any<Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkRequestDto>()).Returns(
+            new Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkResultDto
+            {
+                OutcomeCode = ConformanceOutcomeCodes.Passed,
+                Candidates =
+                [
+                    new Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkCandidateDto
+                    {
+                        TargetOperationId = "get-order",
+                        SourceCode = OperationLinkSourceCodes.DeclaredLink,
+                        Score = 100,
+                        RequiresHumanApproval = true,
+                        ParameterMap =
+                        [
+                            new Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkParameterBindingDto
+                            {
+                                SourceResponsePointer = "/body/orderId",
+                                TargetParameterName = "orderId"
+                            }
+                        ]
+                    }
+                ]
+            });
+        var oracleService = new ApiOracleAppService(
+            service,
+            new ApiOracleManager(),
+            new OperationQueryDtoValidator(),
+            new OperationLinkRequestDtoValidator(),
+            new DerivabilityRequestDtoValidator(),
+            new ResponseObservationDtoValidator());
+
+        var result = await oracleService.SuggestOperationLinksAsync(
+            new Ptn.TestModule.Dtos.Bridge.Api.OperationLinkRequestDto
+            {
+                SnapshotId = System.Guid.NewGuid(),
+                SourceOperationId = "create-order"
+            },
+            CancellationToken.None);
+
+        result.OutcomeCode.ShouldBe(PtnOutcomeCodes.Passed);
+        result.Candidates.Single().SourceCode.ShouldBe(PtnOperationLinkSourceCodes.DeclaredLink);
+        result.Candidates.Single().ParameterMap.Single().TargetParameterName.ShouldBe("orderId");
+        result.Candidates.Single().RequiresHumanApproval.ShouldBeTrue();
     }
 }

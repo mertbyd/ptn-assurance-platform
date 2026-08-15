@@ -101,6 +101,7 @@ public class CorrelationEchoTests
             checker,
             new ApiOracleManager(),
             new OperationQueryDtoValidator(),
+            new OperationLinkRequestDtoValidator(),
             new DerivabilityRequestDtoValidator(),
             new ResponseObservationDtoValidator());
 

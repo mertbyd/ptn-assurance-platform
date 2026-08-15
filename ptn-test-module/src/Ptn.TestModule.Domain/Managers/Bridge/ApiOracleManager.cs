@@ -8,6 +8,7 @@ using Ptn.TestModule.ExceptionCodes.Bridge;
 using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Api;
 using Volo.Abp;
+using CheckerOperationLinkSourceCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.OperationLinkSourceCodes;
 
 namespace Ptn.TestModule.Managers.Bridge;
 
@@ -29,6 +30,15 @@ public class ApiOracleManager : TestModuleDomainService
             Path = query.Path,
             VerbosityCode = PtnApiOracleRequestCodes.MinimalVerbosity
         };
+    }
+
+    // Operation link istegini checker cagrisi oncesinde iptal kapisindan gecirir.
+    public OperationLinkRequest PrepareOperationLinkRequest(
+        OperationLinkRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return request;
     }
 
     // Response gozlemini checker'in runtime profil koduyla tamamlar.
@@ -65,6 +75,15 @@ public class ApiOracleManager : TestModuleDomainService
     public OperationBinding Normalize(OperationBinding result)
     {
         result.OutcomeCode = NormalizeOutcome(result.OutcomeCode);
+        return result;
+    }
+
+    // Operation link sonucunu tek outcome ve kaynak sozlugune normalize eder.
+    public OperationLinkResult Normalize(OperationLinkResult result)
+    {
+        result.OutcomeCode = NormalizeOutcome(result.OutcomeCode);
+        result.Candidates.ForEach(candidate =>
+            candidate.SourceCode = NormalizeOperationLinkSource(candidate.SourceCode));
         return result;
     }
 
@@ -111,6 +130,13 @@ public class ApiOracleManager : TestModuleDomainService
             : throw new BusinessException(TestModuleBridgeErrorCodes.CheckerCallFailed)
                 .WithData(nameof(outcomeCode), outcomeCode);
 
+    // Checker operation link kaynagini Bridge'in kapali kaynak sozlugune cevirir.
+    private static string NormalizeOperationLinkSource(string sourceCode) =>
+        OperationLinkSourceMap.TryGetValue(sourceCode, out var normalized)
+            ? normalized
+            : throw new BusinessException(TestModuleBridgeErrorCodes.CheckerCallFailed)
+                .WithData(nameof(sourceCode), sourceCode);
+
     private static readonly IReadOnlyDictionary<string, string> OutcomeMap =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -128,5 +154,13 @@ public class ApiOracleManager : TestModuleDomainService
             [AssertionDerivabilityCodes.Derivable] = PtnOutcomeCodes.Derivable,
             [AssertionDerivabilityCodes.AssertionNotInContract] = PtnOutcomeCodes.AssertionNotInContract,
             [AssertionDerivabilityCodes.DerivableButOptional] = PtnOutcomeCodes.DerivableButOptional
+        };
+
+    private static readonly IReadOnlyDictionary<string, string> OperationLinkSourceMap =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [CheckerOperationLinkSourceCodes.DeclaredLink] = PtnOperationLinkSourceCodes.DeclaredLink,
+            [CheckerOperationLinkSourceCodes.SchemaMatch] = PtnOperationLinkSourceCodes.SchemaMatch,
+            [CheckerOperationLinkSourceCodes.LocationHeader] = PtnOperationLinkSourceCodes.LocationHeader
         };
 }
