@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Ptn.TestModule.Constants.Runs.Lookups;
+using Ptn.TestModule.Interface.Runs;
 using Ptn.TestModule.Managers.Runs;
 using Ptn.TestModule.Mappers.Bridge;
 using Ptn.TestModule.Models.Bridge;
@@ -13,7 +14,7 @@ namespace Ptn.TestModule.Services.Runs;
 
 // islevi: HAR'in her adimini mevcut Bridge yuzeyleri uzerinden hakemlere dagitir ve teshis cagrisini yapar.
 // sistemdeki gorevi: Uzak checker cagrilarini UoW disinda sirayla yapan ince orkestrasyondur; her karar Manager'dadir (ADR-0015 §B/§F).
-public sealed class OracleDispatchService : ITransientDependency
+public sealed class OracleDispatchService : IOracleDispatchPort, ITransientDependency
 {
     // Bridge DTO'lari ile domain modelleri arasindaki compile-time eslemeleri saglar.
     private static readonly ApiOracleMapper ApiMapper = new();

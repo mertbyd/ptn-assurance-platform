@@ -30,8 +30,8 @@ public class ExecuteTestRunJob
     // HAR artefaktini kalici BLOB deposuna yazan sinirdir.
     private readonly IHarArtifactStore _harArtifactStore;
 
-    // HAR'i uc hakeme dagitip bulgulari toplayan Application servisidir.
-    private readonly OracleDispatchService _dispatchService;
+    // HAR'i uc hakeme dagitip bulgulari toplayan yargi siniridir.
+    private readonly IOracleDispatchPort _dispatchPort;
 
     // Adim hukumlerini ve beklenmeyen hatalari terminal hukme ceviren Manager'dir.
     private readonly RunOutcomeResolver _outcomeResolver;
@@ -41,7 +41,7 @@ public class ExecuteTestRunJob
         WorkflowRunPlanner planner,
         IWorkflowRunnerPort runnerPort,
         IHarArtifactStore harArtifactStore,
-        OracleDispatchService dispatchService,
+        IOracleDispatchPort dispatchPort,
         RunOutcomeResolver outcomeResolver,
         ICurrentTenant currentTenant,
         IUnitOfWorkManager unitOfWorkManager,
@@ -52,7 +52,7 @@ public class ExecuteTestRunJob
         _planner = planner;
         _runnerPort = runnerPort;
         _harArtifactStore = harArtifactStore;
-        _dispatchService = dispatchService;
+        _dispatchPort = dispatchPort;
         _outcomeResolver = outcomeResolver;
     }
 
@@ -94,7 +94,7 @@ public class ExecuteTestRunJob
 
         var outcome = await ExecuteAsync(context);
         var harBlobName = await StoreHarAsync(context, outcome);
-        return await _dispatchService.JudgeAsync(context, outcome, harBlobName, JobCancellationToken);
+        return await _dispatchPort.JudgeAsync(context, outcome, harBlobName, JobCancellationToken);
     }
 
     // Belgeyi kabul kapisindan gecirip pinli runner surecinde icra eder.

@@ -26,15 +26,20 @@ public sealed class ProcessBoundaryService : IProcessBoundaryPort, ITransientDep
     {
         ArgumentNullException.ThrowIfNull(plan);
         var workspace = CreateWorkspace(plan);
+        ProcessExecutionOutcome outcome;
         try
         {
             await WriteInputFilesAsync(workspace, plan, cancellationToken);
-            return await RunAsync(workspace, plan, cancellationToken);
+            outcome = await RunAsync(workspace, plan, cancellationToken);
         }
-        finally
+        catch (Exception primary)
         {
-            DeleteWorkspace(workspace);
+            TryDeleteWorkspace(workspace, primary);
+            throw;
         }
+
+        DeleteWorkspace(workspace);
+        return outcome;
     }
 
     // Her cagri icin tahmin edilemez ve izole bir gecici klasor kokleri olusturur.
@@ -198,12 +203,35 @@ public sealed class ProcessBoundaryService : IProcessBoundaryPort, ITransientDep
         return outputs;
     }
 
-    // Her cagrinin gecici belge ve artefakt klasorunu geri birakir.
+    // Her cagrinin gecici belge ve artefakt klasorunu geri birakir; kosum basariliysa temizlik kusuru yutulmaz.
     private static void DeleteWorkspace(string workspace)
     {
         if (Directory.Exists(workspace))
         {
             Directory.Delete(workspace, recursive: true);
         }
+    }
+
+    // Timeout sonrasi oldurulen process handle'i birakmamis olabilir; temizlik kusuru asil hatayi maskelemeden kanit kanalina yazilir.
+    private static void TryDeleteWorkspace(string workspace, Exception primary)
+    {
+        try
+        {
+            DeleteWorkspace(workspace);
+        }
+        catch (IOException exception)
+        {
+            RecordCleanupFailure(primary, exception);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            RecordCleanupFailure(primary, exception);
+        }
+    }
+
+    // Temizlik kusurunu yutmadan, asil hatanin kararli kanit anahtarina baglar.
+    private static void RecordCleanupFailure(Exception primary, Exception cleanupFailure)
+    {
+        primary.Data[ProcessBoundaryConsts.CleanupFailureDataKey] = cleanupFailure.ToString();
     }
 }

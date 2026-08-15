@@ -7,12 +7,12 @@ using Nexum.Abp.Foundation.Querying;
 using Ptn.TestModule.Dtos.Catalog;
 using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Interface.Catalog;
+using Ptn.TestModule.Interface.Compilation;
 using Ptn.TestModule.Managers.Catalog;
 using Ptn.TestModule.Mappers.Catalog;
 using Ptn.TestModule.Models.Catalog;
 using Ptn.TestModule.Permissions;
 using Ptn.TestModule.Services.Bridge;
-using Ptn.TestModule.Services.Compilation;
 using Volo.Abp;
 using Volo.Abp.Users;
 
@@ -36,7 +36,7 @@ public class TestScenarioAppService : BaseApplicationService<
     private static readonly TestScenarioMapper Mapper = new();
     private readonly ScenarioPublicationGateManager _publicationGateManager;
     private readonly ISchemaKnowledgeAppService _schemaKnowledgeAppService;
-    private readonly ScenarioCompilationService _compilationService;
+    private readonly IScenarioCompilationPort _compilationPort;
 
     protected override string GetPolicyName => TestModulePermissions.Scenarios.Default;
     protected override string CreatePolicyName => TestModulePermissions.Scenarios.Create;
@@ -47,11 +47,11 @@ public class TestScenarioAppService : BaseApplicationService<
     public TestScenarioAppService(
         ScenarioPublicationGateManager publicationGateManager,
         ISchemaKnowledgeAppService schemaKnowledgeAppService,
-        ScenarioCompilationService compilationService)
+        IScenarioCompilationPort compilationPort)
     {
         _publicationGateManager = publicationGateManager;
         _schemaKnowledgeAppService = schemaKnowledgeAppService;
-        _compilationService = compilationService;
+        _compilationPort = compilationPort;
     }
 
     // Draft senaryo surumunu insan onayi bekleyen duruma tasiyip kaydeder.
@@ -72,7 +72,7 @@ public class TestScenarioAppService : BaseApplicationService<
     {
         await CheckPolicyAsync(TestModulePermissions.Scenarios.Publish);
         var entity = await Manager.EnsureExistsAsync(id, cancellationToken: CancellationTokenProvider.Token);
-        var evidence = await _compilationService.CompileAsync(entity, CancellationTokenProvider.Token);
+        var evidence = await _compilationPort.CompileAsync(entity, CancellationTokenProvider.Token);
         return Mapper.Map(_publicationGateManager.Evaluate(entity, evidence));
     }
 
@@ -83,7 +83,7 @@ public class TestScenarioAppService : BaseApplicationService<
         await CheckPolicyAsync(TestModulePermissions.Scenarios.Publish);
         var entity = await Manager.EnsureExistsAsync(id, cancellationToken: CancellationTokenProvider.Token);
         await Manager.BindApprovalAsync(entity, CurrentUser.GetId(), Clock.Now, CancellationTokenProvider.Token);
-        var evidence = await _compilationService.CompileAsync(entity, CancellationTokenProvider.Token);
+        var evidence = await _compilationPort.CompileAsync(entity, CancellationTokenProvider.Token);
         var decision = _publicationGateManager.Evaluate(entity, evidence);
         var published = await Manager.PublishAsync(entity, decision, evidence, CancellationTokenProvider.Token);
         var saved = await Repository.UpdateAsync(

@@ -12,4 +12,7 @@ public static class ProcessBoundaryConsts
 
     /// <summary>Tum gecici calisma klasorlerinin sistem temp altindaki ortak kokudur.</summary>
     public const string TempRootName = "ptn-test-module";
+
+    /// <summary>Asil hatayi maskelemeden tasinan calisma klasoru temizlik kusurunun kanit anahtaridir.</summary>
+    public const string CleanupFailureDataKey = "TestModule.ProcessBoundary:WorkspaceCleanupFailed";
 }

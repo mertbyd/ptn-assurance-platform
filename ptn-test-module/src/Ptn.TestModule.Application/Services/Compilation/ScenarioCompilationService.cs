@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Managers.Bridge.Profiles;
+using Ptn.TestModule.Interface.Compilation;
 using Ptn.TestModule.Managers.Compilation;
 using Ptn.TestModule.Mappers.Bridge;
 using Ptn.TestModule.Models.Bridge;
@@ -18,7 +19,7 @@ namespace Ptn.TestModule.Services.Compilation;
 
 // islevi: Muhurlu malzemeden profili cozer, senaryoyu derler ve iki turetilebilirlik yuzeyine sorar.
 // sistemdeki gorevi: Yayin kanitinin tamamini sunucuda ureten duz Application orkestrasyonudur; karar vermez (ADR-0015 §C).
-public sealed class ScenarioCompilationService : ITransientDependency
+public sealed class ScenarioCompilationService : IScenarioCompilationPort, ITransientDependency
 {
     private static readonly DatabaseOracleMapper DatabaseMapper = new();
     private static readonly ApiOracleMapper ApiMapper = new();
