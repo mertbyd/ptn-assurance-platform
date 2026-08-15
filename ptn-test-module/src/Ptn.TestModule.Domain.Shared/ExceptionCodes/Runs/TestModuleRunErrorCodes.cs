@@ -76,6 +76,12 @@ public static class TestModuleRunErrorCodes
     /// <summary>Terminal denemesi bulunmayan kosumun ihrac edilmeye calisildigini bildirir.</summary>
     public const string ExportRequiresTerminalResult = $"{Prefix}:ExportRequiresTerminalResult";
 
+    /// <summary>Senaryonun son kullanma tarihi olmadan karantinaya alinmaya calisildigini bildirir.</summary>
+    public const string QuarantineRequiresExpiry = $"{Prefix}:QuarantineRequiresExpiry";
+
+    /// <summary>Karantina bitisinin gecmiste veya azami suresin otesinde verildigini bildirir.</summary>
+    public const string QuarantineWindowInvalid = $"{Prefix}:QuarantineWindowInvalid";
+
     /// <summary>Belgenin desteklenen Arazzo surumunu tasimadigini bildirir.</summary>
     public const string ArazzoVersionUnsupported = $"{Prefix}:ArazzoVersionUnsupported";
 

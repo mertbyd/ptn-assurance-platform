@@ -14,6 +14,7 @@
     "Permission:Scenarios.Delete": "Delete test scenarios",
     "Permission:Scenarios.Publish": "Publish test scenarios",
     "Permission:Scenarios.Approve": "Approve test scenarios",
+    "Permission:Scenarios.Quarantine": "Quarantine test scenarios for a bounded period",
     "Permission:Runs": "Test runs",
     "Permission:Runs.View": "Read test runs and results",
     "Permission:Runs.Trigger": "Create test runs",

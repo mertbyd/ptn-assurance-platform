@@ -124,4 +124,29 @@ public class TestScenarioController : TestModuleController
         var result = await AppService.DeprecateAsync(id);
         return result;
     }
+
+    /// <summary>Senaryoyu son kullanma tarihi zorunlu olacak sekilde karantinaya alir.</summary>
+    /// <param name="id">Karantinaya alinacak senaryo kimligi.</param>
+    /// <param name="input">Karantina bitisi ve gerekcesi.</param>
+    /// <returns>Ev standardi icinde karantinaya alinmis senaryo.</returns>
+    [HttpPost(TestScenarioRoutes.Quarantine)]
+    [Authorize(TestModulePermissions.Scenarios.Quarantine)]
+    public virtual async Task<Result<TestScenarioDto>> Quarantine(
+        Guid id,
+        [FromBody] QuarantineTestScenarioDto input)
+    {
+        var result = await AppService.QuarantineAsync(id, input);
+        return result;
+    }
+
+    /// <summary>Suresi dolmus karantinayi temizler; sure dolmamissa senaryo karantinada kalir.</summary>
+    /// <param name="id">Karantinasi degerlendirilecek senaryo kimligi.</param>
+    /// <returns>Ev standardi icinde guncel senaryo.</returns>
+    [HttpPost(TestScenarioRoutes.ReleaseQuarantine)]
+    [Authorize(TestModulePermissions.Scenarios.Quarantine)]
+    public virtual async Task<Result<TestScenarioDto>> ReleaseQuarantine(Guid id)
+    {
+        var result = await AppService.ReleaseQuarantineAsync(id);
+        return result;
+    }
 }

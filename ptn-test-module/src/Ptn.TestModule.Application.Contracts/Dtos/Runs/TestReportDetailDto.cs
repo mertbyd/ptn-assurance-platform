@@ -10,4 +10,13 @@ public sealed class TestReportDetailDto
 
     /// <summary>Bulgulari ve diagnosis raporunu tasiyan en son terminal sonuctur; kosum terminale girmemisse null kalir.</summary>
     public TestRunResultDto? Result { get; set; }
+
+    /// <summary>En son denemenin terminal hukum kodudur.</summary>
+    public string? OutcomeCode { get; set; }
+
+    /// <summary>Ayni trend kovasindaki bir onceki kosumun terminal hukum kodudur.</summary>
+    public string? PreviousOutcomeCode { get; set; }
+
+    /// <summary>Onarim sonrasi ilk yesil kosumu isaretler.</summary>
+    public bool IsHealed { get; set; }
 }

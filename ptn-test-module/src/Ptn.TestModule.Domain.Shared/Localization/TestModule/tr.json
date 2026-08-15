@@ -14,6 +14,7 @@
     "Permission:Scenarios.Delete": "Test senaryosu sil",
     "Permission:Scenarios.Publish": "Test senaryosu yayinla",
     "Permission:Scenarios.Approve": "Test senaryosu onayla",
+    "Permission:Scenarios.Quarantine": "Test senaryosunu sinirli sureyle karantinaya al",
     "Permission:Runs": "Test kosumlari",
     "Permission:Runs.View": "Test kosumlarini ve sonuclarini oku",
     "Permission:Runs.Trigger": "Test kosumu olustur",

@@ -94,7 +94,7 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
     {
         await CheckPolicyAsync(TestModulePermissions.Runs.View);
         var report = await _testRunRepository.GetReportAsync(id, _cancellationTokenProvider.Token);
-        return Mapper.Map(_testRunResultManager.EnsureReportFound(report, id));
+        return Mapper.Map(TestRunResultManager.MarkHealing(_testRunResultManager.EnsureReportFound(report, id)));
     }
 
     /// <summary>Terminal sonucun ihracat artefakt baglarini getirir; agir cikti satirda tutulmaz.</summary>

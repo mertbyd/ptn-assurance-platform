@@ -70,7 +70,6 @@ public class RunReportExportService : TestModuleAppService, IRunReportExportServ
         {
             await _runArtifactStore.SaveAsync(artifact.BlobName, artifact.Content, cancellationToken);
         }
-
         var links = RunExportManager.ToLinks(artifacts);
         TestRunResultManager.AttachArtifactLinks(result, links);
         await _testRunResultRepository.UpdateAsync(result, autoSave: true, cancellationToken: cancellationToken);

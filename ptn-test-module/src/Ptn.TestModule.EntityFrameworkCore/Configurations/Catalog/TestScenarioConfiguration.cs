@@ -44,6 +44,10 @@ public sealed class TestScenarioConfiguration : IEntityTypeConfiguration<TestSce
             .HasDatabaseName(TestScenarioConsts.ContentIndexName);
         builder.HasIndex(entity => entity.StateId)
             .HasDatabaseName(TestScenarioConsts.StateIndexName);
+        builder.Property(entity => entity.QuarantineReason)
+            .HasMaxLength(TestScenarioConsts.MaxQuarantineReasonLength);
+        builder.HasIndex(entity => entity.QuarantineUntil)
+            .HasDatabaseName(TestScenarioConsts.QuarantineIndexName);
         builder.HasOne<TestScenarioState>()
             .WithMany()
             .HasForeignKey(entity => entity.StateId)

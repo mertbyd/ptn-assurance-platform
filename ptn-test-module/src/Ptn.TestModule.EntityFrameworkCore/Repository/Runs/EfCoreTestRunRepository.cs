@@ -114,15 +114,68 @@ public class EfCoreTestRunRepository
             return null;
         }
 
+        var result = await dbContext.Set<TestRunResult>()
+            .Include(entity => entity.Findings)
+            .Where(entity => entity.TestRunId == id)
+            .OrderByDescending(entity => entity.Attempt)
+            .FirstOrDefaultAsync(token);
+
         return new TestRunReport
         {
             Run = run,
-            Result = await dbContext.Set<TestRunResult>()
-                .Include(entity => entity.Findings)
-                .Where(entity => entity.TestRunId == id)
-                .OrderByDescending(entity => entity.Attempt)
-                .FirstOrDefaultAsync(token)
+            Result = result,
+            OutcomeCode = await ReadOutcomeCodeAsync(dbContext, result, token),
+            PreviousOutcomeCode = await ReadPreviousOutcomeCodeAsync(dbContext, run, token)
         };
+    }
+
+    // Terminal denemenin lookup kimligini kararli hukum koduna cevirir.
+    /// <summary>Verilen sonucun terminal hukum kodunu getirir.</summary>
+    private static async Task<string?> ReadOutcomeCodeAsync(
+        TestModuleDbContext dbContext,
+        TestRunResult? result,
+        CancellationToken cancellationToken)
+    {
+        if (result is null)
+        {
+            return null;
+        }
+
+        return await dbContext.Set<TestOutcomeStatus>()
+            .Where(outcome => outcome.Id == result.OutcomeStatusId)
+            .Select(outcome => outcome.Code)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    // Ayni trend kovasindaki bir onceki kosumun terminal hukmunu tek sorguda getirir.
+    /// <summary>Ayni history kovasindaki onceki kosumun terminal hukum kodunu getirir.</summary>
+    private static async Task<string?> ReadPreviousOutcomeCodeAsync(
+        TestModuleDbContext dbContext,
+        TestRun run,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(run.HistoryId))
+        {
+            return null;
+        }
+
+        return await dbContext.Set<TestRun>()
+            .Where(previous => previous.HistoryId == run.HistoryId &&
+                               previous.Id != run.Id &&
+                               previous.CreationTime < run.CreationTime)
+            .OrderByDescending(previous => previous.CreationTime)
+            .Join(
+                dbContext.Set<TestRunResult>(),
+                previous => previous.Id,
+                previousResult => previousResult.TestRunId,
+                (previous, previousResult) => previousResult)
+            .OrderByDescending(previousResult => previousResult.Attempt)
+            .Join(
+                dbContext.Set<TestOutcomeStatus>(),
+                previousResult => previousResult.OutcomeStatusId,
+                outcome => outcome.Id,
+                (previousResult, outcome) => outcome.Code)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     // Ortam ve aktif durum kumesini SQL Any sorgusuyla kontrol eder.

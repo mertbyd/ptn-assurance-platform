@@ -12,4 +12,13 @@ public class TestRunReport
 
     /// <summary>Kosumun en son terminal denemesidir; henuz terminale girmemisse null kalir.</summary>
     public TestRunResult? Result { get; set; }
+
+    /// <summary>En son denemenin cozulmus terminal hukum kodudur.</summary>
+    public string? OutcomeCode { get; set; }
+
+    /// <summary>Ayni trend kovasindaki bir onceki kosumun terminal hukum kodudur.</summary>
+    public string? PreviousOutcomeCode { get; set; }
+
+    /// <summary>Onarim sonrasi ilk yesil kosumu isaretler.</summary>
+    public bool IsHealed { get; set; }
 }

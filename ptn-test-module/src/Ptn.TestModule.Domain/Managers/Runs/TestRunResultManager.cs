@@ -33,6 +33,24 @@ public class TestRunResultManager : FoundationManager<TestRunResult, Guid>
         return report ?? throw new EntityNotFoundException(typeof(TestRun), runId);
     }
 
+    // Onarim sonrasi ilk yesil kosumu isaretler; ikinci yesil kosum artik healed sayilmaz.
+    /// <summary>Raporun healed etiketini onceki ve simdiki hukumden hesaplar.</summary>
+    public static TestRunReport MarkHealing(TestRunReport report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        report.IsHealed = IsHealed(report.OutcomeCode, report.PreviousOutcomeCode);
+        return report;
+    }
+
+    // Yesile donen ilk kosumu tanir; onceki kosum yoksa veya zaten yesilse healed degildir.
+    /// <summary>Verilen hukum ciftinin onarim sonrasi ilk yesil kosum olup olmadigini bildirir.</summary>
+    public static bool IsHealed(string? outcomeCode, string? previousOutcomeCode)
+    {
+        return outcomeCode == TestOutcomeStatusCodes.Passed &&
+               previousOutcomeCode is not null &&
+               previousOutcomeCode != TestOutcomeStatusCodes.Passed;
+    }
+
     // Repository sonucu bulunamazsa sonuc kimligiyle kararli not-found firlatir.
     public TestRunResult EnsureFound(TestRunResult? entity, Guid id)
     {
