@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.Constants.Runs.Lookups;
 using Ptn.TestModule.Data;
 using Ptn.TestModule.Dtos.Runs;
@@ -118,6 +119,7 @@ public class TestRunReportTests : TestModuleEntityFrameworkCoreTestBase
             resultId,
             1,
             tenantId: null,
+            new string('d', TestResultFindingConsts.FingerprintLength),
             new TestResultFindingModel
             {
                 Ordinal = 1,

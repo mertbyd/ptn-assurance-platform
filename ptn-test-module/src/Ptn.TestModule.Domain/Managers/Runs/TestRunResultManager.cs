@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -230,10 +231,26 @@ public class TestRunResultManager : FoundationManager<TestRunResult, Guid>
                 testRunResultId,
                 findings.Count + 1,
                 CurrentTenant.Id,
+                CreateFingerprint(normalized),
                 normalized));
         }
 
         return findings;
+    }
+
+    // Bulgunun kimligini kaynak, tur, kural ve konumdan turetip kalici parmak izine cevirir.
+    /// <summary>Bir bulgunun kararli SHA-256 parmak izini uretir.</summary>
+    public static string CreateFingerprint(TestResultFindingModel model)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        var canonical = string.Join(
+            TestResultFindingConsts.FingerprintSeparator,
+            model.SourceCheckerCode,
+            model.ComparisonKindCode,
+            model.RuleRef ?? string.Empty,
+            model.Location);
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)))
+            .ToLowerInvariant();
     }
 
     // Tek bulgunun acik uclu kod ve metin alanlarini guvenli DBML sinirlarina getirir.

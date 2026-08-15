@@ -118,7 +118,10 @@ public class RunExportManagerTests
     [Fact]
     public void Should_reject_a_run_without_a_terminal_attempt()
     {
-        var manager = new RunExportManager(new CtrfReportManager(), new JUnitReportManager());
+        var manager = new RunExportManager(
+            new CtrfReportManager(),
+            new JUnitReportManager(),
+            new SarifReportManager());
         var source = new RunExportSource { Run = CreateRun(), Attempts = [] };
 
         var exception = Should.Throw<BusinessException>(
@@ -131,16 +134,134 @@ public class RunExportManagerTests
     [Fact]
     public void Should_create_one_named_artifact_per_format()
     {
-        var manager = new RunExportManager(new CtrfReportManager(), new JUnitReportManager());
+        var manager = new RunExportManager(
+            new CtrfReportManager(),
+            new JUnitReportManager(),
+            new SarifReportManager());
         var source = CreateSource(TestOutcomeStatusCodes.Passed);
 
         var artifacts = manager.CreateArtifacts(source, attempt: 1);
         var links = RunExportManager.ToLinks(artifacts);
 
-        artifacts.Count.ShouldBe(2);
+        artifacts.Count.ShouldBe(3);
         links.CtrfBlobName.ShouldEndWith(RunArtifactConsts.FileNames.Ctrf);
         links.JUnitBlobName.ShouldEndWith(RunArtifactConsts.FileNames.JUnit);
-        links.SarifBlobName.ShouldBeNull();
+        links.SarifBlobName.ShouldEndWith(RunArtifactConsts.FileNames.Sarif);
+    }
+
+    // Ayni kosumun iki ayri ihracati bayt-es SARIF uretmelidir.
+    [Fact]
+    public void Should_produce_byte_identical_sarif_for_the_same_run()
+    {
+        var source = CreateSourceWithFinding(TestOutcomeStatusCodes.Failed);
+
+        var first = new SarifReportManager().Create(source);
+        var second = new SarifReportManager().Create(source);
+
+        Sha256(first).ShouldBe(Sha256(second));
+    }
+
+    // Bulgu ureten hukumler error seviyesine, yesil ve atlanan hukum sonuca gitmemelidir.
+    [Theory]
+    [InlineData(TestOutcomeStatusCodes.Failed, SarifReportConsts.Level.Error)]
+    [InlineData(TestOutcomeStatusCodes.Broken, SarifReportConsts.Level.Error)]
+    [InlineData(TestOutcomeStatusCodes.Inconclusive, SarifReportConsts.Level.Error)]
+    public void Should_map_finding_bearing_outcomes_to_the_sarif_error_level(string outcomeCode, string expected)
+    {
+        SarifReportManager.ResolveLevel(outcomeCode).ShouldBe(expected);
+    }
+
+    // Yesil ve bilerek atlanmis kosum SARIF sonucu uretmemelidir.
+    [Theory]
+    [InlineData(TestOutcomeStatusCodes.Passed)]
+    [InlineData(TestOutcomeStatusCodes.Skipped)]
+    public void Should_not_emit_a_sarif_result_for_a_green_or_skipped_attempt(string outcomeCode)
+    {
+        var source = CreateSourceWithFinding(outcomeCode);
+
+        var json = new SarifReportManager().Create(source);
+
+        SarifReportManager.ResolveLevel(outcomeCode).ShouldBeNull();
+        json.ShouldContain($"\"{SarifReportConsts.Fields.Results}\":[]");
+    }
+
+    // Parmak izi satirda duran degeri birebir tasimali, ihracatta yeniden hesaplanmamalidir.
+    [Fact]
+    public void Should_carry_the_stored_finding_fingerprint_into_partial_fingerprints()
+    {
+        var source = CreateSourceWithFinding(TestOutcomeStatusCodes.Failed);
+        var stored = source.Attempts[0].Findings[0].Fingerprint;
+
+        var json = new SarifReportManager().Create(source);
+
+        json.ShouldContain($"\"{SarifReportConsts.FingerprintKey}\":\"{stored}\"");
+    }
+
+    // Ayni kaynak, tur, kural ve konum ayni parmak izini vermelidir.
+    [Fact]
+    public void Should_derive_a_stable_fingerprint_from_the_finding_identity()
+    {
+        var model = new TestResultFindingModel
+        {
+            SourceCheckerCode = TestSourceCheckerCodes.ApiContract,
+            ComparisonKindCode = "ResponseSchemaViolation",
+            RuleRef = "BR-015",
+            Location = "/orders/1#/data/total"
+        };
+
+        var first = TestRunResultManager.CreateFingerprint(model);
+        var second = TestRunResultManager.CreateFingerprint(model);
+
+        first.ShouldBe(second);
+        first.ShouldMatch(TestRunConsts.FingerprintPattern);
+    }
+
+    // Konumu farkli olan bulgu farkli parmak izi almalidir.
+    [Fact]
+    public void Should_separate_fingerprints_for_different_finding_locations()
+    {
+        var first = TestRunResultManager.CreateFingerprint(new TestResultFindingModel
+        {
+            SourceCheckerCode = TestSourceCheckerCodes.ApiContract,
+            ComparisonKindCode = "ResponseSchemaViolation",
+            Location = "/orders/1"
+        });
+        var second = TestRunResultManager.CreateFingerprint(new TestResultFindingModel
+        {
+            SourceCheckerCode = TestSourceCheckerCodes.ApiContract,
+            ComparisonKindCode = "ResponseSchemaViolation",
+            Location = "/orders/2"
+        });
+
+        first.ShouldNotBe(second);
+    }
+
+    // Verilen hukumde tek bulgusu olan ihracat girdisi kurar.
+    private static RunExportSource CreateSourceWithFinding(string outcomeCode)
+    {
+        var source = CreateSource(outcomeCode);
+        var model = new TestResultFindingModel
+        {
+            Ordinal = 1,
+            SourceCheckerCode = TestSourceCheckerCodes.ApiContract,
+            ComparisonKindCode = "ResponseSchemaViolation",
+            RuleRef = "BR-015",
+            Location = "/orders/1#/data/total",
+            Message = "total did not match the contract",
+            ExpectedValue = "1",
+            ObservedValue = "2"
+        };
+        source.Attempts[0].Findings =
+        [
+            new TestResultFinding(
+                Guid.Parse("66666666-6666-6666-6666-666666666666"),
+                Guid.Parse("77777777-7777-7777-7777-777777777777"),
+                ordinal: 1,
+                tenantId: null,
+                TestRunResultManager.CreateFingerprint(model),
+                model)
+        ];
+        return source;
     }
 
     // Verilen hukumlerden sirali denemeler tasiyan ihracat girdisi kurar.
@@ -161,7 +282,7 @@ public class RunExportManagerTests
             });
         }
 
-        return new RunExportSource { Run = CreateRun(), Attempts = attempts };
+        return new RunExportSource { Run = CreateRun(), Attempts = attempts.AsReadOnly() };
     }
 
     // Ihracat testleri icin kararli alanlari olan bir kosum kabugu kurar.

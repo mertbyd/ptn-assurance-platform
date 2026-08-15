@@ -23,12 +23,19 @@ public class RunExportManager : TestModuleDomainService
     /// <summary>JUnit belgesini ureten format sahibidir.</summary>
     private readonly JUnitReportManager _jUnitReportManager;
 
+    /// <summary>SARIF belgesini ureten format sahibidir.</summary>
+    private readonly SarifReportManager _sarifReportManager;
+
     // Ihracati format sahiplerine baglar.
     /// <summary>Ihracat manager'ini format sahipleriyle kurar.</summary>
-    public RunExportManager(CtrfReportManager ctrfReportManager, JUnitReportManager jUnitReportManager)
+    public RunExportManager(
+        CtrfReportManager ctrfReportManager,
+        JUnitReportManager jUnitReportManager,
+        SarifReportManager sarifReportManager)
     {
         _ctrfReportManager = ctrfReportManager;
         _jUnitReportManager = jUnitReportManager;
+        _sarifReportManager = sarifReportManager;
     }
 
     // Ihracat girdisi bulunamazsa kosum kimligiyle kararli not-found firlatir.
@@ -57,7 +64,8 @@ public class RunExportManager : TestModuleDomainService
         return
         [
             CreateArtifact(source, attempt, RunArtifactFormatCodes.Ctrf, _ctrfReportManager.Create(source)),
-            CreateArtifact(source, attempt, RunArtifactFormatCodes.JUnit, _jUnitReportManager.Create(source))
+            CreateArtifact(source, attempt, RunArtifactFormatCodes.JUnit, _jUnitReportManager.Create(source)),
+            CreateArtifact(source, attempt, RunArtifactFormatCodes.Sarif, _sarifReportManager.Create(source))
         ];
     }
 
