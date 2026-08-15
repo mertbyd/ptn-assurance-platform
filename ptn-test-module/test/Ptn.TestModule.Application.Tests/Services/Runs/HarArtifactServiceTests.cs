@@ -4,9 +4,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
 using Ptn.TestModule.Constants.Runs;
+using Ptn.TestModule.Managers.Runs;
 using Ptn.TestModule.Services.Runs;
 using Shouldly;
 using Volo.Abp.BlobStoring;
+using Volo.Abp.Settings;
 using Xunit;
 
 namespace Ptn.TestModule.Application.Tests.Services.Runs;
@@ -25,7 +27,7 @@ public class HarArtifactServiceTests
         var factory = Substitute.For<IBlobContainerFactory>();
         factory.Create(Arg.Any<string>()).Returns(container);
 
-        _ = new HarArtifactService(factory);
+        _ = new HarArtifactService(factory, CreatePlanner());
 
         factory.Received(1).Create(HarArtifactConsts.ContainerName);
     }
@@ -51,7 +53,13 @@ public class HarArtifactServiceTests
         var container = CreateContainer([]);
         var factory = Substitute.For<IBlobContainerFactory>();
         factory.Create(HarArtifactConsts.ContainerName).Returns(container);
-        return new HarArtifactService(factory);
+        return new HarArtifactService(factory, CreatePlanner());
+    }
+
+    // Artefakt guard'larini gercek Manager uzerinden calistiran varsayilan planner'i kurar.
+    private static WorkflowRunPlanner CreatePlanner()
+    {
+        return new WorkflowRunPlanner(Substitute.For<ISettingProvider>());
     }
 
     // Container sozlesmesini bellekteki bir blob sozlugu uzerinde karsilar.

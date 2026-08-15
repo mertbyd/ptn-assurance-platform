@@ -8,6 +8,6 @@ public sealed class ProcessWorkspaceLayout
 {
     public string WorkspaceRoot { get; set; } = string.Empty;
     public IReadOnlyList<string> Directories { get; set; } = [];
-    public IReadOnlyDictionary<string, string> InputFiles { get; set; } = new Dictionary<string, string>();
-    public IReadOnlyDictionary<string, string> OutputFiles { get; set; } = new Dictionary<string, string>();
+    public IReadOnlyList<ProcessInputFile> InputFiles { get; set; } = [];
+    public IReadOnlyList<KeyValuePair<string, string>> OutputFiles { get; set; } = [];
 }

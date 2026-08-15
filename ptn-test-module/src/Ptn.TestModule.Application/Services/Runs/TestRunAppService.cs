@@ -94,7 +94,7 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
     {
         await CheckPolicyAsync(TestModulePermissions.Runs.View);
         var report = await _testRunRepository.GetReportAsync(id, _cancellationTokenProvider.Token);
-        return Mapper.Map(report ?? throw new EntityNotFoundException(typeof(TestRun), id));
+        return Mapper.Map(_testRunResultManager.EnsureReportFound(report, id));
     }
 
     /// <summary>Kimligi verilen terminal sonucu tum bulgulariyla getirir.</summary>
@@ -104,7 +104,7 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         var entity = await _testRunResultRepository.GetWithFindingsAsync(
             id,
             _cancellationTokenProvider.Token);
-        return Mapper.Map(entity ?? throw new EntityNotFoundException(typeof(Ptn.TestModule.Entities.Runs.TestRunResult), id));
+        return Mapper.Map(_testRunResultManager.EnsureFound(entity, id));
     }
 
     /// <summary>Tenant ortam ayarini snapshot'layip yeni Pending kosumu kalicilastirir.</summary>

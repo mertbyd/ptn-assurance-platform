@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.Interface.Runs;
+using Ptn.TestModule.Managers.Runs;
 using Volo.Abp.BlobStoring;
 using Volo.Abp.DependencyInjection;
 
@@ -15,11 +16,13 @@ public sealed class HarArtifactService : IHarArtifactStore, ITransientDependency
 {
     // HAR artefaktlarinin adiyla cozulmus BLOB Storing container'idir.
     private readonly IBlobContainer _blobContainer;
+    private readonly WorkflowRunPlanner _planner;
 
     // Artefakt sinirini Domain.Shared'daki container adina bir kez baglar.
-    public HarArtifactService(IBlobContainerFactory blobContainerFactory)
+    public HarArtifactService(IBlobContainerFactory blobContainerFactory, WorkflowRunPlanner planner)
     {
         _blobContainer = blobContainerFactory.Create(HarArtifactConsts.ContainerName);
+        _planner = planner;
     }
 
     // Manager'in urettigi blob adiyla artefakti yazar ve adi cagirana geri verir.
@@ -28,8 +31,7 @@ public sealed class HarArtifactService : IHarArtifactStore, ITransientDependency
         string harContent,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(blobName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(harContent);
+        _planner.EnsureArtifactIsValid(blobName, harContent);
         await _blobContainer.SaveAsync(
             blobName,
             Encoding.UTF8.GetBytes(harContent),
@@ -43,7 +45,7 @@ public sealed class HarArtifactService : IHarArtifactStore, ITransientDependency
         string blobName,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(blobName);
+        _planner.EnsureArtifactIsValid(blobName);
         var bytes = await _blobContainer.GetAllBytesOrNullAsync(blobName, cancellationToken);
         return bytes is null ? null : Encoding.UTF8.GetString(bytes);
     }
@@ -53,7 +55,7 @@ public sealed class HarArtifactService : IHarArtifactStore, ITransientDependency
         string blobName,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(blobName);
+        _planner.EnsureArtifactIsValid(blobName);
         return _blobContainer.DeleteAsync(blobName, cancellationToken);
     }
 }

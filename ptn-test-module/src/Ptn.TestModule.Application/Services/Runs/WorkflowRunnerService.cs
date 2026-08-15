@@ -2,13 +2,11 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Ptn.TestModule.Dtos.Runs;
-using Ptn.TestModule.ExceptionCodes.Runs;
 using Ptn.TestModule.Interface.Runs;
 using Ptn.TestModule.Interface.Shared;
 using Ptn.TestModule.Managers.Runs;
 using Ptn.TestModule.Mappers.Runs;
 using Ptn.TestModule.Models.Runs;
-using Volo.Abp;
 using Volo.Abp.DependencyInjection;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
@@ -39,7 +37,7 @@ public sealed class WorkflowRunnerService : IWorkflowRunnerPort, ITransientDepen
     // Belgeyi wire DTO'suna cozup domain modeline map eder ve olgu cikarimini Manager'a birakir.
     public WorkflowDocumentFacts ReadDocumentFacts(string document)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(document);
+        _planner.EnsureDocumentCanBeRead(document);
         try
         {
             return _planner.ReadFacts(Mapper.Map(
@@ -47,9 +45,8 @@ public sealed class WorkflowRunnerService : IWorkflowRunnerPort, ITransientDepen
         }
         catch (YamlException exception)
         {
-            throw new BusinessException(
-                TestModuleRunErrorCodes.ArazzoVersionUnsupported,
-                innerException: exception);
+            _planner.ThrowInvalidDocument(exception);
+            return default!;
         }
     }
 
@@ -58,7 +55,6 @@ public sealed class WorkflowRunnerService : IWorkflowRunnerPort, ITransientDepen
         WorkflowRunRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
         var plan = await _planner.CreatePlanAsync(request, cancellationToken);
         return _planner.Interpret(
             await _processBoundary.ExecuteAsync(plan.Process, cancellationToken),

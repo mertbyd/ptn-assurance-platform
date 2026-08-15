@@ -49,9 +49,9 @@ public class FailureDiagnosisAppService : TestModuleAppService, IFailureDiagnosi
                 options.IncludeRuleSets(PtnBridgeValidationRuleSets.Api);
             },
             cancellationToken);
-        cancellationToken.ThrowIfCancellationRequested();
         var request = Mapper.Map(input);
-        var source = await _apiDiagnosisService.DiagnoseAsync(Mapper.Map(_manager.CreateApiRequest(request)));
+        var source = await _apiDiagnosisService.DiagnoseAsync(
+            Mapper.Map(_manager.CreateApiRequest(request, cancellationToken)));
         return Mapper.Map(_manager.NormalizeApiReport(request, Mapper.Map(source)));
     }
 

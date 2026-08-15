@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Ptn.ApiContractChecker.Constants.Conformance.Lookups;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
@@ -15,8 +16,12 @@ namespace Ptn.TestModule.Managers.Bridge;
 public class ApiOracleManager : TestModuleDomainService
 {
     // Operasyon sorgusunu checker'in kapali verbosity koduyla tamamlar.
-    public ApiOperationRequest CreateOperationRequest(OperationQuery query) =>
-        new()
+    public ApiOperationRequest CreateOperationRequest(
+        OperationQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ApiOperationRequest
         {
             SnapshotId = query.SnapshotId,
             OperationId = query.OperationId,
@@ -24,10 +29,15 @@ public class ApiOracleManager : TestModuleDomainService
             Path = query.Path,
             VerbosityCode = PtnApiOracleRequestCodes.MinimalVerbosity
         };
+    }
 
     // Response gozlemini checker'in runtime profil koduyla tamamlar.
-    public ApiResponseRequest CreateResponseRequest(ResponseObservation observation) =>
-        new()
+    public ApiResponseRequest CreateResponseRequest(
+        ResponseObservation observation,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ApiResponseRequest
         {
             SnapshotId = observation.SnapshotId,
             OperationId = observation.OperationId,
@@ -40,6 +50,16 @@ public class ApiOracleManager : TestModuleDomainService
             ProfileCode = PtnApiOracleRequestCodes.RuntimeProfile,
             Correlation = observation.Correlation
         };
+    }
+
+    // Turetilebilirlik istegini dis checker cagrisi oncesinde iptal kapisindan gecirir.
+    public DerivabilityRequest PrepareDerivabilityRequest(
+        DerivabilityRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return request;
+    }
 
     // Operasyon baglama sonucunun outcome kodunu kanoniklestirir.
     public OperationBinding Normalize(OperationBinding result)

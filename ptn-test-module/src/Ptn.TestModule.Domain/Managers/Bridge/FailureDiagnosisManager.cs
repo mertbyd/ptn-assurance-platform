@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.ExceptionCodes.Bridge;
@@ -25,8 +26,12 @@ namespace Ptn.TestModule.Managers.Bridge;
 public class FailureDiagnosisManager : TestModuleDomainService
 {
     // Ortak Bridge sinyalinden API checker'a gidecek kaynak-ozgul modeli kurar.
-    public ApiDiagnosisRequest CreateApiRequest(DiagnosisRequest request) =>
-        new()
+    public ApiDiagnosisRequest CreateApiRequest(
+        DiagnosisRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return new ApiDiagnosisRequest
         {
             SnapshotId = RequireSnapshotId(request.SpecSnapshotId),
             ContractCheckRunId = request.ApiRunId,
@@ -40,6 +45,7 @@ public class FailureDiagnosisManager : TestModuleDomainService
             ObservedAtMs = request.ObservedAtMs,
             Correlation = request.Correlation
         };
+    }
 
     // Ortak Bridge sinyalinden Database checker'in dogru union kolunu kurar.
     public DatabaseDiagnosisRequest CreateDatabaseRequest(DiagnosisRequest request)

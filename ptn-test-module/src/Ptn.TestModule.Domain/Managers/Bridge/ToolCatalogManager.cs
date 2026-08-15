@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.ExceptionCodes.Bridge;
 using Ptn.TestModule.Models.Bridge.Agent;
@@ -12,8 +13,9 @@ namespace Ptn.TestModule.Managers.Bridge;
 public class ToolCatalogManager : TestModuleDomainService
 {
     // Aktif ve discoverable tool kodlarini kararli sirada kataloglar.
-    public ToolCatalog GetCatalog(string responseFormat)
+    public ToolCatalog GetCatalog(string responseFormat, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         EnsureBudget(PtnToolCodes.Active);
         return new ToolCatalog
         {

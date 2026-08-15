@@ -56,10 +56,11 @@ public sealed class ScenarioCompilationService : IScenarioCompilationPort, ITran
         TestScenario scenario,
         CancellationToken cancellationToken = default)
     {
+        var fingerprintRequests = _profilePackManager.CreateSchemaFingerprintRequests(scenario);
         var profileKey = await _settingProvider.GetOrNullAsync(TestModuleSettings.ProfilePackKey);
         var pack = await _profilePackFileManager.LoadAsync(profileKey!, cancellationToken);
         var fingerprints = new List<string>();
-        foreach (var connectionId in _profilePackManager.CreateSchemaFingerprintRequests(scenario.DbConnectionId))
+        foreach (var connectionId in fingerprintRequests)
         {
             fingerprints.Add(await _schemaKnowledgeAppService.GetSchemaFingerprintAsync(connectionId, cancellationToken));
         }

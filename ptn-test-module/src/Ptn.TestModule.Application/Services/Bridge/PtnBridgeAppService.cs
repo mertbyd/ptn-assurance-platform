@@ -117,7 +117,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     public Task<ToolCatalogDto> GetToolCatalogAsync()
     {
         var cancellationToken = _cancellationTokenProvider.Token;
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(Mapper.Map(_toolCatalogManager.GetCatalog(PtnResponseFormatCodes.Concise)));
+        return Task.FromResult(Mapper.Map(
+            _toolCatalogManager.GetCatalog(PtnResponseFormatCodes.Concise, cancellationToken)));
     }
 }

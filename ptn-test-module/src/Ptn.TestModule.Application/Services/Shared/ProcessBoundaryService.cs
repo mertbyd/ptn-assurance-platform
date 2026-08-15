@@ -35,11 +35,6 @@ public sealed class ProcessBoundaryService : IProcessBoundaryPort, ITransientDep
         {
             Directory.CreateDirectory(directory);
         }
-        foreach (var input in descriptor.Workspace.InputFiles)
-        {
-            await File.WriteAllTextAsync(input.Key, input.Value, new UTF8Encoding(false), cancellationToken);
-        }
-
         var stopwatch = Stopwatch.StartNew();
         var startInfo = new ProcessStartInfo
         {
@@ -61,6 +56,11 @@ public sealed class ProcessBoundaryService : IProcessBoundaryPort, ITransientDep
         ProcessExecutionOutcome outcome = default!;
         try
         {
+            foreach (var input in descriptor.Workspace.InputFiles)
+            {
+                await File.WriteAllTextAsync(
+                    input.RelativePath, input.Content, new UTF8Encoding(false), cancellationToken);
+            }
             using var process = new Process { StartInfo = startInfo };
             try
             {

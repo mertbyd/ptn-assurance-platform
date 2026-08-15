@@ -88,14 +88,19 @@ public class ProcessPlanManager : TestModuleDomainService
     private static ProcessWorkspaceLayout CreateWorkspaceLayout(ProcessExecutionPlan plan, string tempRoot)
     {
         var root = Path.Combine(tempRoot, ProcessBoundaryConsts.TempRootName, plan.WorkspaceName, Guid.NewGuid().ToString("N"));
-        var inputs = plan.InputFiles.ToDictionary(
-            file => Path.Combine(root, file.RelativePath), file => file.Content, StringComparer.Ordinal);
-        var outputs = plan.OutputFilePaths.ToDictionary(
-            relativePath => relativePath, relativePath => Path.Combine(root, relativePath), StringComparer.Ordinal);
+        var inputs = plan.InputFiles.Select(file => new ProcessInputFile
+        {
+            RelativePath = Path.Combine(root, file.RelativePath),
+            Content = file.Content
+        }).ToList();
+        var outputs = plan.OutputFilePaths.Select(relativePath =>
+            new KeyValuePair<string, string>(relativePath, Path.Combine(root, relativePath))).ToList();
         return new ProcessWorkspaceLayout
         {
             WorkspaceRoot = root,
-            Directories = CreateDirectories(root, inputs.Keys.Concat(outputs.Values)),
+            Directories = CreateDirectories(
+                root,
+                inputs.Select(file => file.RelativePath).Concat(outputs.Select(output => output.Value))),
             InputFiles = inputs,
             OutputFiles = outputs
         };

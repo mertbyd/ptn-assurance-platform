@@ -14,6 +14,7 @@ using Ptn.TestModule.Models.Runs;
 using Ptn.TestModule.Models.Shared;
 using Volo.Abp;
 using Volo.Abp.Settings;
+using YamlDotNet.Core;
 
 namespace Ptn.TestModule.Managers.Runs;
 
@@ -24,6 +25,30 @@ namespace Ptn.TestModule.Managers.Runs;
 /// </summary>
 public class WorkflowRunPlanner : TestModuleDomainService
 {
+    // Wire belge metninin parser sinirina girmeden once var olmasini dogrular.
+    public void EnsureDocumentCanBeRead(string document)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(document);
+    }
+
+    // YAML parser kusurunu kosum ailesinin kararli belge koduna cevirir.
+    public void ThrowInvalidDocument(YamlException exception)
+    {
+        throw new BusinessException(
+            TestModuleRunErrorCodes.ArazzoVersionUnsupported,
+            innerException: exception);
+    }
+
+    // BLOB adini ve yazma isleminde HAR icerigini ortak artefakt kapisindan gecirir.
+    public void EnsureArtifactIsValid(string blobName, string? harContent = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(blobName);
+        if (harContent is not null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(harContent);
+        }
+    }
+
     /// <summary>Docker imajinin cekilemedigi cikis kodu araliginin alt sinirdir.</summary>
     private const int DockerFailureExitCodeMinimum = 125;
 

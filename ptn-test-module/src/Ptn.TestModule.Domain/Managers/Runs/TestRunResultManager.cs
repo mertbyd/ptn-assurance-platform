@@ -26,6 +26,18 @@ namespace Ptn.TestModule.Managers.Runs;
 /// </summary>
 public class TestRunResultManager : FoundationManager<TestRunResult, Guid>
 {
+    // Repository rapor projeksiyonu bulunamazsa kosum kimligiyle kararli not-found firlatir.
+    public TestRunReport EnsureReportFound(TestRunReport? report, Guid runId)
+    {
+        return report ?? throw new EntityNotFoundException(typeof(TestRun), runId);
+    }
+
+    // Repository sonucu bulunamazsa sonuc kimligiyle kararli not-found firlatir.
+    public TestRunResult EnsureFound(TestRunResult? entity, Guid id)
+    {
+        return entity ?? throw new EntityNotFoundException(typeof(TestRunResult), id);
+    }
+
     /// <summary>Attempt ve bulgulu sonuc sorgularini saglayan repository'dir.</summary>
     private readonly ITestRunResultRepository _repository;
 
