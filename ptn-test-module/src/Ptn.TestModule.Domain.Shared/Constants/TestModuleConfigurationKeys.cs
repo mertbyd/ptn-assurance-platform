@@ -15,6 +15,7 @@ public static class TestModuleConfigurationKeys
     public const string AuthServerSwaggerClientId = "AuthServer:SwaggerClientId";
 
     public const string CorsOrigins = "App:CorsOrigins";
+    public const string BlobStoringFileSystemBasePath = "BlobStoring:FileSystemBasePath";
     public const string RedisConfiguration = "Redis:Configuration";
     public const string DatabaseAutoMigrate = "Database:AutoMigrate";
     public const string DatabaseSeedOnStartup = "Database:SeedOnStartup";
