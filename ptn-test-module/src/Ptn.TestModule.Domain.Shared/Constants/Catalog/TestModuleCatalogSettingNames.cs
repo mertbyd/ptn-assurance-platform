@@ -34,6 +34,9 @@ public static class TestModuleCatalogSettingNames
     /// <summary>Ayar okunamadiginda kullanilan zamanlama tarama periyodudur.</summary>
     public const int FallbackScheduleSweepPeriodSeconds = 60;
 
+    /// <summary>Tek sozlesme degisikligi olayinda tetiklenebilecek azami senaryo sayisidir.</summary>
+    public const int MaxContractChangeScenariosPerEvent = 500;
+
     /// <summary>Timer.Period milisaniye int'ine cevrildigi icin kabul edilen azami periyottur.</summary>
     public const int MaxWorkerPeriodSeconds = 3_600;
 
