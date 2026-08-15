@@ -1,5 +1,6 @@
 using System.Globalization;
 using Ptn.TestModule.Constants.Bridge;
+using Ptn.TestModule.Constants.Catalog;
 using Ptn.TestModule.Constants.Runs;
 using Volo.Abp.Settings;
 
@@ -60,5 +61,11 @@ public class TestModuleSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(new SettingDefinition(
             TestModuleSettings.RunConcurrencyWaitSeconds,
             TestModuleRunSettingNames.DefaultRunConcurrencyWaitSeconds));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.QuarantineSweepPeriodSeconds,
+            TestModuleCatalogSettingNames.DefaultQuarantineSweepPeriodSeconds));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.QuarantineSweepBatchSize,
+            TestModuleCatalogSettingNames.DefaultQuarantineSweepBatchSize));
     }
 }

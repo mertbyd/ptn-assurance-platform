@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Nexum.Abp.Foundation.Repositories;
@@ -24,5 +25,11 @@ public interface ITestScenarioRepository : IBaseRepository<TestScenario, Guid>
     // Senaryo anahtari icin kullanilacak siradaki monoton surum numarasini uretir.
     Task<int> GetNextVersionNoAsync(
         string scenarioKey,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Karantina suresi dolmus senaryolari tenant sinirlari otesinde sinirli bir dilim halinde getirir.</summary>
+    Task<IReadOnlyList<TestScenario>> GetExpiredQuarantinesAsync(
+        DateTime expiredBefore,
+        int maxResultCount,
         CancellationToken cancellationToken = default);
 }
