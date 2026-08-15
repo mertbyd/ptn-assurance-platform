@@ -25,17 +25,20 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
 {
     private readonly ITestScenarioRepository _repository;
     private readonly ITestScenarioStateRepository _stateRepository;
+    private readonly ScenarioScheduleManager _scheduleManager;
 
     protected override string AlreadyExistsErrorCode => TestModuleScenarioErrorCodes.VersionAlreadyExists;
 
-    // Senaryo ve durum lookup depolarini domain kurallarina baglar.
+    // Senaryo, durum lookup ve zamanlama kurallarini domain akisina baglar.
     public TestScenarioManager(
         ITestScenarioRepository repository,
-        ITestScenarioStateRepository stateRepository)
+        ITestScenarioStateRepository stateRepository,
+        ScenarioScheduleManager scheduleManager)
         : base(repository)
     {
         _repository = repository;
         _stateRepository = stateRepository;
+        _scheduleManager = scheduleManager;
     }
 
     // Yeni senaryoyu kanoniklestirir, siradaki surumu ve iki benzersizlik kuralini uygular.
@@ -142,9 +145,32 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
                 .WithData(nameof(decision.FailedGateCodes), decision.FailedGateCodes);
         }
 
+        var publishedStateId = await GetStateIdAsync(TestScenarioStateCodes.Published, cancellationToken);
+        var previous = await _repository.FindPublishedAsync(entity.ScenarioKey, publishedStateId, cancellationToken);
         ApplyCompilation(entity, evidence);
-        entity.StateId = await GetStateIdAsync(TestScenarioStateCodes.Published, cancellationToken);
+        entity.StateId = publishedStateId;
+
+        // Zamanlama yayinlanmis surumun alanidir; onceki surum vadesini birakir, iki surum ayni anda vadeli olamaz.
+        ScenarioScheduleManager.Transfer(previous, entity);
         return entity;
+    }
+
+    // Yayinlanmis surume cron zamanlamasi yazar; vade ve dogrulama kararlarini zamanlama Manager'i verir.
+    /// <summary>Yayinlanmis senaryo surumunun zamanlamasini gunceller.</summary>
+    public async Task<TestScenario> UpdateScheduleAsync(
+        TestScenario entity,
+        TestScenarioScheduleModel model,
+        DateTime now,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        var publishedStateId = await GetStateIdAsync(TestScenarioStateCodes.Published, cancellationToken);
+        if (entity.StateId != publishedStateId)
+        {
+            throw new BusinessException(TestModuleScenarioErrorCodes.ScheduleRequiresPublishedVersion);
+        }
+
+        return _scheduleManager.Apply(entity, model, now);
     }
 
     // Derleyicinin urettigi belgeyi, kanonik hash'i ve assertion sayisini satira yazar (ADR-0015 §C).
@@ -158,13 +184,16 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
         entity.AssertionCount = evidence.AssertionCount;
     }
 
-    // Yayinlanmis surumu silmeden kullanimdan kaldirir.
+    // Yayinlanmis surumu silmeden kullanimdan kaldirir ve zamanlamasini birakir.
     public async Task<TestScenario> DeprecateAsync(
         TestScenario entity,
         CancellationToken cancellationToken = default)
     {
         await EnsureStateAsync(entity, TestScenarioStateCodes.Published, cancellationToken);
         entity.StateId = await GetStateIdAsync(TestScenarioStateCodes.Deprecated, cancellationToken);
+
+        // Kullanimdan kalkan surum vadeli kalamaz; aksi halde vade tarayicisi olu surumu kosardi.
+        ScenarioScheduleManager.Clear(entity);
         return entity;
     }
 

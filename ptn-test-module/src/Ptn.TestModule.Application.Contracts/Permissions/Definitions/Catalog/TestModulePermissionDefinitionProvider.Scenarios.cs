@@ -19,5 +19,6 @@ public partial class TestModulePermissionDefinitionProvider
         scenarios.AddChild(TestModulePermissions.Scenarios.Publish, L(TestModuleLocalizationKeys.Permissions.ScenariosPublish));
         scenarios.AddChild(TestModulePermissions.Scenarios.Approve, L(TestModuleLocalizationKeys.Permissions.ScenariosApprove));
         scenarios.AddChild(TestModulePermissions.Scenarios.Quarantine, L(TestModuleLocalizationKeys.Permissions.ScenariosQuarantine));
+        scenarios.AddChild(TestModulePermissions.Scenarios.Schedule, L(TestModuleLocalizationKeys.Permissions.ScenariosSchedule));
     }
 }

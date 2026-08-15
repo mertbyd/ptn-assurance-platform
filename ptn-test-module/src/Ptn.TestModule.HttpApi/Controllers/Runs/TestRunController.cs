@@ -149,6 +149,23 @@ public class TestRunController : TestModuleController
         return result;
     }
 
+    /// <summary>Paylasilan sirla dogrulanmis webhook cagrisini idempotent bicimde kosuma cevirir.</summary>
+    /// <param name="secret">Basliktaki paylasilan sirdir; ayar tanimli degilse uc kapalidir.</param>
+    /// <param name="input">Teslim kimligi, senaryo anahtari ve istege bagli ortam anahtari.</param>
+    /// <returns>Ev standardi icinde kuyruklanan veya ayni teslim icin daha once uretilmis kosum.</returns>
+    [HttpPost(TestRunRoutes.Webhook)]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public virtual async Task<Result<TestRunDto>> TriggerByWebhook(
+        [FromHeader(Name = TestModuleRunSettingNames.WebhookSecretHeaderName)] string? secret,
+        [FromBody] WebhookTestRunDto input)
+    {
+        var result = await AppService.TriggerByWebhookAsync(secret, input);
+        Response.StatusCode = StatusCodes.Status202Accepted;
+        return result;
+    }
+
     /// <summary>Pending kosumu idempotent bicimde Running durumuna claim eder.</summary>
     /// <param name="id">Claim edilecek TestRun aggregate kimligi.</param>
     /// <returns>Ev standardi icinde claim karari ve guncel kosum.</returns>

@@ -32,6 +32,9 @@ public static class TestScenarioRoutes
     /// <summary>Taslagi kalicilastirmadan derleyip lint eden rotadir.</summary>
     public const string CompilePreview = "compile-preview";
 
+    /// <summary>Yayinlanmis surumun cron zamanlamasini yazan rotadir.</summary>
+    public const string Schedule = "{id:guid}/schedule";
+
     /// <summary>Senaryo katalogu endpoint'lerinin Swagger grup adidir.</summary>
     public const string SwaggerGroupName = "test-module-scenarios";
 }

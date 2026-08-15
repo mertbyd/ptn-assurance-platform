@@ -70,5 +70,21 @@ public class TestModuleSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(new SettingDefinition(
             TestModuleSettings.ScenarioHealthRefreshPeriodSeconds,
             TestModuleRunSettingNames.DefaultScenarioHealthRefreshPeriodSeconds));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.ScheduleSweepPeriodSeconds,
+            TestModuleCatalogSettingNames.DefaultScheduleSweepPeriodSeconds));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.MaxScenariosPerTick,
+            TestModuleCatalogSettingNames.DefaultMaxScenariosPerTick));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.AutomationEnvironmentKey,
+            TestModuleRunSettingNames.DefaultAutomationEnvironmentKey));
+
+        // Sir bos birakilir; webhook ucu ayar tanimlanmadan acilmaz ve deger hicbir yanitta veya logda gorunmez.
+        context.Add(new SettingDefinition(
+            TestModuleSettings.WebhookSecret,
+            TestModuleRunSettingNames.DefaultWebhookSecret,
+            isVisibleToClients: false,
+            isEncrypted: true));
     }
 }

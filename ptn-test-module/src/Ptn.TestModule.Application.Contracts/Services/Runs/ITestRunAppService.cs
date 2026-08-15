@@ -58,6 +58,12 @@ public interface ITestRunAppService : IApplicationService
     /// <returns>Kuyruga verilen Pending kosum.</returns>
     Task<TestRunDto> TriggerAsync(CreateTestRunDto input);
 
+    /// <summary>Paylasilan sirla dogrulanmis webhook cagrisini idempotent bicimde kosuma cevirir.</summary>
+    /// <param name="secret">Cagiran sistemin basliktaki paylasilan sirridir; hicbir yanitta geri donmez.</param>
+    /// <param name="input">Teslim kimligi, senaryo anahtari ve istege bagli ortam anahtari.</param>
+    /// <returns>Kuyruklanan kosum; ayni teslim kimligi tekrar geldiginde mevcut kosum.</returns>
+    Task<TestRunDto> TriggerByWebhookAsync(string? secret, WebhookTestRunDto input);
+
     /// <summary>Pending kosumu idempotent bicimde Running durumuna claim eder.</summary>
     /// <param name="id">Claim edilecek TestRun aggregate kimligi.</param>
     /// <returns>Claim karari ve guncel kosum.</returns>

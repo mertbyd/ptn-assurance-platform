@@ -15,5 +15,8 @@ public partial class TestModulePermissions
 
         /// <summary>Senaryoyu sinirli sureyle karantinaya alma permission'idir.</summary>
         public const string Quarantine = Default + ".Quarantine";
+
+        /// <summary>Yayinlanmis senaryo surumunun cron zamanlamasini yazma permission'idir.</summary>
+        public const string Schedule = Default + ".Schedule";
     }
 }

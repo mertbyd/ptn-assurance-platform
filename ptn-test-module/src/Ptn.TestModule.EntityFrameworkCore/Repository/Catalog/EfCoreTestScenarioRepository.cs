@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Nexum.Abp.Foundation.EntityFrameworkCore.Repositories;
 using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Interface.Catalog;
+using Ptn.TestModule.Models.Catalog;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EntityFrameworkCore;
@@ -89,5 +90,84 @@ public class EfCoreTestScenarioRepository
                 .Take(maxResultCount)
                 .ToListAsync(GetCancellationToken(cancellationToken));
         }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<DueScenarioModel>> GetDueScheduledAsync(
+        DateTime dueAt,
+        int maxResultCount,
+        CancellationToken cancellationToken = default)
+    {
+        // Vade tarayicisi de CurrentTenant olmadan calisir; capraz tenant okuma yalniz bu sorgunun omru
+        // boyunca ve yalniz tenant filtresi icin acilir.
+        using (_multiTenantFilter.Disable())
+        {
+            var queryable = await GetQueryableAsync();
+            return await queryable
+                .AsNoTracking()
+                .Where(entity => entity.ScheduleEnabled &&
+                                 entity.NextRunAt != null &&
+                                 entity.NextRunAt <= dueAt &&
+                                 (entity.QuarantineUntil == null || entity.QuarantineUntil <= dueAt))
+                .OrderBy(entity => entity.NextRunAt)
+                .ThenBy(entity => entity.Id)
+                .Take(maxResultCount)
+                .Select(entity => new DueScenarioModel
+                {
+                    ScenarioId = entity.Id,
+                    ScenarioKey = entity.ScenarioKey,
+                    CompiledHash = entity.CompiledHash,
+                    NextRunAt = entity.NextRunAt,
+                    TenantId = entity.TenantId
+                })
+                .ToListAsync(GetCancellationToken(cancellationToken));
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<TestScenario>> GetManyForScheduleAdvanceAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        // Vade ilerletme tik basina tek sorgudur; senaryo basina okuma acilmaz.
+        using (_multiTenantFilter.Disable())
+        {
+            var queryable = await GetQueryableAsync();
+            return await queryable
+                .Where(entity => ids.Contains(entity.Id))
+                .ToListAsync(GetCancellationToken(cancellationToken));
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<DueScenarioModel>> GetPublishedBySpecSnapshotAsync(
+        Guid specSnapshotId,
+        Guid publishedStateId,
+        DateTime now,
+        int maxResultCount,
+        CancellationToken cancellationToken = default)
+    {
+        var queryable = await GetQueryableAsync();
+        return await queryable
+            .AsNoTracking()
+            .Where(entity => entity.SpecSnapshotId == specSnapshotId &&
+                             entity.StateId == publishedStateId &&
+                             (entity.QuarantineUntil == null || entity.QuarantineUntil <= now))
+            .OrderBy(entity => entity.ScenarioKey)
+            .ThenBy(entity => entity.Id)
+            .Take(maxResultCount)
+            .Select(entity => new DueScenarioModel
+            {
+                ScenarioId = entity.Id,
+                ScenarioKey = entity.ScenarioKey,
+                CompiledHash = entity.CompiledHash,
+                TenantId = entity.TenantId
+            })
+            .ToListAsync(GetCancellationToken(cancellationToken));
     }
 }

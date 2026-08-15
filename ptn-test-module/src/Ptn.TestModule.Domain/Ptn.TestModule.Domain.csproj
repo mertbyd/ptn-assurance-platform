@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Authenticator.Domain" Version="$(AuthenticatorVersion)" />
+    <PackageReference Include="Cronos" Version="$(CronosVersion)" />
     <PackageReference Include="CheckNexus.ApiContracts.Domain.Shared" Version="$(CheckNexusApiContractsVersion)" />
     <PackageReference Include="CheckNexus.DatabaseComparison.Domain.Shared" Version="$(CheckNexusDatabaseComparisonVersion)" />
     <PackageReference Include="Pintern.SaaS.Notifications.Domain" Version="$(NotificationsVersion)" />

@@ -58,4 +58,16 @@ public static class TestModuleSettings
 
     /// <summary>Saglik materialized view'inin yenilendigi periyot ayar adidir.</summary>
     public const string ScenarioHealthRefreshPeriodSeconds = TestModuleRunSettingNames.ScenarioHealthRefreshPeriodSeconds;
+
+    /// <summary>Vadesi gelmis zamanlanmis senaryolarin tarandigi periyot ayar adidir.</summary>
+    public const string ScheduleSweepPeriodSeconds = TestModuleCatalogSettingNames.ScheduleSweepPeriodSeconds;
+
+    /// <summary>Tek zamanlama tikinde kuyruklanacak azami senaryo sayisi ayar adidir.</summary>
+    public const string MaxScenariosPerTick = TestModuleCatalogSettingNames.MaxScenariosPerTick;
+
+    /// <summary>Otomatik tetikleyicilerin kullandigi mantiksal ortam anahtari ayar adidir.</summary>
+    public const string AutomationEnvironmentKey = TestModuleRunSettingNames.AutomationEnvironmentKey;
+
+    /// <summary>Gelen webhook cagrilarinin dogrulandigi paylasilan sir ayar adidir.</summary>
+    public const string WebhookSecret = TestModuleRunSettingNames.WebhookSecret;
 }

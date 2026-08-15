@@ -58,6 +58,9 @@ public static class TestModuleLocalizationKeys
         /// <summary>Senaryo karantina permission adinin anahtaridir.</summary>
         public const string ScenariosQuarantine = "Permission:Scenarios.Quarantine";
 
+        /// <summary>Senaryo zamanlama permission adinin anahtaridir.</summary>
+        public const string ScenariosSchedule = "Permission:Scenarios.Schedule";
+
         /// <summary>Test kosumu permission adinin anahtaridir.</summary>
         public const string Runs = "Permission:Runs";
 

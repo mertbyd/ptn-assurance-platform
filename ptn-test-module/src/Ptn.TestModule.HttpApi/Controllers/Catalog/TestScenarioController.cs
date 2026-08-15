@@ -160,4 +160,18 @@ public class TestScenarioController : TestModuleController
         var result = await AppService.ReleaseQuarantineAsync(id);
         return result;
     }
+
+    /// <summary>Yayinlanmis senaryo surumune UTC cron zamanlamasi yazar.</summary>
+    /// <param name="id">Zamanlamasi guncellenecek yayinlanmis senaryo kimligi.</param>
+    /// <param name="input">Cron ifadesi ve zamanlamanin acik olup olmadigi.</param>
+    /// <returns>Ev standardi icinde guncel vade bilgisini tasiyan senaryo.</returns>
+    [HttpPut(TestScenarioRoutes.Schedule)]
+    [Authorize(TestModulePermissions.Scenarios.Schedule)]
+    public virtual async Task<Result<TestScenarioDto>> UpdateSchedule(
+        Guid id,
+        [FromBody] UpdateScenarioScheduleDto input)
+    {
+        var result = await AppService.UpdateScheduleAsync(id, input);
+        return result;
+    }
 }

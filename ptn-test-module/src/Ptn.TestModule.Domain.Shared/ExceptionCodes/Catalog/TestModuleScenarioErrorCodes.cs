@@ -16,6 +16,18 @@ public static class TestModuleScenarioErrorCodes
     public const string InvalidScenarioKey = $"{Prefix}:InvalidScenarioKey";
     public const string InvalidHash = $"{Prefix}:InvalidHash";
 
+    /// <summary>Zamanlamanin yayinlanmamis bir surume yazilmaya calisildigini bildirir.</summary>
+    public const string ScheduleRequiresPublishedVersion = $"{Prefix}:ScheduleRequiresPublishedVersion";
+
+    /// <summary>Cron ifadesinin ayristirilamadigini bildirir.</summary>
+    public const string ScheduleCronInvalid = $"{Prefix}:ScheduleCronInvalid";
+
+    /// <summary>Zamanlamanin cron ifadesi olmadan acilmaya calisildigini bildirir.</summary>
+    public const string ScheduleCronRequired = $"{Prefix}:ScheduleCronRequired";
+
+    /// <summary>Cron ifadesinin gelecege donuk hicbir vade uretmedigini bildirir.</summary>
+    public const string ScheduleHasNoFutureOccurrence = $"{Prefix}:ScheduleHasNoFutureOccurrence";
+
     public static class Validation
     {
         public const string ScenarioKeyRequired = $"{Prefix}:Validation:ScenarioKeyRequired";
@@ -35,5 +47,7 @@ public static class TestModuleScenarioErrorCodes
         public const string MaterialIdentityInvalid = $"{Prefix}:Validation:MaterialIdentityInvalid";
         public const string SourceDescriptionsRequired = $"{Prefix}:Validation:SourceDescriptionsRequired";
         public const string SourceDescriptionInvalid = $"{Prefix}:Validation:SourceDescriptionInvalid";
+        public const string ScheduleCronRequired = $"{Prefix}:Validation:ScheduleCronRequired";
+        public const string ScheduleCronTooLong = $"{Prefix}:Validation:ScheduleCronTooLong";
     }
 }

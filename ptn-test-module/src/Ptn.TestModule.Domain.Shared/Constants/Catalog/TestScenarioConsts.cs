@@ -27,4 +27,13 @@ public static class TestScenarioConsts
 
     /// <summary>Bir senaryonun kesintisiz kalabilecegi azami karantina gunudur.</summary>
     public const int MaxQuarantineDays = 30;
+
+    /// <summary>Cron ifadesinin azami karakter sayisidir.</summary>
+    public const int MaxScheduleCronLength = 128;
+
+    /// <summary>Vadesi gelmis zamanlanmis senaryolarin indeks adidir.</summary>
+    public const string ScheduleIndexName = "ix_scenarios_schedule";
+
+    /// <summary>Zamanlanmis tetikleyici referansinda senaryo ile vade anini ayiran isarettir.</summary>
+    public const string ScheduleTriggerRefSeparator = "@";
 }

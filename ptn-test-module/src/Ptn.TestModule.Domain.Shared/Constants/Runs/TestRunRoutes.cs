@@ -14,6 +14,9 @@ public static class TestRunRoutes
     /// <summary>Kosumu olusturup dayanikli icra kuyruguna veren alt rotadir.</summary>
     public const string Trigger = "trigger";
 
+    /// <summary>Paylasilan sirla dogrulanan idempotent webhook tetikleme rotasidir.</summary>
+    public const string Webhook = "webhook";
+
     /// <summary>Pending kosumu claim eden alt rotadir.</summary>
     public const string Start = "{id:guid}/start";
 

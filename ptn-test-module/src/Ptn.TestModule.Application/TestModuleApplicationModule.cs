@@ -44,5 +44,6 @@ public class TestModuleApplicationModule : AbpModule
     {
         await context.AddBackgroundWorkerAsync<ExpiredQuarantineSweepWorker>();
         await context.AddBackgroundWorkerAsync<ScenarioHealthRefreshWorker>();
+        await context.AddBackgroundWorkerAsync<DueScenarioRunWorker>();
     }
 }

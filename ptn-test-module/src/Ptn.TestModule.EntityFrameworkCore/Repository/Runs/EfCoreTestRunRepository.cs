@@ -288,6 +288,30 @@ public class EfCoreTestRunRepository
             .ExecuteDeleteAsync(GetCancellationToken(cancellationToken));
     }
 
+    /// <inheritdoc />
+    public async Task<TestRun?> FindByTriggerAsync(
+        string triggerKindCode,
+        string triggerRef,
+        Guid? scenarioId,
+        CancellationToken cancellationToken = default)
+    {
+        var token = GetCancellationToken(cancellationToken);
+        var dbContext = await GetDbContextAsync();
+        return await dbContext.Set<TestRun>()
+            .AsNoTracking()
+            .Join(
+                dbContext.Set<TestTriggerKind>(),
+                run => run.TriggerKindId,
+                trigger => trigger.Id,
+                (run, trigger) => new { Run = run, Trigger = trigger })
+            .Where(item => item.Trigger.Code == triggerKindCode &&
+                           item.Run.TriggerRef == triggerRef &&
+                           (scenarioId == null || item.Run.ScenarioId == scenarioId))
+            .OrderBy(item => item.Run.CreationTime)
+            .Select(item => item.Run)
+            .FirstOrDefaultAsync(token);
+    }
+
     // Kosumu ve en son denemeyi getirir; bulgular tek Include ile gelir, bulgu basina sorgu acilmaz.
     /// <summary>Kosumun bulgulu ve teshisli terminal raporunu getirir.</summary>
     public async Task<TestRunReport?> GetReportAsync(

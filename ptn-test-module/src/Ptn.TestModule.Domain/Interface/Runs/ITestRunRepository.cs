@@ -68,4 +68,11 @@ public interface ITestRunRepository : IBaseRepository<TestRun, Guid>
     Task<RunExportSource?> GetExportSourceAsync(
         Guid id,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Ayni tetikleyici turu, referansi ve senaryosu icin daha once uretilmis kosumu getirir.</summary>
+    Task<TestRun?> FindByTriggerAsync(
+        string triggerKindCode,
+        string triggerRef,
+        Guid? scenarioId,
+        CancellationToken cancellationToken = default);
 }

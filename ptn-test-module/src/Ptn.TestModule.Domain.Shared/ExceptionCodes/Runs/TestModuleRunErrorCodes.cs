@@ -124,6 +124,15 @@ public static class TestModuleRunErrorCodes
     /// <summary>Kosum saklama suresi veya purge batch ayarinin pozitif sayi olmadigini bildirir.</summary>
     public const string RunRetentionSettingInvalid = $"{Prefix}:RunRetentionSettingInvalid";
 
+    /// <summary>Webhook sirrinin tanimsiz veya gonderilen degerle uyusmadigini bildirir; sir degeri tasinmaz.</summary>
+    public const string WebhookSecretRejected = $"{Prefix}:WebhookSecretRejected";
+
+    /// <summary>Webhook teslim kimliginin bos veya kabul edilen uzunlugun otesinde oldugunu bildirir.</summary>
+    public const string WebhookDeliveryIdInvalid = $"{Prefix}:WebhookDeliveryIdInvalid";
+
+    /// <summary>Webhook'un yayinlanmis bir senaryo surumu bulamadigini bildirir.</summary>
+    public const string WebhookScenarioNotPublished = $"{Prefix}:WebhookScenarioNotPublished";
+
     /// <summary>Public kosum girdilerinin kararli FluentValidation hata kodlarini tasir.</summary>
     public static class Validation
     {

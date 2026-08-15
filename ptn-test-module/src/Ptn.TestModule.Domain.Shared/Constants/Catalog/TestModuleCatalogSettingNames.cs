@@ -13,11 +13,26 @@ public static class TestModuleCatalogSettingNames
     /// <summary>Tek karantina tikinde temizlenecek azami senaryo sayisinin ayar adidir.</summary>
     public const string QuarantineSweepBatchSize = "TestModule.Catalog.QuarantineSweepBatchSize";
 
+    /// <summary>Vadesi gelmis zamanlanmis senaryo taramasinin iki tik arasindaki sure ayar adidir.</summary>
+    public const string ScheduleSweepPeriodSeconds = "TestModule.Catalog.ScheduleSweepPeriodSeconds";
+
+    /// <summary>Tek zamanlama tikinde kuyruklanacak azami senaryo sayisinin ayar adidir.</summary>
+    public const string MaxScenariosPerTick = "TestModule.Catalog.MaxScenariosPerTick";
+
     /// <summary>Varsayilan karantina tarama periyodudur.</summary>
     public const string DefaultQuarantineSweepPeriodSeconds = "300";
 
     /// <summary>Varsayilan karantina tik tavanidir.</summary>
     public const string DefaultQuarantineSweepBatchSize = "200";
+
+    /// <summary>Varsayilan zamanlama tarama periyodudur.</summary>
+    public const string DefaultScheduleSweepPeriodSeconds = "60";
+
+    /// <summary>Varsayilan zamanlama tik tavanidir.</summary>
+    public const string DefaultMaxScenariosPerTick = "50";
+
+    /// <summary>Ayar okunamadiginda kullanilan zamanlama tarama periyodudur.</summary>
+    public const int FallbackScheduleSweepPeriodSeconds = 60;
 
     /// <summary>Timer.Period milisaniye int'ine cevrildigi icin kabul edilen azami periyottur.</summary>
     public const int MaxWorkerPeriodSeconds = 3_600;

@@ -54,6 +54,13 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
     private readonly IHarArtifactStore _harArtifactStore;
     private readonly RunCancellationManager _runCancellationManager;
 
+    /// <summary>Webhook sir dogrulamasini ve senaryo cozumunu sahiplenen Manager'dir.</summary>
+    private readonly RunWebhookManager _runWebhookManager;
+
+    /// <summary>Otomatik tetikleyicilerin idempotency kararini sahiplenen Manager'dir.</summary>
+    private readonly AutomatedRunTriggerManager _automatedRunTriggerManager;
+    private readonly IValidator<WebhookTestRunDto> _webhookValidator;
+
     /// <summary>Application orkestrasyonunu Manager ve repository bagimliliklariyla kurar.</summary>
     public TestRunAppService(
         TestRunManager testRunManager,
@@ -67,8 +74,14 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         IValidator<TestRunListInput> listValidator,
         IRunArtifactStore artifactStore,
         IHarArtifactStore harArtifactStore,
-        RunCancellationManager runCancellationManager)
+        RunCancellationManager runCancellationManager,
+        RunWebhookManager runWebhookManager,
+        AutomatedRunTriggerManager automatedRunTriggerManager,
+        IValidator<WebhookTestRunDto> webhookValidator)
     {
+        _runWebhookManager = runWebhookManager;
+        _automatedRunTriggerManager = automatedRunTriggerManager;
+        _webhookValidator = webhookValidator;
         _testRunManager = testRunManager;
         _testRunResultManager = testRunResultManager;
         _environmentBindingManager = environmentBindingManager;
@@ -217,6 +230,33 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         });
         return created;
     }
+
+    /// <summary>Paylasilan sirla dogrulanmis webhook cagrisini idempotent bicimde kosuma cevirir.</summary>
+    public async Task<TestRunDto> TriggerByWebhookAsync(string? secret, WebhookTestRunDto input)
+    {
+        var cancellationToken = _cancellationTokenProvider.Token;
+        await _runWebhookManager.EnsureAuthorizedAsync(secret, cancellationToken);
+        await _webhookValidator.ValidateAndThrowAsync(input, cancellationToken);
+        var request = await _runWebhookManager.CreateRunRequestAsync(Mapper.Map(input), cancellationToken);
+        var outcome = await _automatedRunTriggerManager.ResolveAsync(request, cancellationToken);
+        if (!outcome.IsNew)
+        {
+            return Mapper.Map(outcome.Run);
+        }
+
+        var saved = await _testRunRepository.InsertAsync(
+            outcome.Run,
+            autoSave: true,
+            cancellationToken: cancellationToken);
+        await _backgroundJobManager.EnqueueAsync(new ExecuteTestRunArgs
+        {
+            TestRunId = saved.Id,
+            TenantId = saved.TenantId,
+            TraceId = saved.TraceId ?? string.Empty
+        });
+        return Mapper.Map(saved);
+    }
+
     /// <summary>Pending kosumu idempotent bicimde Running durumuna claim edip guncel kaydi dondurur.</summary>
     public async Task<TestRunClaimDto> StartAsync(Guid id)
     {

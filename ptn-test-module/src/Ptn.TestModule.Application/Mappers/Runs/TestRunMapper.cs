@@ -49,6 +49,9 @@ public partial class TestRunMapper
     /// <summary>Kuru kosum celiski modelini public ajan bildirimine cevirir.</summary>
     public partial DryRunContradictionReportDto Map(DryRunContradictionReport source);
 
+    /// <summary>Webhook girdisini Manager girdisi olan domain modeline cevirir.</summary>
+    public partial WebhookRunTriggerModel Map(WebhookTestRunDto source);
+
     public partial TestRunQuery Map(TestRunListInput source);
     public partial TestFindingQuery Map(TestFindingListInput source);
     public partial TestRunHeaderDto Map(TestRunHeader source);

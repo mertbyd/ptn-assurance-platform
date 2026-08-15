@@ -102,4 +102,22 @@ public static class TestModuleRunSettingNames
 
     /// <summary>Ayar okunamadiginda kullanilan saglik yenileme periyodudur.</summary>
     public const int FallbackScenarioHealthRefreshPeriodSeconds = 900;
+
+    /// <summary>Zamanlama ve sozlesme degisikligi tetikleyicilerinin kullandigi ortam anahtari ayar adidir.</summary>
+    public const string AutomationEnvironmentKey = "TestModule.Runs.AutomationEnvironmentKey";
+
+    /// <summary>Gelen webhook cagrilarini dogrulayan paylasilan sirrin ayar adidir.</summary>
+    public const string WebhookSecret = "TestModule.Runs.WebhookSecret";
+
+    /// <summary>Otomatik tetikleyicilerin varsayilan mantiksal ortam anahtaridir.</summary>
+    public const string DefaultAutomationEnvironmentKey = "default";
+
+    /// <summary>Sir tanimlanmadan uc acilmaz; varsayilan bos deger ucu kapali tutar.</summary>
+    public const string DefaultWebhookSecret = "";
+
+    /// <summary>Webhook paylasilan sirrini tasiyan basligin kararli adidir.</summary>
+    public const string WebhookSecretHeaderName = "X-TestModule-Webhook-Secret";
+
+    /// <summary>Webhook teslim kimliginin azami karakter sayisidir.</summary>
+    public const int MaxWebhookDeliveryIdLength = 128;
 }
