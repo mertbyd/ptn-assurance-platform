@@ -19,6 +19,7 @@
     "Permission:Runs.Trigger": "Create test runs",
     "Permission:Runs.Start": "Claim test runs",
     "Permission:Runs.WriteResult": "Write terminal test results",
+    "Permission:Lookups": "Read test lookups",
     "TestModule.Bridge:ProfilePackNotFound": "The requested bridge profile pack was not found.",
     "TestModule.Bridge:ProfilePackInvalid": "The bridge profile pack is invalid.",
     "TestModule.Bridge:ProfileFingerprintMismatch": "The bridge profile pack does not match the current database schema.",

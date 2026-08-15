@@ -17,6 +17,7 @@ public partial class TestModulePermissionDefinitionProvider : PermissionDefiniti
         AddBridgePermissions(group);
         AddScenarioPermissions(group);
         AddRunPermissions(group);
+        AddLookupPermissions(group);
     }
 
     // Localization anahtarini modul kaynagindan olusturur.

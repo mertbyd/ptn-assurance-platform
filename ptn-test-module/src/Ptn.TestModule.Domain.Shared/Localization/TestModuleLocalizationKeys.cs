@@ -66,6 +66,9 @@ public static class TestModuleLocalizationKeys
 
         /// <summary>Test kosumu terminal yazma permission adinin anahtaridir.</summary>
         public const string RunsWriteResult = "Permission:Runs.WriteResult";
+
+        /// <summary>Test lookup okuma permission adinin anahtaridir.</summary>
+        public const string Lookups = "Permission:Lookups";
     }
 
     // Kosum BusinessException kodlarini localization kaynagindaki ayni anahtarlara baglar.
