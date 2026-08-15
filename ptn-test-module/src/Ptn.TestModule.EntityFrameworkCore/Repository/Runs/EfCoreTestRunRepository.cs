@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Nexum.Abp.Foundation.EntityFrameworkCore.Repositories;
+using Ptn.TestModule.Entities.Lookups;
 using Ptn.TestModule.Entities.Runs;
 using Ptn.TestModule.Interface.Runs;
 using Ptn.TestModule.Models.Runs;
@@ -55,6 +56,47 @@ public class EfCoreTestRunRepository
                              entity.StartedAt.Value < startedBefore)
             .OrderBy(entity => entity.StartedAt)
             .ToListAsync(GetCancellationToken(cancellationToken));
+    }
+
+    // Kosumu, tum denemelerini ve bulgularini hukum kodu lookup'a join edilerek tek sorguda getirir.
+    /// <summary>Kosumun deterministik ihracat girdisini getirir.</summary>
+    public async Task<RunExportSource?> GetExportSourceAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var token = GetCancellationToken(cancellationToken);
+        var dbContext = await GetDbContextAsync();
+        var run = await dbContext.Set<TestRun>()
+            .FirstOrDefaultAsync(entity => entity.Id == id, token);
+        if (run is null)
+        {
+            return null;
+        }
+
+        return new RunExportSource
+        {
+            Run = run,
+            Attempts = await dbContext.Set<TestRunResult>()
+                .Include(entity => entity.Findings)
+                .Where(entity => entity.TestRunId == id)
+                .OrderBy(entity => entity.Attempt)
+                .Join(
+                    dbContext.Set<TestOutcomeStatus>(),
+                    result => result.OutcomeStatusId,
+                    outcome => outcome.Id,
+                    (result, outcome) => new RunExportAttempt
+                    {
+                        Attempt = result.Attempt,
+                        OutcomeCode = outcome.Code,
+                        DurationMs = result.DurationMs,
+                        ErrorCode = result.ErrorCode,
+                        Detail = result.Detail,
+                        FailedStepName = result.FailedStepName,
+                        FailedStepOrdinal = result.FailedStepOrdinal,
+                        Findings = result.Findings.OrderBy(finding => finding.Ordinal).ToList()
+                    })
+                .ToListAsync(token)
+        };
     }
 
     // Kosumu ve en son denemeyi getirir; bulgular tek Include ile gelir, bulgu basina sorgu acilmaz.

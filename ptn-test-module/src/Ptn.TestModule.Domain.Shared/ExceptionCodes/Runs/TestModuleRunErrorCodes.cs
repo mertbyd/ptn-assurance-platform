@@ -73,6 +73,9 @@ public static class TestModuleRunErrorCodes
     /// <summary>Ihracat blob adinin satirda tutulabilecek uzunlugu astigini bildirir.</summary>
     public const string ArtifactBlobNameTooLong = $"{Prefix}:ArtifactBlobNameTooLong";
 
+    /// <summary>Terminal denemesi bulunmayan kosumun ihrac edilmeye calisildigini bildirir.</summary>
+    public const string ExportRequiresTerminalResult = $"{Prefix}:ExportRequiresTerminalResult";
+
     /// <summary>Belgenin desteklenen Arazzo surumunu tasimadigini bildirir.</summary>
     public const string ArazzoVersionUnsupported = $"{Prefix}:ArazzoVersionUnsupported";
 

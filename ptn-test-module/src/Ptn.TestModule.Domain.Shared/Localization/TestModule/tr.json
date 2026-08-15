@@ -19,6 +19,7 @@
     "Permission:Runs.Trigger": "Test kosumu olustur",
     "Permission:Runs.Start": "Test kosumu claim et",
     "Permission:Runs.WriteResult": "Terminal test sonucu yaz",
+    "Permission:Runs.Export": "Test kosumlarini standart rapor formatlarina ihrac et",
     "Permission:Lookups": "Test lookup satirlarini oku",
     "TestModule.Bridge:ProfilePackNotFound": "Istenen kopru profil paketi bulunamadi.",
     "TestModule.Bridge:ProfilePackInvalid": "Kopru profil paketi gecersiz.",

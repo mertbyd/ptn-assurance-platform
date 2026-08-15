@@ -18,5 +18,6 @@ public partial class TestModulePermissionDefinitionProvider
         runs.AddChild(TestModulePermissions.Runs.Trigger, L(TestModuleLocalizationKeys.Permissions.RunsTrigger));
         runs.AddChild(TestModulePermissions.Runs.Start, L(TestModuleLocalizationKeys.Permissions.RunsStart));
         runs.AddChild(TestModulePermissions.Runs.WriteResult, L(TestModuleLocalizationKeys.Permissions.RunsWriteResult));
+        runs.AddChild(TestModulePermissions.Runs.Export, L(TestModuleLocalizationKeys.Permissions.RunsExport));
     }
 }

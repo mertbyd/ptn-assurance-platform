@@ -29,6 +29,9 @@ public static class TestRunRoutes
     /// <summary>Terminal sonucun ihracat artefakt baglarini veren rotadir.</summary>
     public const string ResultArtifactsById = "results/{id:guid}/artifacts";
 
+    /// <summary>Kosumu standart rapor formatlarina ihrac eden rotadir.</summary>
+    public const string Export = "{id:guid}/export";
+
     /// <summary>Test kosumu endpoint'lerinin Swagger grup adidir.</summary>
     public const string SwaggerGroupName = "test-module-runs";
 }
