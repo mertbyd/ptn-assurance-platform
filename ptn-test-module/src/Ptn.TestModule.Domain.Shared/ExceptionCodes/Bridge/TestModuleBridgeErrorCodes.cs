@@ -31,6 +31,7 @@ public static class TestModuleBridgeErrorCodes
         public const string PathRequired = $"{Prefix}:Validation:PathRequired";
         public const string AssertionPathRequired = $"{Prefix}:Validation:AssertionPathRequired";
         public const string StatusCodeInvalid = $"{Prefix}:Validation:StatusCodeInvalid";
+        public const string ProfileCodeInvalid = $"{Prefix}:Validation:ProfileCodeInvalid";
         public const string TimeoutInvalid = $"{Prefix}:Validation:TimeoutInvalid";
         public const string PollIntervalInvalid = $"{Prefix}:Validation:PollIntervalInvalid";
         public const string ProjectionRowLimitInvalid = $"{Prefix}:Validation:ProjectionRowLimitInvalid";

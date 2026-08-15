@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Ptn.ApiContractChecker.Constants.Conformance.Lookups;
 using Ptn.TestModule.Constants.Bridge;
@@ -41,7 +42,7 @@ public class ApiOracleManager : TestModuleDomainService
         return request;
     }
 
-    // Response gozlemini checker'in runtime profil koduyla tamamlar.
+    // Response gozlemini senaryonun sectigi veya geriye uyumlu varsayilan uygunluk profiliyle tamamlar.
     public ApiResponseRequest CreateResponseRequest(
         ResponseObservation observation,
         CancellationToken cancellationToken = default)
@@ -57,7 +58,7 @@ public class ApiOracleManager : TestModuleDomainService
             ContentType = observation.ContentType,
             Headers = observation.Headers,
             Body = observation.Body,
-            ProfileCode = PtnApiOracleRequestCodes.RuntimeProfile,
+            ProfileCode = ResolveConformanceProfile(observation.ProfileCode),
             Correlation = observation.Correlation
         };
     }
@@ -76,6 +77,20 @@ public class ApiOracleManager : TestModuleDomainService
     {
         result.OutcomeCode = NormalizeOutcome(result.OutcomeCode);
         return result;
+    }
+
+    // Opsiyonel senaryo profilini kapali sozlukten cozer; secim yoksa Runtime uygular.
+    private static string ResolveConformanceProfile(string? profileCode)
+    {
+        if (string.IsNullOrWhiteSpace(profileCode))
+        {
+            return PtnConformanceProfileCodes.Runtime;
+        }
+
+        return PtnConformanceProfileCodes.All.Contains(profileCode)
+            ? profileCode
+            : throw new BusinessException(TestModuleBridgeErrorCodes.Validation.ProfileCodeInvalid)
+                .WithData(nameof(profileCode), profileCode);
     }
 
     // Operation link sonucunu tek outcome ve kaynak sozlugune normalize eder.

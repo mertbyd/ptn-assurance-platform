@@ -1,4 +1,6 @@
+using System.Linq;
 using FluentValidation;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Dtos.Bridge.Api;
 using Ptn.TestModule.ExceptionCodes.Bridge;
 using Ptn.TestModule.FluentValidation.Bridge.Correlation;
@@ -15,6 +17,10 @@ public sealed class ResponseObservationDtoValidator : AbstractValidator<Response
         RuleFor(input => input.Method).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.MethodRequired);
         RuleFor(input => input.Path).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.PathRequired);
         RuleFor(input => input.StatusCode).InclusiveBetween(100, 599).WithMessage(TestModuleBridgeErrorCodes.Validation.StatusCodeInvalid);
+        RuleFor(input => input.ProfileCode)
+            .Must(profileCode => string.IsNullOrWhiteSpace(profileCode) ||
+                                 PtnConformanceProfileCodes.All.Contains(profileCode))
+            .WithMessage(TestModuleBridgeErrorCodes.Validation.ProfileCodeInvalid);
         RuleFor(input => input.Correlation!)
             .SetValidator(new CorrelationRefDtoValidator())
             .When(input => input.Correlation is not null);

@@ -40,6 +40,10 @@ public sealed class ResponseObservationDto
     /// </summary>
     public JsonElement? Body { get; set; }
     /// <summary>
+    /// Senaryonun Strict, Runtime veya Lenient uygunluk profilini belirtir; bos birakilirsa Runtime kullanilir.
+    /// </summary>
+    public string? ProfileCode { get; set; }
+    /// <summary>
     /// Checker cagrisi ile cevabi eslestiren korelasyon bilgisini tasir.
     /// </summary>
     public CorrelationRefDto? Correlation { get; set; }

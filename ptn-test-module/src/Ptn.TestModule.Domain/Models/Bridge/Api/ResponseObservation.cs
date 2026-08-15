@@ -16,5 +16,6 @@ public sealed class ResponseObservation
     public string? ContentType { get; set; }
     public Dictionary<string, string> Headers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public JsonElement? Body { get; set; }
+    public string? ProfileCode { get; set; }
     public CorrelationRef? Correlation { get; set; }
 }
