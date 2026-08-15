@@ -14,6 +14,7 @@ namespace Ptn.TestModule.Services.Runs;
 
 // islevi: HAR artefaktini ABP BLOB Storing container'ina yazar, geri okur ve siler.
 // sistemdeki gorevi: Artefakti satirdan cikaran kalicilik siniridir; test_runs uzerinde yalniz har_blob_name kalir (ADR-0016 §H).
+[ExposeServices(typeof(IHarArtifactStore))]
 public sealed class HarArtifactService : IHarArtifactStore, ITransientDependency
 {
     // HAR artefaktlarinin adiyla cozulmus BLOB Storing container'idir.
@@ -49,7 +50,14 @@ public sealed class HarArtifactService : IHarArtifactStore, ITransientDependency
     {
         _planner.EnsureArtifactIsValid(blobName);
         var bytes = await _blobContainer.GetAllBytesOrNullAsync(blobName, cancellationToken);
-        return bytes is null ? null : Encoding.UTF8.GetString(bytes);
+        if (bytes is null)
+        {
+            return null;
+        }
+
+        var content = Encoding.UTF8.GetString(bytes);
+        _planner.EnsureArtifactIsValid(blobName, content);
+        return content;
     }
 
     // Saklama suresi dolan artefakti kalici depodan birakir.

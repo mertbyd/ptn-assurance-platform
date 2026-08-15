@@ -27,6 +27,8 @@ using Volo.Abp.AspNetCore.Authentication.JwtBearer;
 using Volo.Abp.AspNetCore.MultiTenancy;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
+using Volo.Abp.BlobStoring;
+using Volo.Abp.BlobStoring.FileSystem;
 using Volo.Abp.Caching;
 using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.EntityFrameworkCore;
@@ -56,6 +58,7 @@ namespace Ptn.TestModule;
     typeof(AbpAspNetCoreMultiTenancyModule),
     typeof(AbpAspNetCoreAuthenticationJwtBearerModule),
     typeof(AbpAutofacModule),
+    typeof(AbpBlobStoringFileSystemModule),
     typeof(AbpCachingStackExchangeRedisModule),
     typeof(AbpEntityFrameworkCorePostgreSqlModule),
     typeof(AbpAspNetCoreSerilogModule),
@@ -84,6 +87,7 @@ public class TestModuleHttpApiHostModule : AbpModule
         ConfigureLocalization();
         ConfigureExternalBearerAuthentication(context, configuration);
         ConfigureCache(configuration);
+        ConfigureBlobStoring(configuration, hostingEnvironment);
         ConfigureDataProtection(context, configuration, hostingEnvironment);
         ConfigureSwagger(context, configuration);
         ConfigureCors(context, configuration);
@@ -142,6 +146,22 @@ public class TestModuleHttpApiHostModule : AbpModule
     private void ConfigureCache(IConfiguration configuration)
     {
         Configure<AbpDistributedCacheOptions>(options => options.KeyPrefix = $"{ApplicationName}:");
+    }
+
+    // Kosum artefaktlari ve HAR govdeleri dosya sisteminde durur; saglayici olmadan BLOB Storing kurulamaz.
+    private void ConfigureBlobStoring(IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
+    {
+        var basePath = configuration[TestModuleConfigurationKeys.BlobStoringFileSystemBasePath];
+        if (string.IsNullOrWhiteSpace(basePath))
+        {
+            basePath = Path.Combine(hostingEnvironment.ContentRootPath, "blobs");
+        }
+
+        Configure<AbpBlobStoringOptions>(options =>
+        {
+            options.Containers.ConfigureAll((_, container) =>
+                container.UseFileSystem(fileSystem => fileSystem.BasePath = basePath));
+        });
     }
 
     private static void ConfigureDataProtection(

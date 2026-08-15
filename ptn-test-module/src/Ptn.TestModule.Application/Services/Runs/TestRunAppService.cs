@@ -1,9 +1,9 @@
 using System;
 using System.Threading.Tasks;
-using Nexum.Abp.Foundation.Querying;
+using System.Collections.Generic;
+using FluentValidation;
 using Ptn.TestModule.BackgroundJobs.Runs;
 using Ptn.TestModule.Dtos.Runs;
-using Ptn.TestModule.Entities.Runs;
 using Ptn.TestModule.Interface.Runs;
 using Ptn.TestModule.Managers.Runs;
 using Ptn.TestModule.Mappers.Runs;
@@ -49,6 +49,10 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
 
     /// <summary>Dayanikli kosum icra job'ini kuyruga veren ABP job manager'idir.</summary>
     private readonly IBackgroundJobManager _backgroundJobManager;
+    private readonly IValidator<TestRunListInput> _listValidator;
+    private readonly IRunArtifactStore _artifactStore;
+    private readonly IHarArtifactStore _harArtifactStore;
+    private readonly RunCancellationManager _runCancellationManager;
 
     /// <summary>Application orkestrasyonunu Manager ve repository bagimliliklariyla kurar.</summary>
     public TestRunAppService(
@@ -59,7 +63,11 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         ITestRunRepository testRunRepository,
         ITestRunResultRepository testRunResultRepository,
         ICancellationTokenProvider cancellationTokenProvider,
-        IBackgroundJobManager backgroundJobManager)
+        IBackgroundJobManager backgroundJobManager,
+        IValidator<TestRunListInput> listValidator,
+        IRunArtifactStore artifactStore,
+        IHarArtifactStore harArtifactStore,
+        RunCancellationManager runCancellationManager)
     {
         _testRunManager = testRunManager;
         _testRunResultManager = testRunResultManager;
@@ -69,6 +77,10 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         _testRunResultRepository = testRunResultRepository;
         _cancellationTokenProvider = cancellationTokenProvider;
         _backgroundJobManager = backgroundJobManager;
+        _listValidator = listValidator;
+        _artifactStore = artifactStore;
+        _harArtifactStore = harArtifactStore;
+        _runCancellationManager = runCancellationManager;
     }
 
     /// <summary>Kimligi verilen test kosumunu permission kontrolunden sonra getirir.</summary>
@@ -82,16 +94,57 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
     }
 
     /// <summary>Kosumlari kararli siralamayla sayfalar; agir rapor kolonlari bu uca girmez.</summary>
-    public async Task<PagedResultDto<TestRunDto>> GetListAsync(TestRunListInput input)
+    public async Task<PagedResultDto<TestRunHeaderDto>> GetListAsync(TestRunListInput input)
     {
         await CheckPolicyAsync(TestModulePermissions.Runs.View);
-        var page = await _testRunRepository.GetPageAsync(
-            new RepositoryQuery<TestRun>()
-                .OrderByDescending(entity => entity.CreationTime)
-                .ThenBy(entity => entity.TestKey)
-                .Page(input.SkipCount, input.MaxResultCount),
-            _cancellationTokenProvider.Token);
-        return new PagedResultDto<TestRunDto>(page.TotalCount, Mapper.Map([.. page.Items]));
+        await _listValidator.ValidateAndThrowAsync(input, _cancellationTokenProvider.Token);
+        var page = await _testRunRepository.GetHeaderPageAsync(Mapper.Map(input), _cancellationTokenProvider.Token);
+        return new PagedResultDto<TestRunHeaderDto>(page.TotalCount, Mapper.Map(new List<TestRunHeader>(page.Items)));
+    }
+
+    /// <summary>Running kosuma kooperatif iptal talebi yazar.</summary>
+    public async Task CancelAsync(Guid id)
+    {
+        await CheckPolicyAsync(TestModulePermissions.Runs.Cancel);
+        var token = _cancellationTokenProvider.Token;
+        var entity = await _testRunManager.EnsureExistsAsync(id, cancellationToken: token);
+        await _runCancellationManager.RequestAsync(entity, token);
+        await _testRunRepository.UpdateAsync(entity, autoSave: true, cancellationToken: token);
+    }
+
+    /// <summary>Terminal sonuc artefaktini format koduyla okuyup public metin govdesine cevirir.</summary>
+    public async Task<RunArtifactContentDto> GetArtifactContentAsync(Guid id, string format)
+    {
+        await CheckPolicyAsync(TestModulePermissions.Runs.View);
+        var descriptor = TestRunManager.CreateArtifactDescriptor(
+            await _testRunResultManager.EnsureExistsAsync(id, cancellationToken: _cancellationTokenProvider.Token),
+            format);
+        var content = TestRunManager.EnsureArtifactContent(
+            await _artifactStore.ReadAsync(descriptor.BlobName, _cancellationTokenProvider.Token));
+        return Mapper.Map(new RunArtifactContent
+        {
+            Format = descriptor.Format,
+            BlobName = descriptor.BlobName,
+            ContentType = descriptor.ContentType,
+            Content = content
+        });
+    }
+
+    /// <summary>Kosumun HAR artefaktini okuyup public metin govdesine cevirir.</summary>
+    public async Task<RunArtifactContentDto> GetHarContentAsync(Guid id)
+    {
+        await CheckPolicyAsync(TestModulePermissions.Runs.View);
+        var run = await _testRunManager.EnsureExistsAsync(id, cancellationToken: _cancellationTokenProvider.Token);
+        var descriptor = TestRunManager.CreateHarDescriptor(run);
+        var content = TestRunManager.EnsureArtifactContent(
+            await _harArtifactStore.ReadAsync(descriptor.BlobName, _cancellationTokenProvider.Token));
+        return Mapper.Map(new RunArtifactContent
+        {
+            Format = descriptor.Format,
+            BlobName = descriptor.BlobName,
+            ContentType = descriptor.ContentType,
+            Content = content
+        });
     }
 
     /// <summary>Kosumu terminal hukmu, bulgulari ve teshis raporuyla birlikte getirir.</summary>
@@ -164,7 +217,6 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         });
         return created;
     }
-
     /// <summary>Pending kosumu idempotent bicimde Running durumuna claim edip guncel kaydi dondurur.</summary>
     public async Task<TestRunClaimDto> StartAsync(Guid id)
     {
@@ -176,7 +228,6 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         {
             await _testRunRepository.UpdateAsync(entity, autoSave: true, cancellationToken: cancellationToken);
         }
-
         return Mapper.Map(new TestRunClaimResult
         {
             Claimed = claimed,
@@ -195,8 +246,7 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
             Mapper.Map(input),
             input.DurationMs,
             Clock.Now,
-            input.HarBlobName,
-            cancellationToken);
+            input.HarBlobName, cancellationToken);
 
         await _testRunRepository.UpdateAsync(testRun, cancellationToken: cancellationToken);
         var saved = await _testRunResultRepository.InsertAsync(

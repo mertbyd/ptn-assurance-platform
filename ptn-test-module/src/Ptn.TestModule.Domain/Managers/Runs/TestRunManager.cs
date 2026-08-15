@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -103,6 +104,40 @@ public class TestRunManager : FoundationManager<TestRun, Guid>
         entity.StartedAt = startedAt;
         return true;
     }
+
+    /// <summary>Terminal sonuc format kodunu mevcut blob adi ve MIME turune cozer.</summary>
+    public static RunArtifactDescriptor CreateArtifactDescriptor(TestRunResult result, string format)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        return format switch
+        {
+            RunArtifactFormatCodes.Ctrf when !string.IsNullOrWhiteSpace(result.CtrfBlobName) =>
+                CreateDescriptor(format, result.CtrfBlobName, RunArtifactConsts.JsonContentType),
+            RunArtifactFormatCodes.JUnit when !string.IsNullOrWhiteSpace(result.JUnitBlobName) =>
+                CreateDescriptor(format, result.JUnitBlobName, RunArtifactConsts.XmlContentType),
+            RunArtifactFormatCodes.Sarif when !string.IsNullOrWhiteSpace(result.SarifBlobName) =>
+                CreateDescriptor(format, result.SarifBlobName, RunArtifactConsts.JsonContentType),
+            _ when !RunArtifactFormatCodes.All.Contains(format) =>
+                throw new BusinessException(TestModuleRunErrorCodes.ArtifactFormatNotSupported),
+            _ => throw new BusinessException(TestModuleRunErrorCodes.ArtifactNotFound)
+        };
+    }
+
+    /// <summary>Kosumun mevcut HAR blob adini JSON artefakt tanimina cevirir.</summary>
+    public static RunArtifactDescriptor CreateHarDescriptor(TestRun run)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        return !string.IsNullOrWhiteSpace(run.HarBlobName)
+            ? CreateDescriptor(RunArtifactConsts.HarFormat, run.HarBlobName, RunArtifactConsts.JsonContentType)
+            : throw new BusinessException(TestModuleRunErrorCodes.ArtifactNotFound);
+    }
+
+    /// <summary>Blob deposunda bulunmayan artefakt govdesini kararli domain hatasina cevirir.</summary>
+    public static string EnsureArtifactContent(string? content)
+        => content ?? throw new BusinessException(TestModuleRunErrorCodes.ArtifactNotFound);
+
+    private static RunArtifactDescriptor CreateDescriptor(string format, string blobName, string contentType)
+        => new() { Format = format, BlobName = blobName, ContentType = contentType };
 
     // Running kosumu istenen terminal motor durumuna tasir ve artefakt snapshot'ini baglar.
     /// <summary>Kosum durumunu terminal lookup koduna gecirip tamamlanma alanlarini atar.</summary>

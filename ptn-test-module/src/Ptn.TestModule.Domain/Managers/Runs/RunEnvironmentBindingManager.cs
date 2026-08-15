@@ -2,6 +2,8 @@ using System;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
 using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.ExceptionCodes.Runs;
 using Ptn.TestModule.Models.Runs;
@@ -42,6 +44,34 @@ public class RunEnvironmentBindingManager : TestModuleDomainService
 
         var configured = await _settingProvider.GetOrNullAsync(TestModuleRunSettingNames.EnvironmentBindings);
         return Resolve(configured, requestedKey);
+    }
+
+    /// <summary>Tenant ayarindaki tum ortam baglamalarini sir degerleri acilmadan cozer.</summary>
+    public async Task<IReadOnlyList<TestRunEnvironmentBinding>> ListAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var configured = await _settingProvider.GetOrNullAsync(TestModuleRunSettingNames.EnvironmentBindings);
+        if (string.IsNullOrWhiteSpace(configured))
+        {
+            return [];
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(configured);
+            var bindings = new List<TestRunEnvironmentBinding>();
+            foreach (var property in document.RootElement.EnumerateObject())
+            {
+                bindings.Add(ReadBinding(property.Value, property.Name));
+            }
+
+            return bindings.OrderBy(item => item.EnvironmentKey, StringComparer.Ordinal).ToList();
+        }
+        catch (JsonException exception)
+        {
+            throw new BusinessException(TestModuleRunErrorCodes.EnvironmentNotBound, innerException: exception);
+        }
     }
 
     // JSON haritasindan istenen ortam satirini guvenli tiplerle cozer.

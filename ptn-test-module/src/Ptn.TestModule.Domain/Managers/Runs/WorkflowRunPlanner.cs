@@ -45,7 +45,7 @@ public class WorkflowRunPlanner : TestModuleDomainService
         ArgumentException.ThrowIfNullOrWhiteSpace(blobName);
         if (harContent is not null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(harContent);
+            EnsureHarIsUsable(harContent);
         }
     }
 

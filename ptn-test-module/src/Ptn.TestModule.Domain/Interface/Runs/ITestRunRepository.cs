@@ -15,6 +15,13 @@ namespace Ptn.TestModule.Interface.Runs;
 /// </summary>
 public interface ITestRunRepository : IBaseRepository<TestRun, Guid>
 {
+    Task<TestRunHeaderPage> GetHeaderPageAsync(
+        TestRunQuery query,
+        CancellationToken cancellationToken = default);
+
+    Task<TestFindingHeaderPage> GetFindingPageAsync(
+        TestFindingQuery query,
+        CancellationToken cancellationToken = default);
     // W3C trace kimligiyle tek kosum kaydini bulur.
     /// <summary>Verilen trace kimligine sahip kosum kaydini getirir.</summary>
     Task<TestRun?> FindByTraceIdAsync(

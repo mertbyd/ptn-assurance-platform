@@ -41,10 +41,34 @@ public class TestRunController : TestModuleController
     /// <returns>Ev standardi icinde agir rapor kolonlari tasimayan kosum sayfasi.</returns>
     [HttpGet]
     [Authorize(TestModulePermissions.Runs.View)]
-    public virtual async Task<Result<PagedResultDto<TestRunDto>>> GetList(
+    public virtual async Task<Result<PagedResultDto<TestRunHeaderDto>>> GetList(
         [FromQuery] TestRunListInput input)
     {
         var result = await AppService.GetListAsync(input);
+        return result;
+    }
+
+    [HttpPost(TestRunRoutes.Cancel)]
+    [Authorize(TestModulePermissions.Runs.Cancel)]
+    public virtual async Task<Result> Cancel(Guid id)
+    {
+        await AppService.CancelAsync(id);
+        return Result.NoContent();
+    }
+
+    [HttpGet(TestRunRoutes.ResultArtifactContent)]
+    [Authorize(TestModulePermissions.Runs.View)]
+    public virtual async Task<Result<RunArtifactContentDto>> GetArtifactContent(Guid id, string format)
+    {
+        var result = await AppService.GetArtifactContentAsync(id, format);
+        return result;
+    }
+
+    [HttpGet(TestRunRoutes.HarContent)]
+    [Authorize(TestModulePermissions.Runs.View)]
+    public virtual async Task<Result<RunArtifactContentDto>> GetHarContent(Guid id)
+    {
+        var result = await AppService.GetHarContentAsync(id);
         return result;
     }
 

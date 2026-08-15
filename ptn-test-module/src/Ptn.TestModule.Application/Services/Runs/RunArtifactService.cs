@@ -11,6 +11,7 @@ namespace Ptn.TestModule.Services.Runs;
 
 // islevi: Ihracat artefaktini ABP BLOB Storing container'ina yazar, geri okur ve siler.
 // sistemdeki gorevi: Agir ciktiyi satirdan cikaran kalicilik siniridir; test_run_results uzerinde yalniz blob adi kalir (PLAN-0003 TM-13, ADR-0016 §H).
+[ExposeServices(typeof(IRunArtifactStore))]
 public sealed class RunArtifactService : IRunArtifactStore, ITransientDependency
 {
     /// <summary>Ihracat artefaktlarinin adiyla cozulmus BLOB Storing container'idir.</summary>
@@ -48,7 +49,14 @@ public sealed class RunArtifactService : IRunArtifactStore, ITransientDependency
     {
         _nameManager.EnsureArtifactIsValid(blobName);
         var bytes = await _blobContainer.GetAllBytesOrNullAsync(blobName, cancellationToken);
-        return bytes is null ? null : Encoding.UTF8.GetString(bytes);
+        if (bytes is null)
+        {
+            return null;
+        }
+
+        var content = Encoding.UTF8.GetString(bytes);
+        _nameManager.EnsureArtifactIsValid(blobName, content);
+        return content;
     }
 
     // Saklama suresi dolan artefakti kalici depodan birakir.

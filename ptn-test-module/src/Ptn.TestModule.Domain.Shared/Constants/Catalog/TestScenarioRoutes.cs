@@ -29,6 +29,9 @@ public static class TestScenarioRoutes
     /// <summary>Suresi dolmus karantinayi temizleyen rotadir.</summary>
     public const string ReleaseQuarantine = "{id:guid}/quarantine/release";
 
+    /// <summary>Taslagi kalicilastirmadan derleyip lint eden rotadir.</summary>
+    public const string CompilePreview = "compile-preview";
+
     /// <summary>Senaryo katalogu endpoint'lerinin Swagger grup adidir.</summary>
     public const string SwaggerGroupName = "test-module-scenarios";
 }
