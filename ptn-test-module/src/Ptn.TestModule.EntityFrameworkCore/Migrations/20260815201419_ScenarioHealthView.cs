@@ -13,14 +13,15 @@ namespace Ptn.TestModule.Migrations
             // Saglik tablo degil view olarak baslar (PLAN-0003 TM-27). Pass/fail/flaky oranlari ve p95
             // burada hesaplanir; uygulama tarafinda satir toplayip bellekte yuzdelik hesaplanmaz.
             // is_dry_run = true satirlar hesaba girmez (TM-18).
-            // tenant_id NULL tasiyan host satirlari bos uuid'e indirgenir; boylece CONCURRENTLY yenilemenin
-            // zorunlu kildigi benzersiz indeks NULL tasimaz.
+            // TenantId NULL tasiyan host satirlari bos uuid'e indirgenir; boylece CONCURRENTLY yenilemenin
+            // zorunlu kildigi benzersiz indeks NULL tasimaz. ABP taban kolonlari snake_case'e cevrilmez,
+            // bu yuzden yalniz "TenantId" tirnakli ve PascalCase adreslenir (mevcut migration'larla ayni).
             migrationBuilder.Sql(
                 """
                 CREATE MATERIALIZED VIEW test_run.scenario_health AS
                 WITH terminal_run AS (
                     SELECT
-                        COALESCE(r.tenant_id, '00000000-0000-0000-0000-000000000000'::uuid) AS tenant_key,
+                        COALESCE(r."TenantId", '00000000-0000-0000-0000-000000000000'::uuid) AS tenant_key,
                         r.test_key,
                         r.history_id,
                         r.completed_at,
