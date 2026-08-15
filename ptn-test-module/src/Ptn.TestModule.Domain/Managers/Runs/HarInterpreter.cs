@@ -12,8 +12,8 @@ using HarFields = Ptn.TestModule.Constants.Runs.HarArtifactConsts.Fields;
 
 namespace Ptn.TestModule.Managers.Runs;
 
-// islevi: HAR 1.2 govdesini entry listesine cevirir, adim kimligini echo'dan cozer ve veritabani assertion adimlarini isaretler.
-// sistemdeki gorevi: Entry ile senaryo adimi arasindaki bagi konuma degil StepKey esitligine dayandiran tek domain sahibidir (ADR-0021).
+// islevi: HAR 1.2 govdesini entry listesine cevirir, adim kimligini istek header'i veya echo'dan cozer ve veritabani assertion adimlarini isaretler.
+// sistemdeki gorevi: Entry ile senaryo adimi arasindaki bagi konuma degil StepKey esitligine dayandiran tek domain sahibidir (ADR-0021, ADR-0022).
 /// <summary>
 /// Runner'in urettigi HAR belgesini yargiya hazir hale getirir.
 /// </summary>
@@ -87,11 +87,13 @@ public class HarInterpreter : TestModuleDomainService
         var request = GetOptional(entry, HarFields.Request);
         var response = GetOptional(entry, HarFields.Response);
         var responseBody = ReadBody(response, HarFields.Content);
+        var requestStepKey = ReadHeader(request, WorkflowRunnerConsts.StepKeyHeaderName);
+        var responseStepKey = ReadStepKey(responseBody);
         var url = ReadString(request, HarFields.Url) ?? string.Empty;
 
         return new HarEntryModel
         {
-            StepKey = ResolveStepKey(ReadStepKey(responseBody), declaredStepKeys),
+            StepKey = ResolveStepKey(requestStepKey, responseStepKey, declaredStepKeys),
             Ordinal = ordinal,
             Method = ReadString(request, HarFields.Method) ?? string.Empty,
             Url = url,
@@ -104,6 +106,29 @@ public class HarInterpreter : TestModuleDomainService
             TimeMs = ReadInt(entry, HarFields.Time) ?? 0,
             IsDatabaseAssertion = IsDatabaseAssertion(url)
         };
+    }
+
+    // HAR request header dizisindeki tek kararli degeri buyuk-kucuk harf duyarsiz okur.
+    /// <summary>Istek header'indan adim kimligini okur.</summary>
+    private static string? ReadHeader(JsonElement request, string headerName)
+    {
+        var headers = GetOptional(request, HarFields.Headers);
+        if (headers.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        var values = headers.EnumerateArray()
+            .Where(header => string.Equals(
+                ReadString(header, HarFields.Name),
+                headerName,
+                StringComparison.OrdinalIgnoreCase))
+            .Select(header => ReadString(header, HarFields.Value))
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.Ordinal)
+            .Take(2)
+            .ToList();
+        return values.Count == 1 ? values[0] : null;
     }
 
     // Checker yanitindaki korelasyon echo'sunu once nesne, sonra kok alan olarak arar (ADR-0021).
@@ -146,10 +171,21 @@ public class HarInterpreter : TestModuleDomainService
             .FirstOrDefault(stepKey => stepKey is not null);
     }
 
-    // Bildirilmemis veya bos bir kimligi kabul etmez; boylece hukum yanlis adima baglanmaz.
-    /// <summary>Echo edilen adim kimligini belgede bildirilen kumeye gore dogrular.</summary>
-    private static string? ResolveStepKey(string? stepKey, IReadOnlySet<string> declaredStepKeys)
+    // Celisen, bildirilmemis veya bos bir kimligi kabul etmez; boylece hukum yanlis adima baglanmaz.
+    /// <summary>Header ve echo kaynaklarini belgede bildirilen kumeye gore dogrular.</summary>
+    private static string? ResolveStepKey(
+        string? requestStepKey,
+        string? responseStepKey,
+        IReadOnlySet<string> declaredStepKeys)
     {
+        if (!string.IsNullOrWhiteSpace(requestStepKey) &&
+            !string.IsNullOrWhiteSpace(responseStepKey) &&
+            !string.Equals(requestStepKey, responseStepKey, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var stepKey = requestStepKey ?? responseStepKey;
         return !string.IsNullOrWhiteSpace(stepKey) && declaredStepKeys.Contains(stepKey)
             ? stepKey
             : null;

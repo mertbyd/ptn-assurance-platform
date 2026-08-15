@@ -35,8 +35,10 @@ public static class HarArtifactConsts
         public const string Time = "time";
         public const string Request = "request";
         public const string Response = "response";
+        public const string Headers = "headers";
         public const string Method = "method";
         public const string Url = "url";
+        public const string Value = "value";
         public const string Status = "status";
         public const string PostData = "postData";
         public const string Content = "content";

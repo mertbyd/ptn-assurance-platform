@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.ExceptionCodes.Runs;
 using Ptn.TestModule.Managers.Runs;
 using Ptn.TestModule.Models.Runs;
@@ -8,7 +10,7 @@ using Xunit;
 namespace Ptn.TestModule.Runs;
 
 // islevi: HAR entry'lerinin adima StepKey ile baglanmasini ve veritabani adimlarinin isaretlenmesini dogrular.
-// sistemdeki gorevi: AUDIT-0001 BULGU-01'deki konumla eslestirme yolunun geri gelmesini engeller (ADR-0021).
+// sistemdeki gorevi: Konumla eslestirme yolunun geri gelmesini ve header/echo celiskisinin gizlenmesini engeller (ADR-0021, ADR-0022).
 public class HarInterpreterTests
 {
     // Echo edilen kimlikler konum sirasindan farkliysa bile hukum dogru adima baglanmalidir.
@@ -32,10 +34,49 @@ public class HarInterpreterTests
         var facts = CreateFacts();
         facts.StepKeys = ["create-order"];
 
-        var document = new HarInterpreter().Interpret(HarContent, facts);
+        var document = new HarInterpreter().Interpret(
+            CreateSingleEntryHar("unknown-step", "{\"id\":1}"),
+            facts);
 
         document.Entries[0].StepKey.ShouldBeNull();
-        document.Entries[1].StepKey.ShouldBe("create-order");
+        document.HasUnboundEntries.ShouldBeTrue();
+    }
+
+    // Siradan SUT yaniti echo etmediginde istek header'i entry'yi adima baglamalidir.
+    [Fact]
+    public void Should_bind_from_request_header_without_response_echo()
+    {
+        var document = new HarInterpreter().Interpret(
+            CreateSingleEntryHar("create-order", "{\"id\":1}"),
+            CreateFacts());
+
+        document.Entries[0].StepKey.ShouldBe("create-order");
+        document.HasUnboundEntries.ShouldBeFalse();
+    }
+
+    // Header bulunmadiginda checker response echo'su geriye uyumlu korelasyon kaynagi olmalidir.
+    [Fact]
+    public void Should_fall_back_to_response_echo_when_request_header_is_missing()
+    {
+        var document = new HarInterpreter().Interpret(
+            CreateSingleEntryHar(null, "{\"correlation\":{\"stepKey\":\"verify-subject-row\"}}"),
+            CreateFacts());
+
+        document.Entries[0].StepKey.ShouldBe("verify-subject-row");
+        document.HasUnboundEntries.ShouldBeFalse();
+    }
+
+    // Header ile checker echo'su celisirse sessizce birine guvenilmemelidir.
+    [Fact]
+    public void Should_leave_entry_unbound_when_correlation_sources_conflict()
+    {
+        var document = new HarInterpreter().Interpret(
+            CreateSingleEntryHar(
+                "create-order",
+                "{\"correlation\":{\"stepKey\":\"verify-subject-row\"}}"),
+            CreateFacts());
+
+        document.Entries[0].StepKey.ShouldBeNull();
         document.HasUnboundEntries.ShouldBeTrue();
     }
 
@@ -72,6 +113,40 @@ public class HarInterpreterTests
         };
     }
 
+    // Tek entry'li HAR'i istek ve yanit korelasyon kaynaklarini bagimsiz kuracak sekilde uretir.
+    private static string CreateSingleEntryHar(string? requestStepKey, string responseBody)
+    {
+        var headers = requestStepKey is null
+            ? "[]"
+            : $$"""[{ "name": "{{WorkflowRunnerConsts.StepKeyHeaderName}}", "value": "{{requestStepKey}}" }]""";
+        return $$"""
+            {
+              "log": {
+                "version": "1.2",
+                "creator": { "name": "respect", "version": "2.14.0" },
+                "entries": [
+                  {
+                    "startedDateTime": "2026-08-14T10:00:00.000Z",
+                    "time": 12,
+                    "request": {
+                      "method": "POST",
+                      "url": "https://api.test/orders",
+                      "headers": {{headers}}
+                    },
+                    "response": {
+                      "status": 200,
+                      "content": {
+                        "mimeType": "application/json",
+                        "text": {{JsonSerializer.Serialize(responseBody)}}
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+            """;
+    }
+
     // Ilk entry veritabani adimi, ikincisi API adimi, ucuncusu korelasyonsuzdur.
     private const string HarContent = """
         {
@@ -84,7 +159,10 @@ public class HarInterpreterTests
                 "time": 12,
                 "request": {
                   "method": "POST",
-                  "url": "https://checker.test/api/comparison/assertions/row"
+                  "url": "https://checker.test/api/comparison/assertions/row",
+                  "headers": [
+                    { "name": "X-CheckNexus-Step-Key", "value": "verify-subject-row" }
+                  ]
                 },
                 "response": {
                   "status": 200,
@@ -99,13 +177,16 @@ public class HarInterpreterTests
                 "time": 30,
                 "request": {
                   "method": "POST",
-                  "url": "https://api.test/orders"
+                  "url": "https://api.test/orders",
+                  "headers": [
+                    { "name": "X-CheckNexus-Step-Key", "value": "create-order" }
+                  ]
                 },
                 "response": {
                   "status": 201,
                   "content": {
                     "mimeType": "application/json",
-                    "text": "{\"correlation\":{\"stepKey\":\"create-order\"}}"
+                    "text": "{\"id\":1}"
                   }
                 }
               },
@@ -114,7 +195,8 @@ public class HarInterpreterTests
                 "time": 8,
                 "request": {
                   "method": "GET",
-                  "url": "https://api.test/orders/1"
+                  "url": "https://api.test/orders/1",
+                  "headers": []
                 },
                 "response": {
                   "status": 200,
