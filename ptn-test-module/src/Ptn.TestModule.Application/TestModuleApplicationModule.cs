@@ -4,6 +4,7 @@ using Pintern.Authenticator;
 using Pintern.Notifications;
 using Ptn.DatabaseChecker;
 using Ptn.TestModule.BackgroundWorkers.Catalog;
+using Ptn.TestModule.BackgroundWorkers.Runs;
 using Volo.Abp;
 using Volo.Abp.Application;
 using Volo.Abp.BackgroundJobs;
@@ -39,8 +40,9 @@ public class TestModuleApplicationModule : AbpModule
     }
 
     // Periyodik tarayicilari ABP worker yoneticisine baglar; is kararlarini Manager'lar verir.
-    public override Task OnApplicationInitializationAsync(ApplicationInitializationContext context)
+    public override async Task OnApplicationInitializationAsync(ApplicationInitializationContext context)
     {
-        return context.AddBackgroundWorkerAsync<ExpiredQuarantineSweepWorker>();
+        await context.AddBackgroundWorkerAsync<ExpiredQuarantineSweepWorker>();
+        await context.AddBackgroundWorkerAsync<ScenarioHealthRefreshWorker>();
     }
 }

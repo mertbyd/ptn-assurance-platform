@@ -55,4 +55,7 @@ public static class TestModuleSettings
 
     /// <summary>Tek karantina tikinde temizlenecek azami senaryo sayisi ayar adidir.</summary>
     public const string QuarantineSweepBatchSize = TestModuleCatalogSettingNames.QuarantineSweepBatchSize;
+
+    /// <summary>Saglik materialized view'inin yenilendigi periyot ayar adidir.</summary>
+    public const string ScenarioHealthRefreshPeriodSeconds = TestModuleRunSettingNames.ScenarioHealthRefreshPeriodSeconds;
 }

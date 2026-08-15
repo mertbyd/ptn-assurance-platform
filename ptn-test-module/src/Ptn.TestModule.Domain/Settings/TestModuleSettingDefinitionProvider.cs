@@ -67,5 +67,8 @@ public class TestModuleSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(new SettingDefinition(
             TestModuleSettings.QuarantineSweepBatchSize,
             TestModuleCatalogSettingNames.DefaultQuarantineSweepBatchSize));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.ScenarioHealthRefreshPeriodSeconds,
+            TestModuleRunSettingNames.DefaultScenarioHealthRefreshPeriodSeconds));
     }
 }

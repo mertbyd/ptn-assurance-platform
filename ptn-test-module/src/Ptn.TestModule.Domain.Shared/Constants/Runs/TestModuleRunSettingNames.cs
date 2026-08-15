@@ -93,4 +93,13 @@ public static class TestModuleRunSettingNames
 
     /// <summary>Varsayilan kilit bekleme suresi; runner butcesi ve sert durdurma payini kapsar.</summary>
     public const string DefaultRunConcurrencyWaitSeconds = "3660";
+
+    /// <summary>Senaryo saglik materialized view'inin yenilenme periyodu ayar adidir.</summary>
+    public const string ScenarioHealthRefreshPeriodSeconds = "TestModule.Runs.ScenarioHealthRefreshPeriodSeconds";
+
+    /// <summary>Varsayilan saglik yenileme periyodudur.</summary>
+    public const string DefaultScenarioHealthRefreshPeriodSeconds = "900";
+
+    /// <summary>Ayar okunamadiginda kullanilan saglik yenileme periyodudur.</summary>
+    public const int FallbackScenarioHealthRefreshPeriodSeconds = 900;
 }

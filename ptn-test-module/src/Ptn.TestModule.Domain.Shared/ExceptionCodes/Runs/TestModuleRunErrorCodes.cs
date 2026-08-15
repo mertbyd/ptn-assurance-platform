@@ -246,5 +246,14 @@ public static class TestModuleRunErrorCodes
         public const string FingerprintsRequired = $"{Prefix}:Validation:FingerprintsRequired";
         public const string FingerprintLimitExceeded = $"{Prefix}:Validation:FingerprintLimitExceeded";
         public const string SeverityInvalid = $"{Prefix}:Validation:SeverityInvalid";
+
+        /// <summary>Saglik sayfa buyuklugunun kabul edilen tavani astigini bildirir.</summary>
+        public const string PageSizeInvalid = $"{Prefix}:Validation:PageSizeInvalid";
+
+        /// <summary>Oran filtresinin sifir ile bir araliginin disinda verildigini bildirir.</summary>
+        public const string RatioInvalid = $"{Prefix}:Validation:RatioInvalid";
+
+        /// <summary>Senaryo anahtarinin kalici siniri astigini bildirir.</summary>
+        public const string ScenarioKeyTooLong = $"{Prefix}:Validation:ScenarioKeyTooLong";
     }
 }
