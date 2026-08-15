@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Ptn.TestModule.Constants.Shared;
 using Ptn.TestModule.ExceptionCodes.Compilation;
+using Ptn.TestModule.Managers.Shared;
 using Ptn.TestModule.Models.Shared;
 using Ptn.TestModule.Services.Shared;
 using Shouldly;
@@ -22,7 +23,7 @@ public class ProcessBoundaryServiceTests
         var plan = CreateSleepingPlan("timeout", lockWorkspace: false);
 
         var exception = await Should.ThrowAsync<BusinessException>(
-            () => new ProcessBoundaryService().ExecuteAsync(plan));
+            () => new ProcessBoundaryService(new ProcessPlanManager()).ExecuteAsync(plan));
 
         exception.Code.ShouldBe(TestModuleCompilationErrorCodes.LintTimedOut);
         DeleteWorkspaceRoot(plan.WorkspaceName);
@@ -35,7 +36,7 @@ public class ProcessBoundaryServiceTests
         var plan = CreateSleepingPlan("cleanup", lockWorkspace: true);
 
         var exception = await Should.ThrowAsync<BusinessException>(
-            () => new ProcessBoundaryService().ExecuteAsync(plan));
+            () => new ProcessBoundaryService(new ProcessPlanManager()).ExecuteAsync(plan));
 
         exception.Code.ShouldBe(TestModuleCompilationErrorCodes.LintTimedOut);
         exception.Data.Contains(ProcessBoundaryConsts.CleanupFailureDataKey).ShouldBeTrue();

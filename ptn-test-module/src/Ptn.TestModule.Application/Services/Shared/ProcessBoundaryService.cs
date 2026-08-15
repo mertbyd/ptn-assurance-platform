@@ -3,235 +3,130 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Ptn.TestModule.Constants.Shared;
 using Ptn.TestModule.Interface.Shared;
+using Ptn.TestModule.Managers.Shared;
 using Ptn.TestModule.Models.Shared;
-using Volo.Abp;
 using Volo.Abp.DependencyInjection;
 
 namespace Ptn.TestModule.Services.Shared;
 
-// islevi: Manager'in kurdugu surec planini izole bir gecici klasorde yazar, kosar, okur ve temizler.
-// sistemdeki gorevi: Lint ve kosum sinirlarinin paylastigi tek process mekanigidir; hicbir bayrak, sure veya cikis kodu karari tasimaz.
+// islevi: Manager'in descriptor'ini dosya sistemi ve process framework cagri zinciriyle uygular.
+// sistemdeki gorevi: Saf plan kararlarindan ayrilmis tek process ve filesystem I/O siniridir.
 public sealed class ProcessBoundaryService : IProcessBoundaryPort, ITransientDependency
 {
-    // Girdi dosyalarini yazar, sureci plandaki butceyle kosar ve artefaktlari geri okur.
+    private readonly ProcessPlanManager _manager;
+
+    // Saf surec planini framework I/O sinirina baglar.
+    public ProcessBoundaryService(ProcessPlanManager manager)
+    {
+        _manager = manager;
+    }
+
+    // Descriptor'daki workspace'i kurar, sureci kosar, artefaktlari okur ve workspace'i temizler.
     public async Task<ProcessExecutionOutcome> ExecuteAsync(
         ProcessExecutionPlan plan,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(plan);
-        var workspace = CreateWorkspace(plan);
-        ProcessExecutionOutcome outcome;
-        try
+        var descriptor = _manager.CreateDescriptor(plan, Path.GetTempPath());
+        foreach (var directory in descriptor.Workspace.Directories)
         {
-            await WriteInputFilesAsync(workspace, plan, cancellationToken);
-            outcome = await RunAsync(workspace, plan, cancellationToken);
+            Directory.CreateDirectory(directory);
         }
-        catch (Exception primary)
+        foreach (var input in descriptor.Workspace.InputFiles)
         {
-            TryDeleteWorkspace(workspace, primary);
-            throw;
+            await File.WriteAllTextAsync(input.Key, input.Value, new UTF8Encoding(false), cancellationToken);
         }
 
-        DeleteWorkspace(workspace);
-        return outcome;
-    }
-
-    // Her cagri icin tahmin edilemez ve izole bir gecici klasor kokleri olusturur.
-    private static string CreateWorkspace(ProcessExecutionPlan plan)
-    {
-        var workspace = Path.Combine(
-            Path.GetTempPath(),
-            ProcessBoundaryConsts.TempRootName,
-            plan.WorkspaceName,
-            Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(workspace);
-        foreach (var relativePath in plan.InputFiles.Select(file => file.RelativePath).Concat(plan.OutputFilePaths))
-        {
-            EnsureParentDirectory(workspace, relativePath);
-        }
-
-        return workspace;
-    }
-
-    // Artefakt ve belge yollarinin ust klasorlerini surec baslamadan once hazir eder.
-    private static void EnsureParentDirectory(string workspace, string relativePath)
-    {
-        var parent = Path.GetDirectoryName(Path.Combine(workspace, relativePath));
-        if (!string.IsNullOrEmpty(parent))
-        {
-            Directory.CreateDirectory(parent);
-        }
-    }
-
-    // Plandaki girdi dosyalarini BOM'suz UTF-8 olarak calisma klasorune yazar.
-    private static async Task WriteInputFilesAsync(
-        string workspace,
-        ProcessExecutionPlan plan,
-        CancellationToken cancellationToken)
-    {
-        foreach (var file in plan.InputFiles)
-        {
-            await File.WriteAllTextAsync(
-                Path.Combine(workspace, file.RelativePath),
-                file.Content,
-                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-                cancellationToken);
-        }
-    }
-
-    // Sureci shell birlestirmesi kullanmadan kosar, sureyi olcer ve akislarla artefaktlari toplar.
-    private static async Task<ProcessExecutionOutcome> RunAsync(
-        string workspace,
-        ProcessExecutionPlan plan,
-        CancellationToken cancellationToken)
-    {
         var stopwatch = Stopwatch.StartNew();
-        using var process = new Process { StartInfo = CreateStartInfo(workspace, plan) };
-        StartProcess(process, plan);
-        var standardOutput = process.StandardOutput.ReadToEndAsync(cancellationToken);
-        var standardError = process.StandardError.ReadToEndAsync(cancellationToken);
-        await WaitForExitAsync(process, plan, cancellationToken);
-        stopwatch.Stop();
-
-        return new ProcessExecutionOutcome
-        {
-            ExitCode = process.ExitCode,
-            StandardOutput = await standardOutput,
-            StandardError = await standardError,
-            DurationMs = stopwatch.ElapsedMilliseconds,
-            OutputFiles = await ReadOutputFilesAsync(workspace, plan, cancellationToken)
-        };
-    }
-
-    // Plan argumanlarini yeniden yorumlamadan, yalniz calisma klasoru yer tutucusunu cozerek tasir.
-    private static ProcessStartInfo CreateStartInfo(string workspace, ProcessExecutionPlan plan)
-    {
         var startInfo = new ProcessStartInfo
         {
-            FileName = plan.Executable,
+            FileName = descriptor.Executable,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
-        foreach (var argument in plan.Arguments)
+        foreach (var argument in descriptor.Arguments)
         {
-            startInfo.ArgumentList.Add(argument.Replace(
-                ProcessBoundaryConsts.WorkspaceToken,
-                workspace,
-                StringComparison.Ordinal));
+            startInfo.ArgumentList.Add(argument);
         }
-
-        foreach (var variable in plan.EnvironmentVariables)
+        foreach (var variable in descriptor.EnvironmentVariables)
         {
             startInfo.Environment[variable.Key] = variable.Value;
         }
 
-        return startInfo;
-    }
-
-    // Executable baslatma hatasini plandaki kararli koda cevirir.
-    private static void StartProcess(Process process, ProcessExecutionPlan plan)
-    {
+        ProcessExecutionOutcome outcome = default!;
         try
         {
-            if (!process.Start())
+            using var process = new Process { StartInfo = startInfo };
+            try
             {
-                throw new BusinessException(plan.StartFailureErrorCode);
+                _manager.EnsureStarted(process.Start(), descriptor);
             }
+            catch (Win32Exception exception)
+            {
+                _manager.ThrowStartFailure(descriptor, exception);
+            }
+            var standardOutput = process.StandardOutput.ReadToEndAsync(cancellationToken);
+            var standardError = process.StandardError.ReadToEndAsync(cancellationToken);
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(descriptor.TimeoutMs);
+            try
+            {
+                await process.WaitForExitAsync(timeout.Token);
+            }
+            catch (OperationCanceledException exception)
+            {
+                if (!process.HasExited)
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+                _manager.ThrowCancellation(descriptor, exception, cancellationToken.IsCancellationRequested);
+            }
+            stopwatch.Stop();
+            var outputs = new Dictionary<string, string?>(StringComparer.Ordinal);
+            foreach (var output in descriptor.Workspace.OutputFiles)
+            {
+                outputs[output.Key] = File.Exists(output.Value)
+                    ? await File.ReadAllTextAsync(output.Value, cancellationToken)
+                    : null;
+            }
+            outcome = new ProcessExecutionOutcome
+            {
+                ExitCode = process.ExitCode,
+                StandardOutput = await standardOutput,
+                StandardError = await standardError,
+                DurationMs = stopwatch.ElapsedMilliseconds,
+                OutputFiles = outputs
+            };
         }
-        catch (Win32Exception exception)
+        catch (Exception primary)
         {
-            throw new BusinessException(plan.StartFailureErrorCode, innerException: exception);
+            try
+            {
+                if (Directory.Exists(descriptor.Workspace.WorkspaceRoot))
+                {
+                    Directory.Delete(descriptor.Workspace.WorkspaceRoot, recursive: true);
+                }
+            }
+            catch (IOException cleanupFailure)
+            {
+                _manager.RecordCleanupFailure(primary, cleanupFailure);
+            }
+            catch (UnauthorizedAccessException cleanupFailure)
+            {
+                _manager.RecordCleanupFailure(primary, cleanupFailure);
+            }
+            _manager.Rethrow(primary);
         }
-    }
 
-    // Sureci plandaki butceyle bekler; timeout ve dis iptali ayri davranislarla korur.
-    private static async Task WaitForExitAsync(
-        Process process,
-        ProcessExecutionPlan plan,
-        CancellationToken cancellationToken)
-    {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(plan.TimeoutMs);
-        try
+        if (Directory.Exists(descriptor.Workspace.WorkspaceRoot))
         {
-            await process.WaitForExitAsync(timeout.Token);
+            Directory.Delete(descriptor.Workspace.WorkspaceRoot, recursive: true);
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            KillProcessTree(process);
-            throw new BusinessException(plan.TimeoutErrorCode);
-        }
-        catch (OperationCanceledException)
-        {
-            KillProcessTree(process);
-            throw;
-        }
-    }
-
-    // Iptal veya timeout sonrasinda process agacinin arka planda kalmasini engeller.
-    private static void KillProcessTree(Process process)
-    {
-        if (!process.HasExited)
-        {
-            process.Kill(entireProcessTree: true);
-        }
-    }
-
-    // Plandaki artefakt yollarini okur; surec dosyayi hic yazmadiysa deger null kalir.
-    private static async Task<IReadOnlyDictionary<string, string?>> ReadOutputFilesAsync(
-        string workspace,
-        ProcessExecutionPlan plan,
-        CancellationToken cancellationToken)
-    {
-        var outputs = new Dictionary<string, string?>(StringComparer.Ordinal);
-        foreach (var relativePath in plan.OutputFilePaths)
-        {
-            var path = Path.Combine(workspace, relativePath);
-            outputs[relativePath] = File.Exists(path)
-                ? await File.ReadAllTextAsync(path, cancellationToken)
-                : null;
-        }
-
-        return outputs;
-    }
-
-    // Her cagrinin gecici belge ve artefakt klasorunu geri birakir; kosum basariliysa temizlik kusuru yutulmaz.
-    private static void DeleteWorkspace(string workspace)
-    {
-        if (Directory.Exists(workspace))
-        {
-            Directory.Delete(workspace, recursive: true);
-        }
-    }
-
-    // Timeout sonrasi oldurulen process handle'i birakmamis olabilir; temizlik kusuru asil hatayi maskelemeden kanit kanalina yazilir.
-    private static void TryDeleteWorkspace(string workspace, Exception primary)
-    {
-        try
-        {
-            DeleteWorkspace(workspace);
-        }
-        catch (IOException exception)
-        {
-            RecordCleanupFailure(primary, exception);
-        }
-        catch (UnauthorizedAccessException exception)
-        {
-            RecordCleanupFailure(primary, exception);
-        }
-    }
-
-    // Temizlik kusurunu yutmadan, asil hatanin kararli kanit anahtarina baglar.
-    private static void RecordCleanupFailure(Exception primary, Exception cleanupFailure)
-    {
-        primary.Data[ProcessBoundaryConsts.CleanupFailureDataKey] = cleanupFailure.ToString();
+        return outcome;
     }
 }
