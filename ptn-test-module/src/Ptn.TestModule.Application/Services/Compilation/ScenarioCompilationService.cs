@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Ptn.TestModule.Entities.Catalog;
@@ -55,70 +56,34 @@ public sealed class ScenarioCompilationService : IScenarioCompilationPort, ITran
         TestScenario scenario,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(scenario);
-        var profilePack = await ResolveProfilePackAsync(scenario, cancellationToken);
+        var profileKey = await _settingProvider.GetOrNullAsync(TestModuleSettings.ProfilePackKey);
+        var pack = await _profilePackFileManager.LoadAsync(profileKey!, cancellationToken);
+        var fingerprints = new List<string>();
+        foreach (var connectionId in _profilePackManager.CreateSchemaFingerprintRequests(scenario.DbConnectionId))
+        {
+            fingerprints.Add(await _schemaKnowledgeAppService.GetSchemaFingerprintAsync(connectionId, cancellationToken));
+        }
+        var profilePack = _profilePackManager.GetValidatedForCompilation(pack, profileKey!, fingerprints);
         var compilation = await _compilerManager.CompileAsync(
             scenario.SourceDocument,
             profilePack,
             scenario.SpecSnapshotId ?? Guid.Empty,
             cancellationToken);
-        var apiDerivability = await ValidateApiAssertionsAsync(compilation, cancellationToken);
-        var databaseDerivability = await ValidateDatabaseAssertionsAsync(scenario, compilation, cancellationToken);
-        return _compilerManager.CreateEvidence(compilation, apiDerivability, databaseDerivability);
-    }
-
-    // Aktif profil paketini ayardan cozer, dosyadan okur ve guncel sema muhruyle dogrular.
-    private async Task<ProfilePack> ResolveProfilePackAsync(
-        TestScenario scenario,
-        CancellationToken cancellationToken)
-    {
-        var profileKey = await _settingProvider.GetOrNullAsync(TestModuleSettings.ProfilePackKey);
-        var pack = await _profilePackFileManager.LoadAsync(profileKey!, cancellationToken);
-        var fingerprint = scenario.DbConnectionId.HasValue
-            ? await _schemaKnowledgeAppService.GetSchemaFingerprintAsync(scenario.DbConnectionId.Value, cancellationToken)
-            : pack.DbSchemaFingerprint;
-        return _profilePackManager.GetValidated(pack, profileKey!, fingerprint);
-    }
-
-    // Derlenmis DB adreslerini checker'in turetilebilirlik yuzeyine tasir; adres yoksa cagri yapmaz.
-    private async Task<DatabaseDerivabilityResult?> ValidateDatabaseAssertionsAsync(
-        TestScenario scenario,
-        ArazzoCompilationResult compilation,
-        CancellationToken cancellationToken)
-    {
-        if (compilation.DatabaseAssertions.Count == 0 || !scenario.DbConnectionId.HasValue)
+        var plan = _compilerManager.CreateDerivabilityPlan(scenario, compilation);
+        var apiResults = new List<DerivabilityResult>();
+        foreach (var request in plan.ApiRequests)
         {
-            return null;
-        }
-
-        var request = DatabaseMapper.MapToDto(new DatabaseDerivabilityRequest
-        {
-            ConnectionId = scenario.DbConnectionId.Value,
-            Assertions = compilation.DatabaseAssertions
-        });
-        return DatabaseMapper.Map(
-            await _databaseOracleAppService.ValidateDerivabilityAsync(request, cancellationToken));
-    }
-
-    // Her derlenmis API operasyonunu sozlesme yuzeyine sorar; pointer yoksa cagri yapmaz.
-    private async Task<DerivabilityResult?> ValidateApiAssertionsAsync(
-        ArazzoCompilationResult compilation,
-        CancellationToken cancellationToken)
-    {
-        if (compilation.ApiAssertions.Count == 0)
-        {
-            return null;
-        }
-
-        var merged = new DerivabilityResult();
-        foreach (var request in compilation.ApiAssertions)
-        {
-            var result = ApiMapper.MapResult(await _apiOracleAppService.ValidateScenarioAssertionsAsync(
+            apiResults.Add(ApiMapper.MapResult(await _apiOracleAppService.ValidateScenarioAssertionsAsync(
                 ApiMapper.MapToDto(request),
-                cancellationToken));
-            merged.Assertions.AddRange(result.Assertions);
-            merged.IsTruncated |= result.IsTruncated;
+                cancellationToken)));
         }
-        return merged;
+        var databaseResults = new List<DatabaseDerivabilityResult>();
+        foreach (var request in plan.DatabaseRequests)
+        {
+            databaseResults.Add(DatabaseMapper.Map(
+                await _databaseOracleAppService.ValidateDerivabilityAsync(
+                    DatabaseMapper.MapToDto(request), cancellationToken)));
+        }
+        return _compilerManager.CreateEvidence(compilation, apiResults, databaseResults);
     }
 }

@@ -12,6 +12,7 @@ using Ptn.DatabaseChecker.Constants.Comparison;
 using Ptn.DatabaseChecker.Constants.Comparison.Assertions;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Constants.Compilation;
+using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.ExceptionCodes.Compilation;
 using Ptn.TestModule.Interface.Compilation;
 using Ptn.TestModule.Managers.Bridge;
@@ -71,6 +72,70 @@ public class ArazzoCompilerManager : TestModuleDomainService
             SourceDescriptionSpecSnapshotIds = compilation.SourceDescriptionSpecSnapshotIds,
             LintDiagnostics = compilation.LintDiagnostics
         };
+    }
+
+    // Derleme ciktisindan gercekten sorgulanacak checker isteklerini fail-closed planlar.
+    public ScenarioDerivabilityPlan CreateDerivabilityPlan(
+        TestScenario scenario,
+        ArazzoCompilationResult compilation)
+    {
+        ArgumentNullException.ThrowIfNull(scenario);
+        ArgumentNullException.ThrowIfNull(compilation);
+        return new ScenarioDerivabilityPlan
+        {
+            ApiRequests = compilation.ApiAssertions,
+            DatabaseRequests = CreateDatabaseRequests(scenario, compilation)
+        };
+    }
+
+    // Checker cevap listelerini birlestirip mevcut yayin kaniti kuralina uygular.
+    public ScenarioCompilationEvidence CreateEvidence(
+        ArazzoCompilationResult compilation,
+        IReadOnlyList<DerivabilityResult> apiResults,
+        IReadOnlyList<DatabaseDerivabilityResult> databaseResults)
+    {
+        return CreateEvidence(
+            compilation,
+            MergeApiResults(apiResults),
+            databaseResults.FirstOrDefault());
+    }
+
+    // Bagli veritabani ve derlenmis assertion birlikte varsa tek checker istegi kurar.
+    private static IReadOnlyList<DatabaseDerivabilityRequest> CreateDatabaseRequests(
+        TestScenario scenario,
+        ArazzoCompilationResult compilation)
+    {
+        if (compilation.DatabaseAssertions.Count == 0 || !scenario.DbConnectionId.HasValue)
+        {
+            return [];
+        }
+
+        return
+        [
+            new DatabaseDerivabilityRequest
+            {
+                ConnectionId = scenario.DbConnectionId.Value,
+                Assertions = compilation.DatabaseAssertions
+            }
+        ];
+    }
+
+    // API checker cevaplarini assertion sirasini ve truncation olgusunu koruyarak birlestirir.
+    private static DerivabilityResult? MergeApiResults(IReadOnlyList<DerivabilityResult> results)
+    {
+        if (results.Count == 0)
+        {
+            return null;
+        }
+
+        var merged = new DerivabilityResult();
+        foreach (var result in results)
+        {
+            merged.Assertions.AddRange(result.Assertions);
+            merged.IsTruncated |= result.IsTruncated;
+        }
+
+        return merged;
     }
 
     // Saf derleme adiminda uzantilari standart HTTP step nesnelerine cevirir.

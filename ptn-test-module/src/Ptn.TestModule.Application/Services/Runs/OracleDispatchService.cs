@@ -1,7 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Ptn.TestModule.Constants.Runs.Lookups;
 using Ptn.TestModule.Interface.Runs;
 using Ptn.TestModule.Managers.Runs;
 using Ptn.TestModule.Mappers.Bridge;
@@ -58,49 +58,31 @@ public sealed class OracleDispatchService : IOracleDispatchPort, ITransientDepen
         CancellationToken cancellationToken = default)
     {
         var document = _harInterpreter.Interpret(outcome.HarContent, context.DocumentFacts);
-        var judgements = new List<StepJudgement>(document.Entries.Count + 1);
-        foreach (var entry in document.Entries)
+        var plan = _dispatchManager.CreatePlan(document, context, outcome);
+        var responseResults = new List<ConformanceResult>();
+        foreach (var step in plan.Steps.Where(step => step.Observation is not null))
         {
-            judgements.Add(await JudgeEntryAsync(entry, context, cancellationToken));
+            var result = await _apiOracleAppService.AssertResponseAsync(
+                ApiMapper.MapToDto(step.Observation!), cancellationToken);
+            responseResults.Add(ApiMapper.MapResult(result));
         }
-
-        judgements.Add(_dispatchManager.JudgeRunner(outcome));
-        var diagnosis = await DiagnoseAsync(judgements, context, cancellationToken);
-        return _outcomeResolver.Resolve(_dispatchManager.Combine(judgements, diagnosis), harBlobName);
-    }
-
-    // Veritabani adimini yanit olarak okur, API adimini uygunluk yuzeyine gonderir (ADR-0015 §D).
-    private async Task<StepJudgement> JudgeEntryAsync(
-        HarEntryModel entry,
-        TestRunExecutionContext context,
-        CancellationToken cancellationToken)
-    {
-        if (entry.IsDatabaseAssertion)
+        var judgements = _dispatchManager.CompletePlan(plan, responseResults);
+        var diagnosisPlan = _dispatchManager.CreateDiagnosisPlan(judgements, context);
+        var apiReports = new List<DiagnosisReport>();
+        foreach (var request in diagnosisPlan.ApiRequests)
         {
-            return _dispatchManager.JudgeDatabaseAssertion(entry);
+            var report = await _failureDiagnosisAppService.DiagnoseApiAsync(
+                DiagnosisMapper.MapToDto(request), cancellationToken);
+            apiReports.Add(DiagnosisMapper.MapReport(report));
         }
-
-        var observation = ApiMapper.MapToDto(_dispatchManager.CreateObservation(entry, context));
-        var result = await _apiOracleAppService.AssertResponseAsync(observation, cancellationToken);
-        return _dispatchManager.JudgeResponse(entry, ApiMapper.MapResult(result));
-    }
-
-    // Birincil kirmizi adimi kaynak hakemine gore dogru teshis ucuna gonderir.
-    private async Task<DiagnosisReport?> DiagnoseAsync(
-        IReadOnlyList<StepJudgement> judgements,
-        TestRunExecutionContext context,
-        CancellationToken cancellationToken)
-    {
-        var target = OracleDispatchManager.SelectDiagnosisTarget(judgements);
-        if (target is null)
+        var databaseReports = new List<DiagnosisReport>();
+        foreach (var request in diagnosisPlan.DatabaseRequests)
         {
-            return null;
+            var report = await _failureDiagnosisAppService.DiagnoseDatabaseAsync(
+                DiagnosisMapper.MapToDto(request), cancellationToken);
+            databaseReports.Add(DiagnosisMapper.MapReport(report));
         }
-
-        var request = DiagnosisMapper.MapToDto(_dispatchManager.CreateDiagnosisRequest(target, context));
-        var report = target.SourceCheckerCode == TestSourceCheckerCodes.DatabaseComparison
-            ? await _failureDiagnosisAppService.DiagnoseDatabaseAsync(request, cancellationToken)
-            : await _failureDiagnosisAppService.DiagnoseApiAsync(request, cancellationToken);
-        return DiagnosisMapper.MapReport(report);
+        var dispatch = _dispatchManager.CompleteDiagnosis(judgements, apiReports, databaseReports);
+        return _outcomeResolver.Resolve(dispatch, harBlobName);
     }
 }

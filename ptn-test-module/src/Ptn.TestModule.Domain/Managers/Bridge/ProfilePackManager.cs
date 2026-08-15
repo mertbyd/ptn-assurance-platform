@@ -15,6 +15,22 @@ namespace Ptn.TestModule.Managers.Bridge;
 // sistemdeki gorevi: Baglama, kapsam ve sessiz sema drift'i kurallarinin tek domain sahibidir.
 public class ProfilePackManager : TestModuleDomainService
 {
+    // Sema muhru yalniz bagli bir veritabani varsa dis yuzeyden okunur.
+    public IReadOnlyList<Guid> CreateSchemaFingerprintRequests(Guid? connectionId)
+    {
+        return connectionId.HasValue ? [connectionId.Value] : [];
+    }
+
+    // Dis yuzeyden okunan muhru, yoksa paketin kendi muhrunu kullanarak profili dogrular.
+    public ProfilePack GetValidatedForCompilation(
+        ProfilePack pack,
+        string profileKey,
+        IReadOnlyList<string> currentFingerprints)
+    {
+        var currentFingerprint = currentFingerprints.FirstOrDefault() ?? pack.DbSchemaFingerprint;
+        return GetValidated(pack, profileKey, currentFingerprint);
+    }
+
     // Yuklenmis profili kapali sozluklerle dogrular ve sema kaymasinda onaylari geri alir.
     public ProfilePack GetValidated(
         ProfilePack pack,

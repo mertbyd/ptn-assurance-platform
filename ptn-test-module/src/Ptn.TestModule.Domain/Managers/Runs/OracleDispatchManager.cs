@@ -37,6 +37,66 @@ public class OracleDispatchManager : TestModuleDomainService
             PtnOutcomeCodes.PolicySuppressed
         };
 
+    // HAR adimlarini dogrudan DB hukumleri ve API checker gozlemleri olarak planlar.
+    public OracleDispatchPlan CreatePlan(
+        HarDocument document,
+        TestRunExecutionContext context,
+        WorkflowRunOutcome outcome)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(outcome);
+        return new OracleDispatchPlan
+        {
+            Steps = document.Entries.Select(entry => CreateStepDispatch(entry, context)).ToList(),
+            RunnerJudgement = JudgeRunner(outcome)
+        };
+    }
+
+    // API cevaplarini plandaki adimlarla esleyip kaynak sirasindaki hukum listesini tamamlar.
+    public IReadOnlyList<StepJudgement> CompletePlan(
+        OracleDispatchPlan plan,
+        IReadOnlyList<ConformanceResult> responseResults)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(responseResults);
+        var responseIndex = 0;
+        var judgements = new List<StepJudgement>(plan.Steps.Count + 1);
+        foreach (var step in plan.Steps)
+        {
+            judgements.Add(step.DirectJudgement ?? JudgeResponse(step.Entry, responseResults[responseIndex++]));
+        }
+
+        judgements.Add(plan.RunnerJudgement);
+        return judgements;
+    }
+
+    // Birincil kirmizi adimi yalniz kendi kaynak checker'inin teshis listesine koyar.
+    public OracleDiagnosisPlan CreateDiagnosisPlan(
+        IReadOnlyList<StepJudgement> judgements,
+        TestRunExecutionContext context)
+    {
+        var target = SelectDiagnosisTarget(judgements);
+        if (target is null)
+        {
+            return new OracleDiagnosisPlan();
+        }
+
+        var request = CreateDiagnosisRequest(target, context);
+        return target.SourceCheckerCode == TestSourceCheckerCodes.DatabaseComparison
+            ? new OracleDiagnosisPlan { DatabaseRequests = [request] }
+            : new OracleDiagnosisPlan { ApiRequests = [request] };
+    }
+
+    // Iki teshis listesinden Manager'in planladigi tek raporu secip dagitim sonucunu kurar.
+    public OracleDispatchResult CompleteDiagnosis(
+        IReadOnlyList<StepJudgement> judgements,
+        IReadOnlyList<DiagnosisReport> apiReports,
+        IReadOnlyList<DiagnosisReport> databaseReports)
+    {
+        return Combine(judgements, databaseReports.FirstOrDefault() ?? apiReports.FirstOrDefault());
+    }
+
     // Entry'yi checker'in bekledigi gozleme cevirir ve korelasyonu echo edilebilir bicimde tasir.
     /// <summary>Bir HAR entry'sini API uygunluk gozlemine cevirir.</summary>
     public ResponseObservation CreateObservation(HarEntryModel entry, TestRunExecutionContext context)
@@ -155,6 +215,14 @@ public class OracleDispatchManager : TestModuleDomainService
             Findings = OrderFindings(judgements),
             DiagnosisReport = BoundDiagnosis(diagnosis)
         };
+    }
+
+    // Bir HAR adiminin DB hukum mu yoksa API checker I/O'su mu gerektirdigini belirler.
+    private OracleStepDispatch CreateStepDispatch(HarEntryModel entry, TestRunExecutionContext context)
+    {
+        return entry.IsDatabaseAssertion
+            ? new OracleStepDispatch { Entry = entry, DirectJudgement = JudgeDatabaseAssertion(entry) }
+            : new OracleStepDispatch { Entry = entry, Observation = CreateObservation(entry, context) };
     }
 
     // Adim kimligi cozulemeyen bir hukum dogru adima baglanamaz; konumla eslemek yerine belirsiz kalir.
