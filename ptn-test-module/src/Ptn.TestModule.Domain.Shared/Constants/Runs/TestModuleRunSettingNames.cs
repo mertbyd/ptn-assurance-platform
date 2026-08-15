@@ -46,12 +46,51 @@ public static class TestModuleRunSettingNames
     /// <summary>HAR artefaktlarinin gun cinsinden saklama suresi ayar adidir.</summary>
     public const string HarRetentionDays = "TestModule.Runs.HarRetentionDays";
 
+    /// <summary>Tamamlanmis kosum satirlarinin gun cinsinden saklama suresi ayar adidir.</summary>
+    public const string RunRetentionDays = "TestModule.Runs.RunRetentionDays";
+
+    /// <summary>Tek purge tesliminde silinebilecek azami kosum sayisinin ayar adidir.</summary>
+    public const string RunPurgeBatchSize = "TestModule.Runs.PurgeBatchSize";
+
     /// <summary>Asili Running kosularinin kurtarilma esigi dakika ayar adidir.</summary>
     public const string StaleRunThresholdMinutes = "TestModule.Runs.StaleRunThresholdMinutes";
 
+    /// <summary>Sandbox verisini kosumdan once temizleyen stratejinin ayar adidir.</summary>
+    public const string SandboxResetStrategy = "TestModule.Runs.SandboxResetStrategy";
+
+    /// <summary>Ortam kilidini edinmek icin beklenecek azami surenin ayar adidir.</summary>
+    public const string RunConcurrencyWaitSeconds = "TestModule.Runs.RunConcurrencyWaitSeconds";
+
+    /// <summary>Desteklenen iliskisel sandbox temizleme stratejisidir.</summary>
+    public const string RespawnResetStrategy = "Respawn";
+
+    /// <summary>Ortam bazli ayri sandbox connection-string adinin bicimidir.</summary>
+    public const string SandboxConnectionStringNameFormat = "TestModuleSandbox.{0}";
+
+    /// <summary>Connection-string adina guvenle tasinabilen ortam anahtari bicimidir.</summary>
+    public const string SandboxEnvironmentKeyPattern = "^[A-Za-z0-9._-]+$";
+
+    /// <summary>Tenant ve ortam bazli kosum kilidi adinin bicimidir.</summary>
+    public const string RunConcurrencyLockNameFormat = "TestModule.Runs.Environment:{0}:{1}";
+
+    /// <summary>Host kapsamindaki kosum kilitlerinin tenant segmentidir.</summary>
+    public const string HostTenantLockSegment = "host";
+
     /// <summary>Varsayilan HAR saklama suresidir.</summary>
-    public const string DefaultHarRetentionDays = "30";
+    public const string DefaultHarRetentionDays = "90";
+
+    /// <summary>Varsayilan tamamlanmis kosum saklama suresidir.</summary>
+    public const string DefaultRunRetentionDays = "90";
+
+    /// <summary>Varsayilan parcali purge buyuklugudur.</summary>
+    public const string DefaultRunPurgeBatchSize = "10000";
 
     /// <summary>Varsayilan asili kosum kurtarma esigidir.</summary>
     public const string DefaultStaleRunThresholdMinutes = "120";
+
+    /// <summary>Varsayilan sandbox temizleme stratejisidir.</summary>
+    public const string DefaultSandboxResetStrategy = RespawnResetStrategy;
+
+    /// <summary>Varsayilan kilit bekleme suresi; runner butcesi ve sert durdurma payini kapsar.</summary>
+    public const string DefaultRunConcurrencyWaitSeconds = "3660";
 }

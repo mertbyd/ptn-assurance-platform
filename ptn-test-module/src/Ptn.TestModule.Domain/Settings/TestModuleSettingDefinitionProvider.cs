@@ -38,6 +38,12 @@ public class TestModuleSettingDefinitionProvider : SettingDefinitionProvider
             TestModuleSettings.HarRetentionDays,
             TestModuleRunSettingNames.DefaultHarRetentionDays));
         context.Add(new SettingDefinition(
+            TestModuleSettings.RunRetentionDays,
+            TestModuleRunSettingNames.DefaultRunRetentionDays));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.RunPurgeBatchSize,
+            TestModuleRunSettingNames.DefaultRunPurgeBatchSize));
+        context.Add(new SettingDefinition(
             TestModuleSettings.StaleRunThresholdMinutes,
             TestModuleRunSettingNames.DefaultStaleRunThresholdMinutes));
         foreach (var momentCode in AgentMomentCodes.All)
@@ -48,5 +54,11 @@ public class TestModuleSettingDefinitionProvider : SettingDefinitionProvider
             context.Add(new SettingDefinition(PtnBridgeSettingNames.MaxTurns(momentCode), "8"));
             context.Add(new SettingDefinition(PtnBridgeSettingNames.TokenLimit(momentCode), "12000"));
         }
+        context.Add(new SettingDefinition(
+            TestModuleSettings.SandboxResetStrategy,
+            TestModuleRunSettingNames.DefaultSandboxResetStrategy));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.RunConcurrencyWaitSeconds,
+            TestModuleRunSettingNames.DefaultRunConcurrencyWaitSeconds));
     }
 }

@@ -109,6 +109,18 @@ public static class TestModuleRunErrorCodes
     /// <summary>Veritabani assertion yanitinin okunamadigini bildirir.</summary>
     public const string AssertionResponseUnreadable = $"{Prefix}:AssertionResponseUnreadable";
 
+    /// <summary>Sandbox ayarinin desteklenmeyen veya rollback tabanli strateji tasidigini bildirir.</summary>
+    public const string SandboxResetStrategyUnsupported = $"{Prefix}:SandboxResetStrategyUnsupported";
+
+    /// <summary>Ortam anahtarinin ayri sandbox connection-string adina guvenle tasinamadigini bildirir.</summary>
+    public const string SandboxEnvironmentKeyInvalid = $"{Prefix}:SandboxEnvironmentKeyInvalid";
+
+    /// <summary>Ortam kilidi bekleme ayarinin pozitif saniye olmadigini bildirir.</summary>
+    public const string RunConcurrencyWaitInvalid = $"{Prefix}:RunConcurrencyWaitInvalid";
+
+    /// <summary>Kosum saklama suresi veya purge batch ayarinin pozitif sayi olmadigini bildirir.</summary>
+    public const string RunRetentionSettingInvalid = $"{Prefix}:RunRetentionSettingInvalid";
+
     /// <summary>Public kosum girdilerinin kararli FluentValidation hata kodlarini tasir.</summary>
     public static class Validation
     {

@@ -36,6 +36,8 @@
     <SerilogSinksAsyncVersion>2.1.0</SerilogSinksAsyncVersion>
     <YamlDotNetVersion>18.1.0</YamlDotNetVersion>
     <ModelContextProtocolVersion>2.2.0</ModelContextProtocolVersion>
+    <NpgsqlVersion>10.0.0</NpgsqlVersion>
+    <RespawnVersion>7.0.0</RespawnVersion>
   </PropertyGroup>
 
   <ItemGroup>

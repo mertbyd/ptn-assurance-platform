@@ -34,6 +34,18 @@ public static class TestModuleSettings
     /// <summary>HAR artefaktlarinin gun cinsinden saklama suresi ayar adidir.</summary>
     public const string HarRetentionDays = TestModuleRunSettingNames.HarRetentionDays;
 
+    /// <summary>Tamamlanmis kosum satirlarinin gun cinsinden saklama suresi ayar adidir.</summary>
+    public const string RunRetentionDays = TestModuleRunSettingNames.RunRetentionDays;
+
+    /// <summary>Tek purge tesliminde islenecek azami kosum sayisi ayar adidir.</summary>
+    public const string RunPurgeBatchSize = TestModuleRunSettingNames.RunPurgeBatchSize;
+
     /// <summary>Asili Running kosularinin kurtarilma esigi ayar adidir.</summary>
     public const string StaleRunThresholdMinutes = TestModuleRunSettingNames.StaleRunThresholdMinutes;
+
+    /// <summary>Sandbox verisini kosumdan once temizleyen strateji ayar adidir.</summary>
+    public const string SandboxResetStrategy = TestModuleRunSettingNames.SandboxResetStrategy;
+
+    /// <summary>Ortam kilidini edinmek icin beklenecek azami sure ayar adidir.</summary>
+    public const string RunConcurrencyWaitSeconds = TestModuleRunSettingNames.RunConcurrencyWaitSeconds;
 }

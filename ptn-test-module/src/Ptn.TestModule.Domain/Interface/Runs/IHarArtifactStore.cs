@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,5 +28,10 @@ public interface IHarArtifactStore
     /// <summary>Verilen blob adindaki HAR artefaktini siler.</summary>
     Task DeleteAsync(
         string blobName,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Verilen HAR artefaktlarini tek bir toplu port cagrisi olarak siler.</summary>
+    Task DeleteManyAsync(
+        IReadOnlyCollection<string> blobNames,
         CancellationToken cancellationToken = default);
 }

@@ -5,6 +5,7 @@ using Ptn.DatabaseChecker;
 using Volo.Abp.Application;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.BlobStoring;
+using Volo.Abp.DistributedLocking;
 using Volo.Abp.Mapperly;
 using Volo.Abp.Modularity;
 
@@ -19,6 +20,7 @@ namespace Ptn.TestModule;
     typeof(AbpMapperlyModule),
     typeof(AbpBackgroundJobsModule),
     typeof(AbpBlobStoringModule),
+    typeof(AbpDistributedLockingAbstractionsModule),
     typeof(AuthenticatorApplicationModule),
     typeof(NotificationsApplicationModule),
     typeof(DatabaseCheckerApplicationContractsModule)
