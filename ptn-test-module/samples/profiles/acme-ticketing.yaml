@@ -1,0 +1,44 @@
+profileKey: acme-ticketing
+revision: "1"
+dbSchemaFingerprint: "sha256:replace-with-current-schema-fingerprint"
+bindings:
+  - conceptCode: Subject
+    dbSchemaName: identity
+    tableName: users
+    columnMap: { identity: id, naturalKey: email }
+    patternCode: SE
+    stateCode: Approved
+    approvedBy: mertbyd
+  - conceptCode: RoleAssignment
+    dbSchemaName: identity
+    tableName: user_roles
+    columnMap: { subject: user_id, role: role_id }
+    patternCode: SRa
+    stateCode: Approved
+    approvedBy: mertbyd
+  - conceptCode: PermissionGrant
+    dbSchemaName: identity
+    tableName: role_permission_grants
+    columnMap: { role: role_id, permission: permission_name }
+    patternCode: SRR
+    stateCode: Approved
+    approvedBy: mertbyd
+paths:
+  - pathKey: access-denied-403
+    trigger: { statusCodes: [401, 403] }
+    steps:
+      - nodeKind: ScopeRequired
+        source: api.failureIdentity
+      - nodeKind: SubjectResolved
+        source: db.projection
+        concept: Subject
+      - nodeKind: RoleHeld
+        source: db.projection
+        concept: RoleAssignment
+        joinFrom: SubjectResolved
+      - nodeKind: GrantMatched
+        source: db.projection
+        concept: PermissionGrant
+        joinFrom: RoleHeld
+    confirmedWhen: "ScopeRequired.observed && !GrantMatched.containsAny(ScopeRequired.values)"
+    inconclusiveWhen: "any(step.state == Unavailable)"

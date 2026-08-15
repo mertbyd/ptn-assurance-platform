@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.TestModule</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Authenticator.Domain" Version="$(AuthenticatorVersion)" />
+    <PackageReference Include="CheckNexus.ApiContracts.Domain.Shared" Version="$(CheckNexusApiContractsVersion)" />
+    <PackageReference Include="CheckNexus.DatabaseComparison.Domain.Shared" Version="$(CheckNexusDatabaseComparisonVersion)" />
+    <PackageReference Include="Pintern.SaaS.Notifications.Domain" Version="$(NotificationsVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Ddd.Domain" Version="$(AbpVersion)" />
+    <PackageReference Include="YamlDotNet" Version="$(YamlDotNetVersion)" />
+    <ProjectReference Include="..\Ptn.TestModule.Domain.Shared\Ptn.TestModule.Domain.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

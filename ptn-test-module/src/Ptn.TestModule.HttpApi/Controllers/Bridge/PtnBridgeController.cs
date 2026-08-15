@@ -1,0 +1,111 @@
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Ptn.TestModule.Constants.Bridge;
+using Ptn.TestModule.Dtos.Bridge;
+using Ptn.TestModule.Permissions;
+using Ptn.TestModule.Services.Bridge;
+using SystemStandards.Results;
+
+namespace Ptn.TestModule.Controllers.Bridge;
+
+// islevi: Bridge agent use-case'lerini bes yetkili HTTP endpoint'iyle acar.
+// sistemdeki gorevi: Route, binding ve operation permission'i tasiyip her istegi tek AppService cagrisina yonlendirir.
+/// <summary>Deterministik Bridge agent islemleri.</summary>
+[Route(PtnBridgeRoutes.Root)]
+[ApiExplorerSettings(GroupName = PtnBridgeRoutes.SwaggerGroupName)]
+public class PtnBridgeController : TestModuleController
+{
+    // Bridge use-case AppService'ini lazy cozer; controller business karari tasimaz.
+    private IPtnBridgeAppService AppService => LazyGetRequiredService<IPtnBridgeAppService>();
+
+    /// <summary>Operasyon zeminini tek birlesik cevapta getirir.</summary>
+    /// <param name="input">Profil, checker referanslari ve istenen response formati.</param>
+    /// <returns>Grounding karari ve kanit ozetini tasiyan ev standardi sonucu.</returns>
+    [HttpPost(PtnBridgeRoutes.Ground)]
+    [Authorize(TestModulePermissions.Bridge.Ground)]
+    public virtual async Task<Result<GroundResultDto>> Ground([FromBody] GroundRequestDto input)
+    {
+        var result = await AppService.GroundAsync(input);
+        return result;
+    }
+
+    /// <summary>Kanit zincirinin mekanik aciklama sonucunu getirir.</summary>
+    /// <param name="input">Aciklanacak operasyon ve gozlenen sonuc bilgisi.</param>
+    /// <returns>Kanit zincirini tasiyan ev standardi sonucu.</returns>
+    [HttpPost(PtnBridgeRoutes.Explain)]
+    [Authorize(TestModulePermissions.Bridge.Explain)]
+    public virtual async Task<Result<ExplainResultDto>> Explain([FromBody] ExplainRequestDto input)
+    {
+        var result = await AppService.ExplainAsync(input);
+        return result;
+    }
+
+    /// <summary>Assertion turetilebilirligini ve yayin kapisini denetler.</summary>
+    /// <param name="input">Yayin kapisinda denetlenecek assertion referanslari.</param>
+    /// <returns>Kapali validation kararini tasiyan ev standardi sonucu.</returns>
+    [HttpPost(PtnBridgeRoutes.Validate)]
+    [Authorize(TestModulePermissions.Bridge.Validate)]
+    public virtual async Task<Result<ValidateResultDto>> Validate([FromBody] ValidateRequestDto input)
+    {
+        var result = await AppService.ValidateAsync(input);
+        return result;
+    }
+
+    /// <summary>Profil kaynakli kavram kapsamini getirir.</summary>
+    /// <param name="input">Profil, baglanti ve kapali kavram kodlari.</param>
+    /// <returns>Profil kapsamini tasiyan ev standardi sonucu.</returns>
+    [HttpPost(PtnBridgeRoutes.Knowledge)]
+    [Authorize(TestModulePermissions.Bridge.Knowledge)]
+    public virtual async Task<Result<KnowledgeResultDto>> GetKnowledge([FromBody] KnowledgeRequestDto input)
+    {
+        var result = await AppService.GetKnowledgeAsync(input);
+        return result;
+    }
+
+    /// <summary>Aktif ve talep uzerine kesfedilen tool katalagunu getirir.</summary>
+    /// <returns>Aktif Bridge tool listesini tasiyan ev standardi sonucu.</returns>
+    [HttpGet(PtnBridgeRoutes.ToolCatalog)]
+    [Authorize(TestModulePermissions.Bridge.Knowledge)]
+    public virtual async Task<Result<ToolCatalogDto>> GetToolCatalog()
+    {
+        var result = await AppService.GetToolCatalogAsync();
+        return result;
+    }
+
+    /// <summary>Tek ajan aninin tenant-scoped profilini getirir.</summary>
+    [HttpPost(PtnBridgeRoutes.AgentProfile)]
+    [Authorize(TestModulePermissions.Bridge.Profile)]
+    public virtual async Task<Result<AgentProfileDto>> ResolveAgentProfile([FromBody] AgentProfileRequestDto input)
+    {
+        var result = await AppService.ResolveAgentProfileAsync(input);
+        return result;
+    }
+
+    /// <summary>Tek tool cagrisini aktif an butcesine karsi denetler.</summary>
+    [HttpPost(PtnBridgeRoutes.ToolBudget)]
+    [Authorize(TestModulePermissions.Bridge.Profile)]
+    public virtual async Task<Result<ToolBudgetDecisionDto>> CheckToolBudget([FromBody] ToolBudgetRequestDto input)
+    {
+        var result = await AppService.CheckToolBudgetAsync(input);
+        return result;
+    }
+
+    /// <summary>Ic is durumunu MCP Task wire sozlugune esler.</summary>
+    [HttpPost(PtnBridgeRoutes.TaskStatus)]
+    [Authorize(TestModulePermissions.Bridge.Task)]
+    public virtual async Task<Result<McpTaskStatusDto>> MapTaskStatus([FromBody] McpTaskStatusRequestDto input)
+    {
+        var result = await AppService.MapTaskStatusAsync(input);
+        return result;
+    }
+
+    /// <summary>Bulguyla bagli inceleme-only OpenAPI Overlay onerisi uretir.</summary>
+    [HttpPost(PtnBridgeRoutes.OverlaySuggestion)]
+    [Authorize(TestModulePermissions.Bridge.PatchSuggest)]
+    public virtual async Task<Result<OverlayPatchSuggestionDto>> SuggestOverlayPatch([FromBody] OverlayPatchRequestDto input)
+    {
+        var result = await AppService.SuggestOverlayPatchAsync(input);
+        return result;
+    }
+}

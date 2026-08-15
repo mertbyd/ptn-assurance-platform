@@ -1,0 +1,16 @@
+arazzo: 1.0.1
+info:
+  title: Test Module lookup readback
+  version: 1.0.0
+sourceDescriptions:
+  - name: testModule
+    url: https://example.test/openapi.json
+    type: openapi
+workflows:
+  - workflowId: read-test-run-statuses
+    summary: Reads deterministic Test Module lookup rows.
+    steps:
+      - stepId: read-test-run-statuses
+        operationPath: '{$sourceDescriptions.testModule.url}#/paths/~1api~1test-module~1test-run-statuses/get'
+        successCriteria:
+          - condition: $statusCode == 200

@@ -1,0 +1,113 @@
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using NSubstitute;
+using Ptn.TestModule.Services.Bridge;
+using Ptn.ApiContractChecker.Constants.Conformance.Lookups;
+using Ptn.ApiContractChecker.Dtos.Conformance;
+using Ptn.ApiContractChecker.Services.Conformance;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
+using Ptn.TestModule.Dtos.Bridge.Api;
+using Ptn.TestModule.FluentValidation.Bridge.Api;
+using Ptn.TestModule.Managers.Bridge;
+using Shouldly;
+using Xunit;
+
+namespace Ptn.TestModule.Application.Tests.Services.Bridge;
+
+// islevi: API oracle adapter'inin outcome casing'i ve operasyon baglama DTO cevirisini dogrular.
+// sistemdeki gorevi: API checker ham sozlugunun domain portundan sizmasini test kapisiyla engeller.
+public class ApiOracleAppServiceTests
+{
+    // Lowercase checker outcome'unu PascalCase kopru outcome'una cevirir.
+    [Fact]
+    public async Task Should_normalize_api_outcome_and_map_suggestions()
+    {
+        var service = Substitute.For<IResponseConformanceAppService>();
+        service.SuggestOperationBindingsAsync(Arg.Any<OperationSelectionDto>()).Returns(
+            new OperationBindingResultDto
+            {
+                OutcomeCode = ConformanceOutcomeCodes.Passed,
+                Suggestions =
+                [
+                    new OperationBindingSuggestionDto
+                    {
+                        SourceOperationId = "source-operation",
+                        SourceMethod = "POST",
+                        SourcePath = "/tickets",
+                        Score = 95
+                    }
+                ]
+            });
+        var oracleService = new ApiOracleAppService(
+            service,
+            new ApiOracleManager(),
+            new OperationQueryDtoValidator(),
+            new OperationLinkRequestDtoValidator(),
+            new DerivabilityRequestDtoValidator(),
+            new ResponseObservationDtoValidator());
+
+        var result = await oracleService.SuggestOperationBindingsAsync(
+            new OperationQueryDto
+            {
+                SnapshotId = System.Guid.NewGuid(),
+                Method = "GET",
+                Path = "/tickets/{id}"
+            },
+            CancellationToken.None);
+
+        result.OutcomeCode.ShouldBe(PtnOutcomeCodes.Passed);
+        result.Suggestions.Single().Score.ShouldBe(95);
+    }
+
+    // OpenAPI links adaylarini kaynak sozlugu ve parametre eslemeleriyle Bridge'e tasir.
+    [Fact]
+    public async Task Should_expose_operation_link_candidates_without_guessing()
+    {
+        var service = Substitute.For<IResponseConformanceAppService>();
+        service.SuggestOperationLinksAsync(
+            Arg.Any<Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkRequestDto>()).Returns(
+            new Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkResultDto
+            {
+                OutcomeCode = ConformanceOutcomeCodes.Passed,
+                Candidates =
+                [
+                    new Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkCandidateDto
+                    {
+                        TargetOperationId = "get-order",
+                        SourceCode = OperationLinkSourceCodes.DeclaredLink,
+                        Score = 100,
+                        RequiresHumanApproval = true,
+                        ParameterMap =
+                        [
+                            new Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkParameterBindingDto
+                            {
+                                SourceResponsePointer = "/body/orderId",
+                                TargetParameterName = "orderId"
+                            }
+                        ]
+                    }
+                ]
+            });
+        var oracleService = new ApiOracleAppService(
+            service,
+            new ApiOracleManager(),
+            new OperationQueryDtoValidator(),
+            new OperationLinkRequestDtoValidator(),
+            new DerivabilityRequestDtoValidator(),
+            new ResponseObservationDtoValidator());
+
+        var result = await oracleService.SuggestOperationLinksAsync(
+            new Ptn.TestModule.Dtos.Bridge.Api.OperationLinkRequestDto
+            {
+                SnapshotId = System.Guid.NewGuid(),
+                SourceOperationId = "create-order"
+            },
+            CancellationToken.None);
+
+        result.OutcomeCode.ShouldBe(PtnOutcomeCodes.Passed);
+        result.Candidates.Single().SourceCode.ShouldBe(PtnOperationLinkSourceCodes.DeclaredLink);
+        result.Candidates.Single().ParameterMap.Single().TargetParameterName.ShouldBe("orderId");
+        result.Candidates.Single().RequiresHumanApproval.ShouldBeTrue();
+    }
+}

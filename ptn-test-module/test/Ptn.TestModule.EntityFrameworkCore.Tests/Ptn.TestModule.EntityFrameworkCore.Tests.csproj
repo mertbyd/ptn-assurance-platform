@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.TestModule</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <!-- EF Core surumu Authenticator.EntityFrameworkCore ile ayni olmak zorundadir (10.0.10);
+         daha dusuk bir Sqlite/Proxies surumu CS1705 assembly surum catismasi uretir. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore.Sqlite" Version="$(AbpVersion)" />
+    <ProjectReference Include="..\..\src\Ptn.TestModule.EntityFrameworkCore\Ptn.TestModule.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Ptn.TestModule.Application.Tests\Ptn.TestModule.Application.Tests.csproj" />
+  </ItemGroup>
+
+</Project>

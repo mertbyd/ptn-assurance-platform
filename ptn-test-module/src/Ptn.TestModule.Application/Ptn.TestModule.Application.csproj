@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.TestModule</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Authenticator.Application" Version="$(AuthenticatorVersion)" />
+    <PackageReference Include="CheckNexus.ApiContracts.Application.Contracts" Version="$(CheckNexusApiContractsVersion)" />
+    <PackageReference Include="CheckNexus.DatabaseComparison.Application.Contracts" Version="$(CheckNexusDatabaseComparisonVersion)" />
+    <PackageReference Include="Pintern.SaaS.Notifications.Application" Version="$(NotificationsVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Ddd.Application" Version="$(AbpVersion)" />
+    <PackageReference Include="Volo.Abp.Mapperly" Version="$(AbpVersion)" />
+    <PackageReference Include="Volo.Abp.BackgroundJobs" Version="$(AbpVersion)" />
+    <PackageReference Include="Volo.Abp.BlobStoring" Version="$(AbpVersion)" />
+    <PackageReference Include="YamlDotNet" Version="$(YamlDotNetVersion)" />
+    <ProjectReference Include="..\Ptn.TestModule.Application.Contracts\Ptn.TestModule.Application.Contracts.csproj" />
+    <ProjectReference Include="..\Ptn.TestModule.Domain\Ptn.TestModule.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
