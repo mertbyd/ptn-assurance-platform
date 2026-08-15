@@ -43,5 +43,8 @@ public class TestModuleSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(new SettingDefinition(
             TestModuleSettings.SandboxResetStrategy,
             TestModuleRunSettingNames.DefaultSandboxResetStrategy));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.RunConcurrencyWaitSeconds,
+            TestModuleRunSettingNames.DefaultRunConcurrencyWaitSeconds));
     }
 }

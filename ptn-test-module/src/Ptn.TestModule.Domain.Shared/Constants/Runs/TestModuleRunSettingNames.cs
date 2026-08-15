@@ -52,6 +52,9 @@ public static class TestModuleRunSettingNames
     /// <summary>Sandbox verisini kosumdan once temizleyen stratejinin ayar adidir.</summary>
     public const string SandboxResetStrategy = "TestModule.Runs.SandboxResetStrategy";
 
+    /// <summary>Ortam kilidini edinmek icin beklenecek azami surenin ayar adidir.</summary>
+    public const string RunConcurrencyWaitSeconds = "TestModule.Runs.RunConcurrencyWaitSeconds";
+
     /// <summary>Desteklenen iliskisel sandbox temizleme stratejisidir.</summary>
     public const string RespawnResetStrategy = "Respawn";
 
@@ -61,6 +64,12 @@ public static class TestModuleRunSettingNames
     /// <summary>Connection-string adina guvenle tasinabilen ortam anahtari bicimidir.</summary>
     public const string SandboxEnvironmentKeyPattern = "^[A-Za-z0-9._-]+$";
 
+    /// <summary>Tenant ve ortam bazli kosum kilidi adinin bicimidir.</summary>
+    public const string RunConcurrencyLockNameFormat = "TestModule.Runs.Environment:{0}:{1}";
+
+    /// <summary>Host kapsamindaki kosum kilitlerinin tenant segmentidir.</summary>
+    public const string HostTenantLockSegment = "host";
+
     /// <summary>Varsayilan HAR saklama suresidir.</summary>
     public const string DefaultHarRetentionDays = "30";
 
@@ -69,4 +78,7 @@ public static class TestModuleRunSettingNames
 
     /// <summary>Varsayilan sandbox temizleme stratejisidir.</summary>
     public const string DefaultSandboxResetStrategy = RespawnResetStrategy;
+
+    /// <summary>Varsayilan kilit bekleme suresi; runner butcesi ve sert durdurma payini kapsar.</summary>
+    public const string DefaultRunConcurrencyWaitSeconds = "3660";
 }

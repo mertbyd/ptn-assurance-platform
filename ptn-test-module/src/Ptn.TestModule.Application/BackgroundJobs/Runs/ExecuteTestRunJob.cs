@@ -7,6 +7,7 @@ using Ptn.TestModule.Managers.Runs;
 using Ptn.TestModule.Models.Runs;
 using Ptn.TestModule.Services.Runs;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.DistributedLocking;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.Threading;
 using Volo.Abp.Uow;
@@ -39,6 +40,12 @@ public class ExecuteTestRunJob
     // SUT test verisini checker kimliginden ayri yazma yetkili baglantiyla sifirlayan porttur.
     private readonly ITestDataSandbox _testDataSandbox;
 
+    // Tenant ve ortam bazli kilit adini ve timeout kararini ureten Manager'dir.
+    private readonly RunConcurrencyManager _concurrencyManager;
+
+    // Ayni ortam kosumlarini ABP'nin kendi kilit altyapisiyla siraya alan sinirdir.
+    private readonly IAbpDistributedLock _distributedLock;
+
     public ExecuteTestRunJob(
         TestRunExecutionManager executionManager,
         WorkflowRunPlanner planner,
@@ -47,6 +54,8 @@ public class ExecuteTestRunJob
         IOracleDispatchPort dispatchPort,
         RunOutcomeResolver outcomeResolver,
         ITestDataSandbox testDataSandbox,
+        RunConcurrencyManager concurrencyManager,
+        IAbpDistributedLock distributedLock,
         ICurrentTenant currentTenant,
         IUnitOfWorkManager unitOfWorkManager,
         ICancellationTokenProvider cancellationTokenProvider)
@@ -59,6 +68,8 @@ public class ExecuteTestRunJob
         _dispatchPort = dispatchPort;
         _outcomeResolver = outcomeResolver;
         _testDataSandbox = testDataSandbox;
+        _concurrencyManager = concurrencyManager;
+        _distributedLock = distributedLock;
     }
 
     // Kosumu claim eder, UoW disinda icra ve yargi yapar, hukmu ayri yeni UoW'da kalicilastirir.
@@ -72,7 +83,7 @@ public class ExecuteTestRunJob
         }
 
         var stopwatch = Stopwatch.StartNew();
-        var judgementTask = RunAndJudgeAsync(args);
+        var judgementTask = RunWithConcurrencyAsync(args);
         await ((Task)judgementTask).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
         stopwatch.Stop();
 
@@ -87,11 +98,23 @@ public class ExecuteTestRunJob
             JobCancellationToken));
     }
 
-    // Kisa hazirlik UoW'sunu, UoW'suz runner icrasini ve UoW'suz yargiyi sirayla baglar.
-    private async Task<TestRunJudgement> RunAndJudgeAsync(ExecuteTestRunArgs args)
+    // Kisa hazirlik UoW'sundan sonra tenant-ortam kilidini alip tum SUT ve yargi akisinda tutar.
+    private async Task<TestRunJudgement> RunWithConcurrencyAsync(ExecuteTestRunArgs args)
     {
         var context = await RunInUnitOfWorkAsync(
             () => _executionManager.PrepareAsync(args.TestRunId, JobCancellationToken));
+        var plan = await _concurrencyManager.CreatePlanAsync(
+            args.TenantId,
+            context.EnvironmentBinding.EnvironmentKey,
+            JobCancellationToken);
+        await using var handle = await _distributedLock.TryAcquireAsync(
+            plan.LockName,
+            plan.WaitTimeout,
+            JobCancellationToken);
+        _concurrencyManager.EnsureLockAcquired(
+            handle is not null,
+            context.EnvironmentBinding.EnvironmentKey);
+
         if (context.MaterialDrift.HasDrift)
         {
             return _outcomeResolver.ResolveMaterialDrift(context.MaterialDrift);

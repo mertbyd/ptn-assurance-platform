@@ -94,6 +94,9 @@ public static class TestModuleRunErrorCodes
     /// <summary>Ortam anahtarinin ayri sandbox connection-string adina guvenle tasinamadigini bildirir.</summary>
     public const string SandboxEnvironmentKeyInvalid = $"{Prefix}:SandboxEnvironmentKeyInvalid";
 
+    /// <summary>Ortam kilidi bekleme ayarinin pozitif saniye olmadigini bildirir.</summary>
+    public const string RunConcurrencyWaitInvalid = $"{Prefix}:RunConcurrencyWaitInvalid";
+
     /// <summary>Public kosum girdilerinin kararli FluentValidation hata kodlarini tasir.</summary>
     public static class Validation
     {

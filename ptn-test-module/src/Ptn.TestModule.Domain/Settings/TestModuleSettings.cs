@@ -39,4 +39,7 @@ public static class TestModuleSettings
 
     /// <summary>Sandbox verisini kosumdan once temizleyen strateji ayar adidir.</summary>
     public const string SandboxResetStrategy = TestModuleRunSettingNames.SandboxResetStrategy;
+
+    /// <summary>Ortam kilidini edinmek icin beklenecek azami sure ayar adidir.</summary>
+    public const string RunConcurrencyWaitSeconds = TestModuleRunSettingNames.RunConcurrencyWaitSeconds;
 }

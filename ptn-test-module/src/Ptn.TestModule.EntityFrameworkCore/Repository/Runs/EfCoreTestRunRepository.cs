@@ -83,17 +83,4 @@ public class EfCoreTestRunRepository
         };
     }
 
-    // Ortam ve aktif durum kumesini SQL Any sorgusuyla kontrol eder.
-    /// <summary>Verilen ortamda belirtilen durumlardan birinde kosum olup olmadigini bildirir.</summary>
-    public async Task<bool> ExistsActiveForEnvironmentAsync(
-        string environmentKey,
-        IReadOnlyCollection<Guid> activeStatusIds,
-        CancellationToken cancellationToken = default)
-    {
-        var statusIds = activeStatusIds.ToArray();
-        var queryable = await GetQueryableAsync();
-        return await queryable.AnyAsync(
-            entity => entity.EnvironmentKey == environmentKey && statusIds.Contains(entity.RunStatusId),
-            GetCancellationToken(cancellationToken));
-    }
 }

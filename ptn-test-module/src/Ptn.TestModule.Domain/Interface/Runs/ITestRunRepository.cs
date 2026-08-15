@@ -34,10 +34,4 @@ public interface ITestRunRepository : IBaseRepository<TestRun, Guid>
         Guid id,
         CancellationToken cancellationToken = default);
 
-    // Ortamda Pending veya Running bir kosum bulunup bulunmadigini veritabaninda hesaplar.
-    /// <summary>Verilen ortam ve durum kumesinde aktif kosum olup olmadigini bildirir.</summary>
-    Task<bool> ExistsActiveForEnvironmentAsync(
-        string environmentKey,
-        IReadOnlyCollection<Guid> activeStatusIds,
-        CancellationToken cancellationToken = default);
 }
