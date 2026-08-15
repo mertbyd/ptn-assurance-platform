@@ -12,4 +12,5 @@ public sealed class TableDescription
     public TableKey? PrimaryKey { get; set; }
     public List<TableKey> UniqueIndexes { get; set; } = [];
     public List<ForeignKeyNeighbor> ForeignKeyNeighbors { get; set; } = [];
+    public List<SchemaLintWarning> LintWarnings { get; set; } = [];
 }

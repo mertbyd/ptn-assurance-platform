@@ -31,7 +31,10 @@ public class ScenarioPublicationGateManager : TestModuleDomainService
         {
             IsPublishable = failedGateCodes.Count == 0,
             FailedGateCodes = failedGateCodes,
-            Warnings = []
+            Warnings = evidence.SchemaLintWarnings
+                .Select(warning => warning.WarningCode)
+                .Distinct(StringComparer.Ordinal)
+                .ToList()
         };
     }
 

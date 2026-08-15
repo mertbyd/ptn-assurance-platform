@@ -1,9 +1,11 @@
 using System;
 using Ptn.TestModule.Constants.Catalog.Lookups;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Managers.Catalog;
 using Ptn.TestModule.Models.Catalog;
 using Ptn.TestModule.Models.Compilation;
+using Ptn.TestModule.Models.Bridge;
 using Shouldly;
 using Xunit;
 
@@ -43,6 +45,17 @@ public class ScenarioPublicationGateTests
 
         decision.IsPublishable.ShouldBeTrue();
         decision.FailedGateCodes.ShouldBeEmpty();
+    }
+
+    // Sema lint uyarisi karar cevabina girmeli fakat tek basina yayin kapisini dusurmemelidir.
+    [Fact]
+    public void Should_report_schema_lint_warning_without_rejecting_publication()
+    {
+        var decision = Evaluate(CreateScenario(), schemaLintWarningCode: PtnSchemaLintWarningCodes.MissingPrimaryKey);
+
+        decision.IsPublishable.ShouldBeTrue();
+        decision.FailedGateCodes.ShouldBeEmpty();
+        decision.Warnings.ShouldBe([PtnSchemaLintWarningCodes.MissingPrimaryKey]);
     }
 
     // Derleyici hic assertion uretmediyse senaryo Published kararini alamamalidir.
@@ -101,7 +114,8 @@ public class ScenarioPublicationGateTests
         bool isSchemaValid = true,
         bool areAssertionsDerivable = true,
         int assertionCount = 1,
-        Guid? sourceSnapshotId = null)
+        Guid? sourceSnapshotId = null,
+        string? schemaLintWarningCode = null)
     {
         return new ScenarioPublicationGateManager().Evaluate(
             scenario,
@@ -112,7 +126,10 @@ public class ScenarioPublicationGateTests
                 AssertionCount = assertionCount,
                 IsSchemaValid = isSchemaValid,
                 AreAssertionsDerivable = areAssertionsDerivable,
-                SourceDescriptionSpecSnapshotIds = [sourceSnapshotId ?? SpecSnapshotId]
+                SourceDescriptionSpecSnapshotIds = [sourceSnapshotId ?? SpecSnapshotId],
+                SchemaLintWarnings = schemaLintWarningCode is null
+                    ? []
+                    : [new SchemaLintWarning { WarningCode = schemaLintWarningCode }]
             });
     }
 

@@ -28,4 +28,8 @@ public sealed class TableDescriptionDto
     /// Tablonun gelen ve giden bir seviyeli FK komsularini kararli sirada tasir.
     /// </summary>
     public List<ForeignKeyNeighborDto> ForeignKeyNeighbors { get; set; } = [];
+    /// <summary>
+    /// Assertion yazarligini etkileyen kararli sema lint uyarilarini tasir.
+    /// </summary>
+    public List<SchemaLintWarningDto> LintWarnings { get; set; } = [];
 }

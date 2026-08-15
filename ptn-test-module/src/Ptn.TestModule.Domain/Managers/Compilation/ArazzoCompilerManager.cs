@@ -59,7 +59,8 @@ public class ArazzoCompilerManager : TestModuleDomainService
     public ScenarioCompilationEvidence CreateEvidence(
         ArazzoCompilationResult compilation,
         DerivabilityResult? apiDerivability,
-        DatabaseDerivabilityResult? databaseDerivability)
+        DatabaseDerivabilityResult? databaseDerivability,
+        IReadOnlyList<SchemaLintWarning>? schemaLintWarnings = null)
     {
         ArgumentNullException.ThrowIfNull(compilation);
         return new ScenarioCompilationEvidence
@@ -70,7 +71,8 @@ public class ArazzoCompilerManager : TestModuleDomainService
             IsSchemaValid = compilation.IsSchemaValid,
             AreAssertionsDerivable = IsFullyDerivable(compilation, apiDerivability, databaseDerivability),
             SourceDescriptionSpecSnapshotIds = compilation.SourceDescriptionSpecSnapshotIds,
-            LintDiagnostics = compilation.LintDiagnostics
+            LintDiagnostics = compilation.LintDiagnostics,
+            SchemaLintWarnings = schemaLintWarnings?.ToList() ?? []
         };
     }
 
@@ -92,12 +94,14 @@ public class ArazzoCompilerManager : TestModuleDomainService
     public ScenarioCompilationEvidence CreateEvidence(
         ArazzoCompilationResult compilation,
         IReadOnlyList<DerivabilityResult> apiResults,
-        IReadOnlyList<DatabaseDerivabilityResult> databaseResults)
+        IReadOnlyList<DatabaseDerivabilityResult> databaseResults,
+        IReadOnlyList<SchemaLintWarning>? schemaLintWarnings = null)
     {
         return CreateEvidence(
             compilation,
             MergeApiResults(apiResults),
-            databaseResults.FirstOrDefault());
+            databaseResults.FirstOrDefault(),
+            schemaLintWarnings);
     }
 
     // Bagli veritabani ve derlenmis assertion birlikte varsa tek checker istegi kurar.

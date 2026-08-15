@@ -19,7 +19,8 @@ public class ScenarioPublicationContractTests
         "AssertionCount",
         "IsSchemaValid",
         "AreAssertionsDerivable",
-        "SourceDescriptionSpecSnapshotIds"
+        "SourceDescriptionSpecSnapshotIds",
+        "SchemaLintWarnings"
     ];
 
     // Senaryo olusturma girdisi yalniz kaynak belgeyi ve malzeme muhrunu kabul etmelidir.

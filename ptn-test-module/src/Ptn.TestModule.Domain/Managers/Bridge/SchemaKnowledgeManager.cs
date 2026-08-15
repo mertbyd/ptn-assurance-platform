@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -10,6 +11,7 @@ using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Database;
 using Volo.Abp;
 using CheckerForeignKeyDirectionCodes = Ptn.DatabaseChecker.Constants.Comparison.ForeignKeyDirectionCodes;
+using CheckerSchemaLintWarningCodes = Ptn.DatabaseChecker.Constants.Comparison.SchemaLintWarningCodes;
 
 namespace Ptn.TestModule.Managers.Bridge;
 
@@ -32,9 +34,49 @@ public class SchemaKnowledgeManager : TestModuleDomainService
                 .OrderBy(GetDirectionOrder)
                 .ThenBy(item => item.DbSchemaName, StringComparer.Ordinal)
                 .ThenBy(item => item.TableName, StringComparer.Ordinal)
-                .ToList()
+                .ToList(),
+            LintWarnings = source.LintWarnings.Select(CreateLintWarning).ToList()
         };
     }
+
+    // DB assertion adreslerini tekrarsiz ve kararli tablo sorgularina cevirir.
+    public IReadOnlyList<TableQuery> CreateLintQueries(
+        IReadOnlyList<DatabaseDerivabilityRequest> requests)
+    {
+        return requests
+            .SelectMany(request => request.Assertions.Select(assertion => new TableQuery
+            {
+                ConnectionId = request.ConnectionId,
+                DbSchemaName = assertion.SchemaName,
+                TableName = assertion.TableName
+            }))
+            .GroupBy(query => new { query.ConnectionId, query.DbSchemaName, query.TableName })
+            .Select(group => group.First())
+            .OrderBy(query => query.ConnectionId)
+            .ThenBy(query => query.DbSchemaName, StringComparer.Ordinal)
+            .ThenBy(query => query.TableName, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    // Checker sema lint uyarisini Bridge'in kapali sozlugune cevirir.
+    private static SchemaLintWarning CreateLintWarning(CheckerSchemaLintWarning source)
+    {
+        return new SchemaLintWarning
+        {
+            WarningCode = NormalizeLintWarningCode(source.WarningCode),
+            ColumnName = source.ColumnName
+        };
+    }
+
+    // Checker lint kodunu Bridge sozlugundeki karsiligina indirger.
+    private static string NormalizeLintWarningCode(string warningCode) => warningCode switch
+    {
+        CheckerSchemaLintWarningCodes.MissingPrimaryKey => PtnSchemaLintWarningCodes.MissingPrimaryKey,
+        CheckerSchemaLintWarningCodes.MissingUniqueKey => PtnSchemaLintWarningCodes.MissingUniqueKey,
+        CheckerSchemaLintWarningCodes.GeneratedColumn => PtnSchemaLintWarningCodes.GeneratedColumn,
+        _ => throw new BusinessException(TestModuleBridgeErrorCodes.CheckerCallFailed)
+            .WithData(nameof(warningCode), warningCode)
+    };
 
     // Checker FK komsusunu acik DB semasi ve Bridge yon koduyla tamamlar.
     private static ForeignKeyNeighbor CreateNeighbor(CheckerForeignKeyNeighbor source)

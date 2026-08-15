@@ -12,6 +12,7 @@ using Ptn.TestModule.Managers.Bridge;
 using Shouldly;
 using Xunit;
 using ForeignKeyDirectionCodes = Ptn.DatabaseChecker.Constants.Comparison.ForeignKeyDirectionCodes;
+using SchemaLintWarningCodes = Ptn.DatabaseChecker.Constants.Comparison.SchemaLintWarningCodes;
 using BridgeTableQueryDto = Ptn.TestModule.Dtos.Bridge.Database.TableQueryDto;
 
 namespace Ptn.TestModule.Application.Tests.Services.Bridge;
@@ -70,6 +71,14 @@ public class SchemaKnowledgeAppServiceTests
                         LocalColumns = ["role_id"],
                         NeighborColumns = ["id"]
                     }
+                ],
+                LintWarnings =
+                [
+                    new SchemaLintWarningDto
+                    {
+                        WarningCode = SchemaLintWarningCodes.GeneratedColumn,
+                        ColumnName = "computed_total"
+                    }
                 ]
             }
         };
@@ -93,6 +102,8 @@ public class SchemaKnowledgeAppServiceTests
             .ShouldBe([PtnForeignKeyDirectionCodes.Outgoing, PtnForeignKeyDirectionCodes.Incoming]);
         result.ForeignKeyNeighbors.First().DbSchemaName.ShouldBe("identity");
         result.ForeignKeyNeighbors.Last().DbSchemaName.ShouldBe("support");
+        result.LintWarnings.Single().WarningCode.ShouldBe(PtnSchemaLintWarningCodes.GeneratedColumn);
+        result.LintWarnings.Single().ColumnName.ShouldBe("computed_total");
     }
 
     // Ayni semayi tablo ve kolon siralari ters iki checker snapshot'i olarak olusturur.

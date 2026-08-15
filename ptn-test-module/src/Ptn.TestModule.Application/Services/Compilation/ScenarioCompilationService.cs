@@ -24,9 +24,11 @@ public sealed class ScenarioCompilationService : IScenarioCompilationPort, ITran
 {
     private static readonly DatabaseOracleMapper DatabaseMapper = new();
     private static readonly ApiOracleMapper ApiMapper = new();
+    private static readonly SchemaKnowledgeMapper SchemaMapper = new();
     private readonly ArazzoCompilerManager _compilerManager;
     private readonly ProfilePackFileManager _profilePackFileManager;
     private readonly ProfilePackManager _profilePackManager;
+    private readonly SchemaKnowledgeManager _schemaKnowledgeManager;
     private readonly ISchemaKnowledgeAppService _schemaKnowledgeAppService;
     private readonly IDatabaseOracleAppService _databaseOracleAppService;
     private readonly IApiOracleAppService _apiOracleAppService;
@@ -37,6 +39,7 @@ public sealed class ScenarioCompilationService : IScenarioCompilationPort, ITran
         ArazzoCompilerManager compilerManager,
         ProfilePackFileManager profilePackFileManager,
         ProfilePackManager profilePackManager,
+        SchemaKnowledgeManager schemaKnowledgeManager,
         ISchemaKnowledgeAppService schemaKnowledgeAppService,
         IDatabaseOracleAppService databaseOracleAppService,
         IApiOracleAppService apiOracleAppService,
@@ -45,6 +48,7 @@ public sealed class ScenarioCompilationService : IScenarioCompilationPort, ITran
         _compilerManager = compilerManager;
         _profilePackFileManager = profilePackFileManager;
         _profilePackManager = profilePackManager;
+        _schemaKnowledgeManager = schemaKnowledgeManager;
         _schemaKnowledgeAppService = schemaKnowledgeAppService;
         _databaseOracleAppService = databaseOracleAppService;
         _apiOracleAppService = apiOracleAppService;
@@ -85,6 +89,17 @@ public sealed class ScenarioCompilationService : IScenarioCompilationPort, ITran
                 await _databaseOracleAppService.ValidateDerivabilityAsync(
                     DatabaseMapper.MapToDto(request), cancellationToken)));
         }
-        return _compilerManager.CreateEvidence(compilation, apiResults, databaseResults);
+        var schemaLintWarnings = new List<SchemaLintWarning>();
+        foreach (var query in _schemaKnowledgeManager.CreateLintQueries(plan.DatabaseRequests))
+        {
+            var description = await _schemaKnowledgeAppService.DescribeTableAsync(
+                SchemaMapper.Map(query), cancellationToken);
+            schemaLintWarnings.AddRange(SchemaMapper.MapLintWarnings(description.LintWarnings));
+        }
+        return _compilerManager.CreateEvidence(
+            compilation,
+            apiResults,
+            databaseResults,
+            schemaLintWarnings);
     }
 }
