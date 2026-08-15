@@ -40,5 +40,13 @@ public class TestModuleSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(new SettingDefinition(
             TestModuleSettings.StaleRunThresholdMinutes,
             TestModuleRunSettingNames.DefaultStaleRunThresholdMinutes));
+        foreach (var momentCode in AgentMomentCodes.All)
+        {
+            context.Add(new SettingDefinition(
+                PtnBridgeSettingNames.AllowedTools(momentCode),
+                PtnBridgeSettingNames.DefaultAllowedTools(momentCode)));
+            context.Add(new SettingDefinition(PtnBridgeSettingNames.MaxTurns(momentCode), "8"));
+            context.Add(new SettingDefinition(PtnBridgeSettingNames.TokenLimit(momentCode), "12000"));
+        }
     }
 }

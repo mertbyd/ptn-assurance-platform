@@ -49,5 +49,14 @@ public static class TestModuleBridgeErrorCodes
         public const string DerivabilityAssertionsRequired = $"{Prefix}:Validation:DerivabilityAssertionsRequired";
         public const string DerivabilityKeyColumnsRequired = $"{Prefix}:Validation:DerivabilityKeyColumnsRequired";
         public const string DerivabilityExpectedColumnsRequired = $"{Prefix}:Validation:DerivabilityExpectedColumnsRequired";
+        public const string AgentMomentInvalid = $"{Prefix}:Validation:AgentMomentInvalid";
+        public const string ToolCodeInvalid = $"{Prefix}:Validation:ToolCodeInvalid";
+        public const string ToolBudgetInvalid = $"{Prefix}:Validation:ToolBudgetInvalid";
+        public const string TaskIdRequired = $"{Prefix}:Validation:TaskIdRequired";
+        public const string TaskStatusRequired = $"{Prefix}:Validation:TaskStatusRequired";
+        public const string FindingFingerprintInvalid = $"{Prefix}:Validation:FindingFingerprintInvalid";
+        public const string OverlayTargetRequired = $"{Prefix}:Validation:OverlayTargetRequired";
+        public const string OverlayDescriptionRequired = $"{Prefix}:Validation:OverlayDescriptionRequired";
+        public const string OverlayUpdateInvalid = $"{Prefix}:Validation:OverlayUpdateInvalid";
     }
 }

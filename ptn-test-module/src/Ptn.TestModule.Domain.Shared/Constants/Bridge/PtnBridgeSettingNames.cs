@@ -10,4 +10,20 @@ public static class PtnBridgeSettingNames
     public const string DefaultProfilePackKey = "acme-ticketing";
     public const string ProfilePackExtension = ".yaml";
     public const string FingerprintPrefix = "sha256:";
+    public const string AgentProfilePrefix = "TestModule.Bridge.AgentProfile";
+
+    public static string AllowedTools(string momentCode) => $"{AgentProfilePrefix}.{momentCode}.AllowedTools";
+    public static string MaxTurns(string momentCode) => $"{AgentProfilePrefix}.{momentCode}.MaxTurns";
+    public static string TokenLimit(string momentCode) => $"{AgentProfilePrefix}.{momentCode}.TokenLimit";
+
+    public static string DefaultAllowedTools(string momentCode) => momentCode switch
+    {
+        AgentMomentCodes.Grounding => string.Join(',', PtnToolCodes.Ground, PtnToolCodes.Knowledge, PtnToolCodes.Profile),
+        AgentMomentCodes.Drafting => string.Join(',', PtnToolCodes.Ground, PtnToolCodes.Knowledge, PtnToolCodes.Impact),
+        AgentMomentCodes.Validation => string.Join(',', PtnToolCodes.Validate, PtnToolCodes.Impact),
+        AgentMomentCodes.Approval => string.Join(',', PtnToolCodes.Validate, PtnToolCodes.Task),
+        AgentMomentCodes.Execution => string.Join(',', PtnToolCodes.Run, PtnToolCodes.Result, PtnToolCodes.Task),
+        AgentMomentCodes.Diagnosis => string.Join(',', PtnToolCodes.Result, PtnToolCodes.Explain, PtnToolCodes.DryRun),
+        _ => string.Empty
+    };
 }
