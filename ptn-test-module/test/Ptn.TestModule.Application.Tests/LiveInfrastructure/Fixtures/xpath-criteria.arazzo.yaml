@@ -1,0 +1,17 @@
+arazzo: 1.0.1
+info:
+  title: Rejected XPath criterion
+  version: 1.0.0
+sourceDescriptions:
+  - name: databaseChecker
+    url: ./database-checker.openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: reject-xpath
+    steps:
+      - stepId: read-statuses
+        operationId: readStatuses
+        successCriteria:
+          - context: $response.body
+            condition: /data/items
+            type: xpath
