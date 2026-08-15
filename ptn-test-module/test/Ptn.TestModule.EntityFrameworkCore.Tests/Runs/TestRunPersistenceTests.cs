@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.Constants.Runs.Lookups;
 using Ptn.TestModule.Data;
 using Ptn.TestModule.Entities.Catalog;
@@ -277,6 +278,7 @@ public class TestRunPersistenceTests : TestModuleEntityFrameworkCoreTestBase
             resultId,
             1,
             tenantId,
+            new string('d', TestResultFindingConsts.FingerprintLength),
             new TestResultFindingModel
             {
                 Ordinal = 1,

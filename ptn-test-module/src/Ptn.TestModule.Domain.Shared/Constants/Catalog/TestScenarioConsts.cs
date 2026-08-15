@@ -18,4 +18,13 @@ public static class TestScenarioConsts
     public const string VersionIndexName = "ux_scenarios_version";
     public const string ContentIndexName = "ux_scenarios_content";
     public const string StateIndexName = "ix_scenarios_state";
+
+    /// <summary>Aktif karantina sorgularinin indeks adidir.</summary>
+    public const string QuarantineIndexName = "ix_scenarios_quarantine";
+
+    /// <summary>Karantina gerekcesinin azami karakter sayisidir.</summary>
+    public const int MaxQuarantineReasonLength = 256;
+
+    /// <summary>Bir senaryonun kesintisiz kalabilecegi azami karantina gunudur.</summary>
+    public const int MaxQuarantineDays = 30;
 }

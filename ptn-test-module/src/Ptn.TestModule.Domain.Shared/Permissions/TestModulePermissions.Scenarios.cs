@@ -12,5 +12,8 @@ public partial class TestModulePermissions
         public const string Delete = Default + ".Delete";
         public const string Publish = Default + ".Publish";
         public const string Approve = Default + ".Approve";
+
+        /// <summary>Senaryoyu sinirli sureyle karantinaya alma permission'idir.</summary>
+        public const string Quarantine = Default + ".Quarantine";
     }
 }

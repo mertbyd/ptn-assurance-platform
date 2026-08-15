@@ -22,5 +22,8 @@ public partial class TestModulePermissions
 
         /// <summary>Terminal sonuc ve bulgulari atomik yazma permission'idir.</summary>
         public const string WriteResult = Default + ".WriteResult";
+
+        /// <summary>Kosumu standart formatlara ihrac etme permission'idir.</summary>
+        public const string Export = Default + ".Export";
     }
 }

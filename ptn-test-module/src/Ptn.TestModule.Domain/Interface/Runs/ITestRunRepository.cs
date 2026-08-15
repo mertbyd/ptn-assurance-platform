@@ -34,6 +34,12 @@ public interface ITestRunRepository : IBaseRepository<TestRun, Guid>
         Guid id,
         CancellationToken cancellationToken = default);
 
+    // Kosumu, tum denemelerini ve bulgularini hukum kodu cozulmus halde tek sorguda getirir.
+    /// <summary>Kosumun deterministik ihracat girdisini getirir.</summary>
+    Task<RunExportSource?> GetExportSourceAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
+
     // Ortamda Pending veya Running bir kosum bulunup bulunmadigini veritabaninda hesaplar.
     /// <summary>Verilen ortam ve durum kumesinde aktif kosum olup olmadigini bildirir.</summary>
     Task<bool> ExistsActiveForEnvironmentAsync(

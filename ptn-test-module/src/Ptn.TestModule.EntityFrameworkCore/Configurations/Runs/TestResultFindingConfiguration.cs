@@ -21,6 +21,7 @@ public sealed class TestResultFindingConfiguration : IEntityTypeConfiguration<Te
         builder.ConfigureByConvention();
         builder.Property(entity => entity.TestRunResultId).IsRequired();
         builder.Property(entity => entity.Ordinal).IsRequired();
+        builder.Property(entity => entity.Fingerprint).IsRequired().HasMaxLength(TestResultFindingConsts.FingerprintLength);
         builder.Property(entity => entity.SourceCheckerCode).IsRequired().HasMaxLength(TestResultFindingConsts.MaxKindCodeLength);
         builder.Property(entity => entity.ComparisonKindCode).IsRequired().HasMaxLength(TestResultFindingConsts.MaxKindCodeLength);
         builder.Property(entity => entity.RuleRef).HasMaxLength(TestResultFindingConsts.MaxRuleRefLength);
@@ -36,5 +37,6 @@ public sealed class TestResultFindingConfiguration : IEntityTypeConfiguration<Te
         builder.HasIndex(entity => entity.Location).HasDatabaseName(TestResultFindingConsts.LocationIndexName);
         builder.HasIndex(entity => entity.RuleRef).HasDatabaseName(TestResultFindingConsts.RuleIndexName);
         builder.HasIndex(entity => entity.SourceCheckerCode).HasDatabaseName(TestResultFindingConsts.SourceIndexName);
+        builder.HasIndex(entity => entity.Fingerprint).HasDatabaseName(TestResultFindingConsts.FingerprintIndexName);
     }
 }

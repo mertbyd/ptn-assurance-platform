@@ -70,6 +70,9 @@ public static class WorkflowRunnerConsts
     /// <summary>Checker yanitinda adim kimliginin echo edildigi alan adidir (ADR-0021).</summary>
     public const string CorrelationStepKeyField = "stepKey";
 
+    /// <summary>Derlenmis her Arazzo adiminin istek korelasyonunu tasiyan header adidir (ADR-0022).</summary>
+    public const string StepKeyHeaderName = "X-CheckNexus-Step-Key";
+
     /// <summary>Checker yanitinda korelasyon nesnesinin adidir (ADR-0021).</summary>
     public const string CorrelationField = "correlation";
 

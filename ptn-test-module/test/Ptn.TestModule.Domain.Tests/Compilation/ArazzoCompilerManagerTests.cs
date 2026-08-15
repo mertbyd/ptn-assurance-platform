@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
+using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.ExceptionCodes.Compilation;
 using Ptn.TestModule.Interface.Compilation;
 using Ptn.TestModule.Managers.Bridge;
@@ -45,6 +46,10 @@ public class ArazzoCompilerManagerTests
         first.CompiledDocument.ShouldContain("tableName: users");
         first.CompiledDocument.ShouldContain("columnName: email");
         first.CompiledDocument.ShouldContain("$response.body#/data/passed == true");
+        first.CompiledDocument.Split(WorkflowRunnerConsts.StepKeyHeaderName).Length.ShouldBe(4);
+        first.CompiledDocument.ShouldContain("value: verify-subject-row");
+        first.CompiledDocument.ShouldContain("value: count-subjects");
+        first.CompiledDocument.ShouldContain("value: verify-subject-absent");
         linter.LastDocument.ShouldBe(second.CompiledDocument);
     }
 

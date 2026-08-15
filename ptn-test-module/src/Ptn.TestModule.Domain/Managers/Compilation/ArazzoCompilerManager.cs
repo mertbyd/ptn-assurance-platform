@@ -10,8 +10,10 @@ using System.Threading.Tasks;
 using Ptn.DatabaseChecker.Constants;
 using Ptn.DatabaseChecker.Constants.Comparison;
 using Ptn.DatabaseChecker.Constants.Comparison.Assertions;
+using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Constants.Compilation;
+using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.ExceptionCodes.Compilation;
 using Ptn.TestModule.Interface.Compilation;
@@ -157,6 +159,7 @@ public class ArazzoCompilerManager : TestModuleDomainService
         };
         CollectApiAssertions(root, specSnapshotId, result);
         result.DatabaseAssertions = CompileDatabaseSteps(root, profilePack);
+        InjectStepCorrelationHeaders(root);
         result.CompiledDocument = Serialize(root);
         result.CompiledHash = ComputeHash(result.CompiledDocument);
         result.CompiledAssertionCount = CountAssertions(result);
@@ -309,6 +312,75 @@ public class ArazzoCompilerManager : TestModuleDomainService
             addresses.AddRange(CompileSteps(steps, profilePack));
         }
         return addresses;
+    }
+
+    // Her workflow adimina stepId'den turetilen standart Arazzo header parametresini enjekte eder.
+    private static void InjectStepCorrelationHeaders(YamlMappingNode root)
+    {
+        var workflows = GetRequiredSequence(root, ArazzoCompilationConsts.Fields.Workflows);
+        foreach (var workflow in workflows.Children.OfType<YamlMappingNode>())
+        {
+            var steps = GetRequiredSequence(workflow, ArazzoCompilationConsts.Fields.Steps);
+            foreach (var step in steps.Children.OfType<YamlMappingNode>())
+            {
+                InjectStepCorrelationHeader(step);
+            }
+        }
+    }
+
+    // Kaynakta ayni header varsa belirsizligi kaldirir ve derleyicinin tek kararli degerini yazar.
+    private static void InjectStepCorrelationHeader(YamlMappingNode step)
+    {
+        var stepKey = GetRequiredScalar(step, ArazzoCompilationConsts.Fields.StepId);
+        if (stepKey.Length > PtnCorrelationConsts.MaxStepKeyLength)
+        {
+            throw InvalidDocument(ArazzoCompilationConsts.Fields.StepId);
+        }
+
+        var parameters = GetOrCreateParameters(step);
+        RemoveExistingStepCorrelationHeaders(parameters);
+        parameters.Add(new YamlMappingNode
+        {
+            { ArazzoCompilationConsts.Fields.Name, WorkflowRunnerConsts.StepKeyHeaderName },
+            { ArazzoCompilationConsts.Fields.In, ArazzoCompilationConsts.HeaderParameterLocation },
+            { ArazzoCompilationConsts.Fields.Value, stepKey }
+        });
+    }
+
+    // Kaynaktaki ayni header tanimlarini derleyicinin tek sahipli degeri icin kaldirir.
+    private static void RemoveExistingStepCorrelationHeaders(YamlSequenceNode parameters)
+    {
+        var existing = parameters.Children
+            .OfType<YamlMappingNode>()
+            .Where(IsStepKeyHeaderParameter)
+            .ToList();
+        foreach (var parameter in existing)
+        {
+            parameters.Children.Remove(parameter);
+        }
+    }
+
+    // Adimin mevcut parameter dizisini kullanir veya standart dizi sahibini olusturur.
+    private static YamlSequenceNode GetOrCreateParameters(YamlMappingNode step)
+    {
+        if (!TryGet(step, ArazzoCompilationConsts.Fields.Parameters, out var node))
+        {
+            var created = new YamlSequenceNode();
+            Set(step, ArazzoCompilationConsts.Fields.Parameters, created);
+            return created;
+        }
+
+        return node as YamlSequenceNode ??
+               throw InvalidDocument(ArazzoCompilationConsts.Fields.Parameters);
+    }
+
+    // Yalniz ADR-0022'nin header konumundaki kararli parametresini eslestirir.
+    private static bool IsStepKeyHeaderParameter(YamlMappingNode parameter)
+    {
+        return TryGetScalar(parameter, ArazzoCompilationConsts.Fields.Name, out var name) &&
+               TryGetScalar(parameter, ArazzoCompilationConsts.Fields.In, out var location) &&
+               string.Equals(name, WorkflowRunnerConsts.StepKeyHeaderName, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(location, ArazzoCompilationConsts.HeaderParameterLocation, StringComparison.OrdinalIgnoreCase);
     }
 
     // Bir workflow icindeki uzantili step'leri standart Arazzo alanlariyla degistirir.

@@ -30,5 +30,12 @@ public sealed class TestScenarioDto : AuditedEntityDto<Guid>
     public DateTime? ApprovedAt { get; set; }
     public string? ApprovalBoundToHash { get; set; }
     public string? Notes { get; set; }
+
+    /// <summary>Karantinanin bittigi andir; dolu oldugunda karantina aktiftir.</summary>
+    public DateTime? QuarantineUntil { get; set; }
+
+    /// <summary>Karantinaya alma gerekcesidir.</summary>
+    public string? QuarantineReason { get; set; }
+
     public Guid? TenantId { get; set; }
 }

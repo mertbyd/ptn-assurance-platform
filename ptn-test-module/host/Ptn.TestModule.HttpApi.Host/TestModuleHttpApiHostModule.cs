@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using CheckNexus.ApiContracts;
 using CheckNexus.DatabaseComparison;
 using CheckNexus.Vault;
@@ -11,7 +10,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,7 +27,6 @@ using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
 using Volo.Abp.Caching.StackExchangeRedis;
-using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.PostgreSql;
 using Volo.Abp.Localization;
@@ -210,7 +207,7 @@ public class TestModuleHttpApiHostModule : AbpModule
         });
     }
 
-    public override async Task OnApplicationInitializationAsync(ApplicationInitializationContext context)
+    public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         var app = context.GetApplicationBuilder();
         var environment = context.GetEnvironment();
@@ -247,35 +244,5 @@ public class TestModuleHttpApiHostModule : AbpModule
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
         app.UseConfiguredEndpoints(endpoints => endpoints.MapHealthChecks("/health"));
-
-        await MigrateAndSeedAsync(context);
-    }
-
-    // Migration yalnizca acikca izin verildiginde uygulanir; her modul kendi migration assembly'sinin sahibidir.
-    private static async Task MigrateAndSeedAsync(ApplicationInitializationContext context)
-    {
-        var configuration = context.ServiceProvider.GetRequiredService<IConfiguration>();
-        var autoMigrate = configuration.GetValue<bool>(TestModuleConfigurationKeys.DatabaseAutoMigrate);
-        var seedOnStartup = configuration.GetValue<bool>(TestModuleConfigurationKeys.DatabaseSeedOnStartup);
-        if (!autoMigrate && !seedOnStartup)
-        {
-            return;
-        }
-
-        using var scope = context.ServiceProvider.CreateScope();
-        if (autoMigrate)
-        {
-            await scope.ServiceProvider
-                .GetRequiredService<TestModuleDbContext>()
-                .Database
-                .MigrateAsync();
-        }
-
-        if (seedOnStartup)
-        {
-            await scope.ServiceProvider
-                .GetRequiredService<IDataSeeder>()
-                .SeedAsync();
-        }
     }
 }

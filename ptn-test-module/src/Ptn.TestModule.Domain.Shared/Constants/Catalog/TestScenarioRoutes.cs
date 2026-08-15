@@ -23,6 +23,12 @@ public static class TestScenarioRoutes
     /// <summary>Yayinlanmis senaryoyu kullanimdan kaldiran alt rotadir.</summary>
     public const string Deprecate = "{id:guid}/deprecate";
 
+    /// <summary>Senaryoyu sinirli sureyle karantinaya alan rotadir.</summary>
+    public const string Quarantine = "{id:guid}/quarantine";
+
+    /// <summary>Suresi dolmus karantinayi temizleyen rotadir.</summary>
+    public const string ReleaseQuarantine = "{id:guid}/quarantine/release";
+
     /// <summary>Senaryo katalogu endpoint'lerinin Swagger grup adidir.</summary>
     public const string SwaggerGroupName = "test-module-scenarios";
 }

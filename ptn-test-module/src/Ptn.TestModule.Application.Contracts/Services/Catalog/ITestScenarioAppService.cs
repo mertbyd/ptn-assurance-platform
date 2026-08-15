@@ -36,4 +36,15 @@ public interface ITestScenarioAppService : IApplicationService
 
     // Yayinlanmis senaryo surumunu tarihsel kaydi koruyarak kullanimdan kaldirir.
     Task<TestScenarioDto> DeprecateAsync(Guid id);
+
+    /// <summary>Senaryoyu son kullanma tarihi zorunlu olacak sekilde karantinaya alir.</summary>
+    /// <param name="id">Karantinaya alinacak senaryo kimligi.</param>
+    /// <param name="input">Karantina bitisi ve gerekcesi.</param>
+    /// <returns>Karantinaya alinmis senaryo gorunumu.</returns>
+    Task<TestScenarioDto> QuarantineAsync(Guid id, QuarantineTestScenarioDto input);
+
+    /// <summary>Suresi dolmus karantinayi temizler; sure dolmamissa senaryo karantinada kalir.</summary>
+    /// <param name="id">Karantinasi degerlendirilecek senaryo kimligi.</param>
+    /// <returns>Guncel senaryo gorunumu.</returns>
+    Task<TestScenarioDto> ReleaseQuarantineAsync(Guid id);
 }

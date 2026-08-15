@@ -14,6 +14,7 @@ public static class ArazzoCompilationConsts
     public const string ObservedRowCountExpression = "$response.body#/data/observedRowCount";
     public const string ResponseBodyPointerMarker = "$response.body#";
     public const string PathsPointerMarker = "#/paths/";
+    public const string HeaderParameterLocation = "header";
     public const string DockerExecutable = "docker";
     public const string RedoclyCliImage = "redocly/cli:2.14.0";
     public const string LintDocumentFileName = "document.arazzo.yaml";
@@ -65,6 +66,8 @@ public static class ArazzoCompilationConsts
         public const string IncludeRowOnFailure = "includeRowOnFailure";
         public const string OperationId = "operationId";
         public const string OperationPath = "operationPath";
+        public const string Parameters = "parameters";
+        public const string In = "in";
         public const string WorkflowId = "workflowId";
         public const string RequestBody = "requestBody";
         public const string ContentType = "contentType";

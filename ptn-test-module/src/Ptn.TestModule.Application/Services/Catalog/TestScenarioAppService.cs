@@ -9,11 +9,13 @@ using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Interface.Catalog;
 using Ptn.TestModule.Interface.Compilation;
 using Ptn.TestModule.Managers.Catalog;
+using Ptn.TestModule.Managers.Runs;
 using Ptn.TestModule.Mappers.Catalog;
 using Ptn.TestModule.Models.Catalog;
 using Ptn.TestModule.Permissions;
 using Ptn.TestModule.Services.Bridge;
 using Volo.Abp;
+using Volo.Abp.Timing;
 using Volo.Abp.Users;
 
 namespace Ptn.TestModule.Services.Catalog;
@@ -37,6 +39,8 @@ public class TestScenarioAppService : BaseApplicationService<
     private readonly ScenarioPublicationGateManager _publicationGateManager;
     private readonly ISchemaKnowledgeAppService _schemaKnowledgeAppService;
     private readonly IScenarioCompilationPort _compilationPort;
+    private readonly ScenarioQuarantineManager _quarantineManager;
+    private readonly IClock _clock;
 
     protected override string GetPolicyName => TestModulePermissions.Scenarios.Default;
     protected override string CreatePolicyName => TestModulePermissions.Scenarios.Create;
@@ -47,13 +51,40 @@ public class TestScenarioAppService : BaseApplicationService<
     public TestScenarioAppService(
         ScenarioPublicationGateManager publicationGateManager,
         ISchemaKnowledgeAppService schemaKnowledgeAppService,
-        IScenarioCompilationPort compilationPort)
+        IScenarioCompilationPort compilationPort,
+        ScenarioQuarantineManager quarantineManager,
+        IClock clock)
     {
         _publicationGateManager = publicationGateManager;
         _schemaKnowledgeAppService = schemaKnowledgeAppService;
         _compilationPort = compilationPort;
+        _quarantineManager = quarantineManager;
+        _clock = clock;
     }
-
+    // Senaryoyu sinirli sureyle karantinaya alir; sure kararini Manager verir.
+    public async Task<TestScenarioDto> QuarantineAsync(Guid id, QuarantineTestScenarioDto input)
+    {
+        await CheckPolicyAsync(TestModulePermissions.Scenarios.Quarantine);
+        var entity = await Manager.EnsureExistsAsync(id, cancellationToken: CancellationTokenProvider.Token);
+        _quarantineManager.Quarantine(entity, input.QuarantineUntil, input.QuarantineReason, _clock.Now);
+        var saved = await Repository.UpdateAsync(
+            entity,
+            autoSave: true,
+            cancellationToken: CancellationTokenProvider.Token);
+        return Mapper.Map(saved);
+    }
+    // Suresi dolmus karantinayi temizler; suresi dolmamis senaryo karantinada kalir.
+    public async Task<TestScenarioDto> ReleaseQuarantineAsync(Guid id)
+    {
+        await CheckPolicyAsync(TestModulePermissions.Scenarios.Quarantine);
+        var entity = await Manager.EnsureExistsAsync(id, cancellationToken: CancellationTokenProvider.Token);
+        _quarantineManager.ReleaseExpired(entity, _clock.Now);
+        var saved = await Repository.UpdateAsync(
+            entity,
+            autoSave: true,
+            cancellationToken: CancellationTokenProvider.Token);
+        return Mapper.Map(saved);
+    }
     // Draft senaryo surumunu insan onayi bekleyen duruma tasiyip kaydeder.
     public async Task<TestScenarioDto> SubmitForApprovalAsync(Guid id)
     {
@@ -75,7 +106,6 @@ public class TestScenarioAppService : BaseApplicationService<
         var evidence = await _compilationPort.CompileAsync(entity, CancellationTokenProvider.Token);
         return Mapper.Map(_publicationGateManager.Evaluate(entity, evidence));
     }
-
     // Onayi source hash'e baglar, belgeyi yeniden derler ve kapilar gectiyse kaniti satira yazar.
     public async Task<TestScenarioDto> PublishAsync(Guid id)
     {
@@ -92,7 +122,6 @@ public class TestScenarioAppService : BaseApplicationService<
             cancellationToken: CancellationTokenProvider.Token);
         return Mapper.Map(saved);
     }
-
     // Published senaryo surumunu silmeden Deprecated durumuna tasiyip kaydeder.
     public async Task<TestScenarioDto> DeprecateAsync(Guid id)
     {
@@ -105,7 +134,6 @@ public class TestScenarioAppService : BaseApplicationService<
             cancellationToken: CancellationTokenProvider.Token);
         return Mapper.Map(saved);
     }
-
     // Liste sorgusunu senaryo anahtari ve azalan surum numarasiyla tamamen kararli siralar.
     protected override RepositoryQuery<TestScenario> CreateListQuery(TestScenarioListInput input)
     {
@@ -113,7 +141,6 @@ public class TestScenarioAppService : BaseApplicationService<
             .OrderBy(entity => entity.ScenarioKey)
             .ThenByDescending(entity => entity.VersionNo);
     }
-
     // Guncel DB sema fingerprint'ini material seal'e uygulayip Manager ile Draft entity kurar.
     protected override async Task<TestScenario> CreateEntityAsync(
         TestScenarioCreateModel model,

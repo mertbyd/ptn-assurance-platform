@@ -128,6 +128,15 @@ namespace Ptn.TestModule.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("profile_fingerprint");
 
+                    b.Property<string>("QuarantineReason")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("quarantine_reason");
+
+                    b.Property<DateTime?>("QuarantineUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("quarantine_until");
+
                     b.Property<string>("RulesFingerprint")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
@@ -179,6 +188,9 @@ namespace Ptn.TestModule.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_test_scenarios");
+
+                    b.HasIndex("QuarantineUntil")
+                        .HasDatabaseName("ix_scenarios_quarantine");
 
                     b.HasIndex("StateId")
                         .HasDatabaseName("ix_scenarios_state");
@@ -459,6 +471,12 @@ namespace Ptn.TestModule.Migrations
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("expected_value");
 
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("fingerprint");
+
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -510,6 +528,9 @@ namespace Ptn.TestModule.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_test_result_findings");
+
+                    b.HasIndex("Fingerprint")
+                        .HasDatabaseName("ix_findings_fingerprint");
 
                     b.HasIndex("Location")
                         .HasDatabaseName("ix_findings_loc");
@@ -697,6 +718,11 @@ namespace Ptn.TestModule.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("CreatorId");
 
+                    b.Property<string>("CtrfBlobName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("ctrf_blob_name");
+
                     b.Property<string>("Detail")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)")
@@ -738,6 +764,11 @@ namespace Ptn.TestModule.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("failure_category_id");
 
+                    b.Property<string>("JUnitBlobName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("junit_blob_name");
+
                     b.Property<int?>("LastCompletedOrdinal")
                         .HasColumnType("integer")
                         .HasColumnName("last_completed_ordinal");
@@ -745,6 +776,11 @@ namespace Ptn.TestModule.Migrations
                     b.Property<Guid>("OutcomeStatusId")
                         .HasColumnType("uuid")
                         .HasColumnName("outcome_status_id");
+
+                    b.Property<string>("SarifBlobName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("sarif_blob_name");
 
                     b.Property<string>("TakenBranchPath")
                         .HasMaxLength(256)

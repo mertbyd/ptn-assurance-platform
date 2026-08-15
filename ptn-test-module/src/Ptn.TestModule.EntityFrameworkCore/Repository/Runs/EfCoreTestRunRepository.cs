@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Nexum.Abp.Foundation.EntityFrameworkCore.Repositories;
+using Ptn.TestModule.Entities.Lookups;
 using Ptn.TestModule.Entities.Runs;
 using Ptn.TestModule.Interface.Runs;
 using Ptn.TestModule.Models.Runs;
@@ -57,6 +58,47 @@ public class EfCoreTestRunRepository
             .ToListAsync(GetCancellationToken(cancellationToken));
     }
 
+    // Kosumu, tum denemelerini ve bulgularini hukum kodu lookup'a join edilerek tek sorguda getirir.
+    /// <summary>Kosumun deterministik ihracat girdisini getirir.</summary>
+    public async Task<RunExportSource?> GetExportSourceAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var token = GetCancellationToken(cancellationToken);
+        var dbContext = await GetDbContextAsync();
+        var run = await dbContext.Set<TestRun>()
+            .FirstOrDefaultAsync(entity => entity.Id == id, token);
+        if (run is null)
+        {
+            return null;
+        }
+
+        return new RunExportSource
+        {
+            Run = run,
+            Attempts = await dbContext.Set<TestRunResult>()
+                .Include(entity => entity.Findings)
+                .Where(entity => entity.TestRunId == id)
+                .OrderBy(entity => entity.Attempt)
+                .Join(
+                    dbContext.Set<TestOutcomeStatus>(),
+                    result => result.OutcomeStatusId,
+                    outcome => outcome.Id,
+                    (result, outcome) => new RunExportAttempt
+                    {
+                        Attempt = result.Attempt,
+                        OutcomeCode = outcome.Code,
+                        DurationMs = result.DurationMs,
+                        ErrorCode = result.ErrorCode,
+                        Detail = result.Detail,
+                        FailedStepName = result.FailedStepName,
+                        FailedStepOrdinal = result.FailedStepOrdinal,
+                        Findings = result.Findings.OrderBy(finding => finding.Ordinal).ToList()
+                    })
+                .ToListAsync(token)
+        };
+    }
+
     // Kosumu ve en son denemeyi getirir; bulgular tek Include ile gelir, bulgu basina sorgu acilmaz.
     /// <summary>Kosumun bulgulu ve teshisli terminal raporunu getirir.</summary>
     public async Task<TestRunReport?> GetReportAsync(
@@ -72,15 +114,68 @@ public class EfCoreTestRunRepository
             return null;
         }
 
+        var result = await dbContext.Set<TestRunResult>()
+            .Include(entity => entity.Findings)
+            .Where(entity => entity.TestRunId == id)
+            .OrderByDescending(entity => entity.Attempt)
+            .FirstOrDefaultAsync(token);
+
         return new TestRunReport
         {
             Run = run,
-            Result = await dbContext.Set<TestRunResult>()
-                .Include(entity => entity.Findings)
-                .Where(entity => entity.TestRunId == id)
-                .OrderByDescending(entity => entity.Attempt)
-                .FirstOrDefaultAsync(token)
+            Result = result,
+            OutcomeCode = await ReadOutcomeCodeAsync(dbContext, result, token),
+            PreviousOutcomeCode = await ReadPreviousOutcomeCodeAsync(dbContext, run, token)
         };
+    }
+
+    // Terminal denemenin lookup kimligini kararli hukum koduna cevirir.
+    /// <summary>Verilen sonucun terminal hukum kodunu getirir.</summary>
+    private static async Task<string?> ReadOutcomeCodeAsync(
+        TestModuleDbContext dbContext,
+        TestRunResult? result,
+        CancellationToken cancellationToken)
+    {
+        if (result is null)
+        {
+            return null;
+        }
+
+        return await dbContext.Set<TestOutcomeStatus>()
+            .Where(outcome => outcome.Id == result.OutcomeStatusId)
+            .Select(outcome => outcome.Code)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    // Ayni trend kovasindaki bir onceki kosumun terminal hukmunu tek sorguda getirir.
+    /// <summary>Ayni history kovasindaki onceki kosumun terminal hukum kodunu getirir.</summary>
+    private static async Task<string?> ReadPreviousOutcomeCodeAsync(
+        TestModuleDbContext dbContext,
+        TestRun run,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(run.HistoryId))
+        {
+            return null;
+        }
+
+        return await dbContext.Set<TestRun>()
+            .Where(previous => previous.HistoryId == run.HistoryId &&
+                               previous.Id != run.Id &&
+                               previous.CreationTime < run.CreationTime)
+            .OrderByDescending(previous => previous.CreationTime)
+            .Join(
+                dbContext.Set<TestRunResult>(),
+                previous => previous.Id,
+                previousResult => previousResult.TestRunId,
+                (previous, previousResult) => previousResult)
+            .OrderByDescending(previousResult => previousResult.Attempt)
+            .Join(
+                dbContext.Set<TestOutcomeStatus>(),
+                previousResult => previousResult.OutcomeStatusId,
+                outcome => outcome.Id,
+                (previousResult, outcome) => outcome.Code)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     // Ortam ve aktif durum kumesini SQL Any sorgusuyla kontrol eder.

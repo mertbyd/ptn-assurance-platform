@@ -32,6 +32,12 @@ public class TestScenario : AuditedAggregateRoot<Guid>, IMultiTenant
     public DateTime? ApprovedAt { get; internal set; }
     public string? ApprovalBoundToHash { get; internal set; }
     public string? Notes { get; internal set; }
+
+    /// <summary>Karantinanin bittigi andir; dolu oldugunda karantina aktiftir, suresiz karantina yoktur.</summary>
+    public DateTime? QuarantineUntil { get; internal set; }
+
+    /// <summary>Karantinaya alma gerekcesinin kararli referansidir.</summary>
+    public string? QuarantineReason { get; internal set; }
     public Guid? TenantId { get; internal set; }
 
     // EF Core materializasyonu icin ayrilmis kurucudur.

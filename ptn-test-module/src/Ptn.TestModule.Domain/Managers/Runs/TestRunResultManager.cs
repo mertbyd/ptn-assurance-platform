@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,6 +31,24 @@ public class TestRunResultManager : FoundationManager<TestRunResult, Guid>
     public TestRunReport EnsureReportFound(TestRunReport? report, Guid runId)
     {
         return report ?? throw new EntityNotFoundException(typeof(TestRun), runId);
+    }
+
+    // Onarim sonrasi ilk yesil kosumu isaretler; ikinci yesil kosum artik healed sayilmaz.
+    /// <summary>Raporun healed etiketini onceki ve simdiki hukumden hesaplar.</summary>
+    public static TestRunReport MarkHealing(TestRunReport report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        report.IsHealed = IsHealed(report.OutcomeCode, report.PreviousOutcomeCode);
+        return report;
+    }
+
+    // Yesile donen ilk kosumu tanir; onceki kosum yoksa veya zaten yesilse healed degildir.
+    /// <summary>Verilen hukum ciftinin onarim sonrasi ilk yesil kosum olup olmadigini bildirir.</summary>
+    public static bool IsHealed(string? outcomeCode, string? previousOutcomeCode)
+    {
+        return outcomeCode == TestOutcomeStatusCodes.Passed &&
+               previousOutcomeCode is not null &&
+               previousOutcomeCode != TestOutcomeStatusCodes.Passed;
     }
 
     // Repository sonucu bulunamazsa sonuc kimligiyle kararli not-found firlatir.
@@ -141,6 +160,30 @@ public class TestRunResultManager : FoundationManager<TestRunResult, Guid>
         }
     }
 
+    // Uretilen ihracat adlarini terminal satirina yazar; null gelen format mevcut bagini korur.
+    /// <summary>Ihracat artefakt adlarini terminal sonuc satirina baglar.</summary>
+    public static void AttachArtifactLinks(TestRunResult result, RunArtifactLinks links)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(links);
+        result.CtrfBlobName = links.CtrfBlobName ?? result.CtrfBlobName;
+        result.JUnitBlobName = links.JUnitBlobName ?? result.JUnitBlobName;
+        result.SarifBlobName = links.SarifBlobName ?? result.SarifBlobName;
+    }
+
+    // Satirda duran uc resource_link'i okuma yuzeyine tek domain modeliyle verir.
+    /// <summary>Terminal sonucun ihracat artefakt baglarini domain modeli olarak getirir.</summary>
+    public static RunArtifactLinks ReadArtifactLinks(TestRunResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        return new RunArtifactLinks
+        {
+            CtrfBlobName = result.CtrfBlobName,
+            JUnitBlobName = result.JUnitBlobName,
+            SarifBlobName = result.SarifBlobName
+        };
+    }
+
     // En son attempt'i tek sorguda okuyup bir sonraki monoton degeri hesaplar.
     /// <summary>Verilen kosum icin bir sonraki bir tabanli attempt numarasini uretir.</summary>
     private async Task<int> GetNextAttemptAsync(Guid testRunId, CancellationToken cancellationToken)
@@ -206,10 +249,26 @@ public class TestRunResultManager : FoundationManager<TestRunResult, Guid>
                 testRunResultId,
                 findings.Count + 1,
                 CurrentTenant.Id,
+                CreateFingerprint(normalized),
                 normalized));
         }
 
         return findings;
+    }
+
+    // Bulgunun kimligini kaynak, tur, kural ve konumdan turetip kalici parmak izine cevirir.
+    /// <summary>Bir bulgunun kararli SHA-256 parmak izini uretir.</summary>
+    public static string CreateFingerprint(TestResultFindingModel model)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        var canonical = string.Join(
+            TestResultFindingConsts.FingerprintSeparator,
+            model.SourceCheckerCode,
+            model.ComparisonKindCode,
+            model.RuleRef ?? string.Empty,
+            model.Location);
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)))
+            .ToLowerInvariant();
     }
 
     // Tek bulgunun acik uclu kod ve metin alanlarini guvenli DBML sinirlarina getirir.

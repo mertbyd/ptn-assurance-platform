@@ -52,6 +52,9 @@ public static class TestModuleLocalizationKeys
         /// <summary>Senaryo approve permission adinin anahtaridir.</summary>
         public const string ScenariosApprove = "Permission:Scenarios.Approve";
 
+        /// <summary>Senaryo karantina permission adinin anahtaridir.</summary>
+        public const string ScenariosQuarantine = "Permission:Scenarios.Quarantine";
+
         /// <summary>Test kosumu permission adinin anahtaridir.</summary>
         public const string Runs = "Permission:Runs";
 
@@ -66,6 +69,9 @@ public static class TestModuleLocalizationKeys
 
         /// <summary>Test kosumu terminal yazma permission adinin anahtaridir.</summary>
         public const string RunsWriteResult = "Permission:Runs.WriteResult";
+
+        /// <summary>Kosum ihracat permission adinin anahtaridir.</summary>
+        public const string RunsExport = "Permission:Runs.Export";
 
         /// <summary>Test lookup okuma permission adinin anahtaridir.</summary>
         public const string Lookups = "Permission:Lookups";

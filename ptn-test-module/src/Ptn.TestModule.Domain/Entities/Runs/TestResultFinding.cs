@@ -18,6 +18,9 @@ public class TestResultFinding : CreationAuditedEntity<Guid>, IMultiTenant
     /// <summary>Rapor icindeki kararli bir tabanli sira numarasidir.</summary>
     public int Ordinal { get; internal set; }
 
+    /// <summary>Bulgunun kaynak, tur, kural ve konumundan turetilmis kararli parmak izidir.</summary>
+    public string Fingerprint { get; internal set; } = string.Empty;
+
     /// <summary>Bulguyu ureten checker veya runner kodudur.</summary>
     public string SourceCheckerCode { get; internal set; } = string.Empty;
 
@@ -66,11 +69,13 @@ public class TestResultFinding : CreationAuditedEntity<Guid>, IMultiTenant
         Guid testRunResultId,
         int ordinal,
         Guid? tenantId,
+        string fingerprint,
         TestResultFindingModel model)
         : base(id)
     {
         TestRunResultId = testRunResultId;
         Ordinal = ordinal;
+        Fingerprint = fingerprint;
         SourceCheckerCode = model.SourceCheckerCode;
         ComparisonKindCode = model.ComparisonKindCode;
         RuleRef = model.RuleRef;

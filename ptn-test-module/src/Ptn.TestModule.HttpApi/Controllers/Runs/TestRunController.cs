@@ -22,6 +22,9 @@ public class TestRunController : TestModuleController
     /// <summary>Test kosumu use-case AppService'ini lazy cozer.</summary>
     private ITestRunAppService AppService => LazyGetRequiredService<ITestRunAppService>();
 
+    /// <summary>Kosum ihracat use-case AppService'ini lazy cozer.</summary>
+    private IRunReportExportService ExportService => LazyGetRequiredService<IRunReportExportService>();
+
     /// <summary>Kimligi verilen test kosumunu getirir.</summary>
     /// <param name="id">Okunacak TestRun aggregate kimligi.</param>
     /// <returns>Ev standardi icinde guncel kosum gorunumu.</returns>
@@ -53,6 +56,28 @@ public class TestRunController : TestModuleController
     public virtual async Task<Result<TestReportDetailDto>> GetReport(Guid id)
     {
         var result = await AppService.GetReportAsync(id);
+        return result;
+    }
+
+    /// <summary>Kosumu CTRF, JUnit ve SARIF formatlarina ihrac edip artefakt baglarini getirir.</summary>
+    /// <param name="id">Ihrac edilecek TestRun aggregate kimligi.</param>
+    /// <returns>Ev standardi icinde uretilen ihracat artefaktlarinin resource_link gorunumu.</returns>
+    [HttpPost(TestRunRoutes.Export)]
+    [Authorize(TestModulePermissions.Runs.Export)]
+    public virtual async Task<Result<RunArtifactLinksDto>> Export(Guid id)
+    {
+        var result = await ExportService.ExportAsync(id);
+        return result;
+    }
+
+    /// <summary>Terminal sonucun ihracat artefaktlarina isaret eden baglarini getirir.</summary>
+    /// <param name="id">Baglari okunacak TestRunResult aggregate kimligi.</param>
+    /// <returns>Ev standardi icinde uc ihracat formatinin resource_link gorunumu.</returns>
+    [HttpGet(TestRunRoutes.ResultArtifactsById)]
+    [Authorize(TestModulePermissions.Runs.View)]
+    public virtual async Task<Result<RunArtifactLinksDto>> GetArtifactLinks(Guid id)
+    {
+        var result = await AppService.GetArtifactLinksAsync(id);
         return result;
     }
 

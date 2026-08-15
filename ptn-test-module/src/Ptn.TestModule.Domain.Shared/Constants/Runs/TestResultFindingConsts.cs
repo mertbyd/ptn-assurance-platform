@@ -39,4 +39,13 @@ public static class TestResultFindingConsts
 
     /// <summary>Kaynak checker sorgularinin indeks adidir.</summary>
     public const string SourceIndexName = "ix_findings_src";
+
+    /// <summary>Bulgunun kararli SHA-256 parmak izinin karakter sayisidir.</summary>
+    public const int FingerprintLength = 64;
+
+    /// <summary>Parmak izi ile bulgu eslestirme sorgularinin indeks adidir.</summary>
+    public const string FingerprintIndexName = "ix_findings_fingerprint";
+
+    /// <summary>Parmak izi girdisindeki alanlari ayiran kararli isarettir.</summary>
+    public const string FingerprintSeparator = "|";
 }
