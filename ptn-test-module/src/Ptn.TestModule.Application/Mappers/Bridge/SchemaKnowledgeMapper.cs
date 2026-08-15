@@ -5,6 +5,7 @@ using Riok.Mapperly.Abstractions;
 using CheckerSchemaColumnDto = Ptn.DatabaseChecker.Dtos.SchemaDiscovery.SchemaColumnDto;
 using CheckerSchemaSnapshotDto = Ptn.DatabaseChecker.Dtos.SchemaDiscovery.SchemaSnapshotDto;
 using CheckerSchemaTableDto = Ptn.DatabaseChecker.Dtos.SchemaDiscovery.SchemaTableDto;
+using CheckerForeignKeyNeighborDto = Ptn.DatabaseChecker.Dtos.SchemaDiscovery.ForeignKeyNeighborDto;
 using CheckerTableColumnDto = Ptn.DatabaseChecker.Dtos.SchemaDiscovery.TableDescriptionColumnDto;
 using CheckerTableDescriptionDto = Ptn.DatabaseChecker.Dtos.SchemaDiscovery.TableDescriptionDto;
 using CheckerTableKeyDto = Ptn.DatabaseChecker.Dtos.SchemaDiscovery.TableKeyDefinitionDto;
@@ -20,6 +21,8 @@ public partial class SchemaKnowledgeMapper
     public partial TableDescriptionDto Map(TableDescription input);
     public partial SchemaSnapshotDto Map(SchemaSnapshot input);
     public partial CheckerTableDescription Map(CheckerTableDescriptionDto input);
+    public partial CheckerForeignKeyNeighbor MapForeignKeyNeighbor(CheckerForeignKeyNeighborDto input);
+    public partial ForeignKeyNeighborDto MapForeignKeyNeighbor(ForeignKeyNeighbor input);
     public partial TableColumn MapColumn(CheckerTableColumnDto input);
     public partial TableKey MapKey(CheckerTableKeyDto input);
     public partial SchemaSnapshot Map(CheckerSchemaSnapshotDto input);

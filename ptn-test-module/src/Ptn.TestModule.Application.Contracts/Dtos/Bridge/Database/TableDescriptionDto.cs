@@ -24,4 +24,8 @@ public sealed class TableDescriptionDto
     /// Sozlesmenin unique indexes bilgisini belirtir.
     /// </summary>
     public List<TableKeyDto> UniqueIndexes { get; set; } = [];
+    /// <summary>
+    /// Tablonun gelen ve giden bir seviyeli FK komsularini kararli sirada tasir.
+    /// </summary>
+    public List<ForeignKeyNeighborDto> ForeignKeyNeighbors { get; set; } = [];
 }

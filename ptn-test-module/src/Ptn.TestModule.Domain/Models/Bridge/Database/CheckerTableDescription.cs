@@ -11,4 +11,5 @@ public sealed class CheckerTableDescription
     public List<TableColumn> Columns { get; set; } = [];
     public TableKey? PrimaryKey { get; set; }
     public List<TableKey> UniqueIndexes { get; set; } = [];
+    public List<CheckerForeignKeyNeighbor> ForeignKeyNeighbors { get; set; } = [];
 }

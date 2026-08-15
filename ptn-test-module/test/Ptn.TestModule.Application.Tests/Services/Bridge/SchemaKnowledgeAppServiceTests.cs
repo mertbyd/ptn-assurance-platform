@@ -11,6 +11,7 @@ using Ptn.TestModule.FluentValidation.Bridge.Database;
 using Ptn.TestModule.Managers.Bridge;
 using Shouldly;
 using Xunit;
+using ForeignKeyDirectionCodes = Ptn.DatabaseChecker.Constants.Comparison.ForeignKeyDirectionCodes;
 using BridgeTableQueryDto = Ptn.TestModule.Dtos.Bridge.Database.TableQueryDto;
 
 namespace Ptn.TestModule.Application.Tests.Services.Bridge;
@@ -48,7 +49,28 @@ public class SchemaKnowledgeAppServiceTests
             {
                 SchemaName = "identity",
                 TableName = "users",
-                PrimaryKey = new TableKeyDefinitionDto { Columns = ["id"] }
+                PrimaryKey = new TableKeyDefinitionDto { Columns = ["id"] },
+                ForeignKeyNeighbors =
+                [
+                    new ForeignKeyNeighborDto
+                    {
+                        DirectionCode = ForeignKeyDirectionCodes.Incoming,
+                        ConstraintName = "fk_tickets_user",
+                        SchemaName = "support",
+                        TableName = "tickets",
+                        LocalColumns = ["id"],
+                        NeighborColumns = ["user_id"]
+                    },
+                    new ForeignKeyNeighborDto
+                    {
+                        DirectionCode = ForeignKeyDirectionCodes.Outgoing,
+                        ConstraintName = "fk_user_role",
+                        SchemaName = "identity",
+                        TableName = "roles",
+                        LocalColumns = ["role_id"],
+                        NeighborColumns = ["id"]
+                    }
+                ]
             }
         };
         var schemaService = new SchemaKnowledgeAppService(
@@ -67,6 +89,10 @@ public class SchemaKnowledgeAppServiceTests
 
         result.DbSchemaName.ShouldBe("identity");
         result.PrimaryKey!.Columns.Single().ShouldBe("id");
+        result.ForeignKeyNeighbors.Select(item => item.DirectionCode)
+            .ShouldBe([PtnForeignKeyDirectionCodes.Outgoing, PtnForeignKeyDirectionCodes.Incoming]);
+        result.ForeignKeyNeighbors.First().DbSchemaName.ShouldBe("identity");
+        result.ForeignKeyNeighbors.Last().DbSchemaName.ShouldBe("support");
     }
 
     // Ayni semayi tablo ve kolon siralari ters iki checker snapshot'i olarak olusturur.
