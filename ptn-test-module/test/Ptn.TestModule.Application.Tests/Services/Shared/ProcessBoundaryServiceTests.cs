@@ -43,6 +43,20 @@ public class ProcessBoundaryServiceTests
         DeleteWorkspaceRoot(plan.WorkspaceName);
     }
 
+    // Baslatilamayan executable plandaki kararli baslatma koduna cevrilmelidir.
+    [Fact]
+    public async Task Should_translate_a_process_start_failure_to_the_planned_error_code()
+    {
+        var plan = CreateSleepingPlan("start", lockWorkspace: false);
+        plan.Executable = $"missing-{Guid.NewGuid():N}";
+
+        var exception = await Should.ThrowAsync<BusinessException>(
+            () => new ProcessBoundaryService(new ProcessPlanManager()).ExecuteAsync(plan));
+
+        exception.Code.ShouldBe(TestModuleCompilationErrorCodes.LintProcessFailed);
+        DeleteWorkspaceRoot(plan.WorkspaceName);
+    }
+
     // Butceyi asan, istege bagli olarak calisma klasorunu silinemez hale getiren plan kurar.
     private static ProcessExecutionPlan CreateSleepingPlan(string name, bool lockWorkspace)
     {
