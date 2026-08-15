@@ -32,6 +32,8 @@
     <MicrosoftAspNetCoreVersion>10.0.9</MicrosoftAspNetCoreVersion>
     <MicrosoftExtensionsVersion>10.0.10</MicrosoftExtensionsVersion>
     <EfCoreNamingConventionsVersion>10.0.1</EfCoreNamingConventionsVersion>
+    <SerilogAspNetCoreVersion>9.0.0</SerilogAspNetCoreVersion>
+    <SerilogSinksAsyncVersion>2.1.0</SerilogSinksAsyncVersion>
     <YamlDotNetVersion>18.1.0</YamlDotNetVersion>
   </PropertyGroup>
 
