@@ -42,4 +42,7 @@ public partial class TestRunMapper
 
     /// <summary>Domain rapor okuma modelini bulgulu ve teshisli public rapor DTO'suna cevirir.</summary>
     public partial TestReportDetailDto Map(TestRunReport source);
+
+    /// <summary>Ihracat artefakt baglarini public resource_link DTO'suna cevirir.</summary>
+    public partial RunArtifactLinksDto Map(RunArtifactLinks source);
 }

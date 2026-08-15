@@ -55,6 +55,15 @@ public class TestRunResult : CreationAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>En fazla 4 KB olan yapilandirilmis diagnosis JSON metnidir.</summary>
     public string? DiagnosisReport { get; internal set; }
 
+    /// <summary>CTRF ihracatinin ABP BLOB Storing icindeki artefakt adidir.</summary>
+    public string? CtrfBlobName { get; internal set; }
+
+    /// <summary>JUnit ihracatinin ABP BLOB Storing icindeki artefakt adidir.</summary>
+    public string? JUnitBlobName { get; internal set; }
+
+    /// <summary>SARIF ihracatinin ABP BLOB Storing icindeki artefakt adidir.</summary>
+    public string? SarifBlobName { get; internal set; }
+
     /// <summary>Terminal yazimla birlikte kalicilastirilan sirali bulgulardir.</summary>
     public IReadOnlyCollection<TestResultFinding> Findings => _findings;
 

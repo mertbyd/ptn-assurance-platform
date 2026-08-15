@@ -61,6 +61,18 @@ public static class TestModuleRunErrorCodes
     /// <summary>HAR artefaktinin kalici depo boyut butcesini astigini bildirir.</summary>
     public const string HarTooLarge = $"{Prefix}:HarTooLarge";
 
+    /// <summary>Istenen ihracat formatinin kapali format kumesinde bulunmadigini bildirir.</summary>
+    public const string ArtifactFormatNotSupported = $"{Prefix}:ArtifactFormatNotSupported";
+
+    /// <summary>Ihracat artefaktinin kalici depo boyut butcesini astigini bildirir.</summary>
+    public const string ArtifactTooLarge = $"{Prefix}:ArtifactTooLarge";
+
+    /// <summary>Artefakt adi uretilirken deneme numarasinin bir tabanli olmadigini bildirir.</summary>
+    public const string ArtifactAttemptInvalid = $"{Prefix}:ArtifactAttemptInvalid";
+
+    /// <summary>Ihracat blob adinin satirda tutulabilecek uzunlugu astigini bildirir.</summary>
+    public const string ArtifactBlobNameTooLong = $"{Prefix}:ArtifactBlobNameTooLong";
+
     /// <summary>Belgenin desteklenen Arazzo surumunu tasimadigini bildirir.</summary>
     public const string ArazzoVersionUnsupported = $"{Prefix}:ArazzoVersionUnsupported";
 

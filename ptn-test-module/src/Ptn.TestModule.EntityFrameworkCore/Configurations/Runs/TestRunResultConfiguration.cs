@@ -31,6 +31,11 @@ public sealed class TestRunResultConfiguration : IEntityTypeConfiguration<TestRu
         builder.Property(entity => entity.FailedStepPath).HasMaxLength(TestRunResultConsts.MaxStepPathLength);
         builder.Property(entity => entity.TakenBranchPath).HasMaxLength(TestRunResultConsts.MaxBranchPathLength);
         builder.Property(entity => entity.DiagnosisReport).HasColumnType("jsonb");
+        builder.Property(entity => entity.CtrfBlobName).HasMaxLength(RunArtifactConsts.MaxBlobNameLength);
+        builder.Property(entity => entity.JUnitBlobName)
+            .HasColumnName(RunArtifactConsts.JUnitBlobColumnName)
+            .HasMaxLength(RunArtifactConsts.MaxBlobNameLength);
+        builder.Property(entity => entity.SarifBlobName).HasMaxLength(RunArtifactConsts.MaxBlobNameLength);
         builder.HasIndex(entity => new { entity.TestRunId, entity.Attempt })
             .IsUnique()
             .HasDatabaseName(TestRunResultConsts.AttemptIndexName);

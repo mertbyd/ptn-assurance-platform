@@ -56,6 +56,17 @@ public class TestRunController : TestModuleController
         return result;
     }
 
+    /// <summary>Terminal sonucun ihracat artefaktlarina isaret eden baglarini getirir.</summary>
+    /// <param name="id">Baglari okunacak TestRunResult aggregate kimligi.</param>
+    /// <returns>Ev standardi icinde uc ihracat formatinin resource_link gorunumu.</returns>
+    [HttpGet(TestRunRoutes.ResultArtifactsById)]
+    [Authorize(TestModulePermissions.Runs.View)]
+    public virtual async Task<Result<RunArtifactLinksDto>> GetArtifactLinks(Guid id)
+    {
+        var result = await AppService.GetArtifactLinksAsync(id);
+        return result;
+    }
+
     /// <summary>Kimligi verilen terminal sonucu tum bulgulariyla getirir.</summary>
     /// <param name="id">Okunacak TestRunResult aggregate kimligi.</param>
     /// <returns>Ev standardi icinde bulgulu terminal sonuc.</returns>

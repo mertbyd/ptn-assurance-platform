@@ -141,6 +141,30 @@ public class TestRunResultManager : FoundationManager<TestRunResult, Guid>
         }
     }
 
+    // Uretilen ihracat adlarini terminal satirina yazar; null gelen format mevcut bagini korur.
+    /// <summary>Ihracat artefakt adlarini terminal sonuc satirina baglar.</summary>
+    public static void AttachArtifactLinks(TestRunResult result, RunArtifactLinks links)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(links);
+        result.CtrfBlobName = links.CtrfBlobName ?? result.CtrfBlobName;
+        result.JUnitBlobName = links.JUnitBlobName ?? result.JUnitBlobName;
+        result.SarifBlobName = links.SarifBlobName ?? result.SarifBlobName;
+    }
+
+    // Satirda duran uc resource_link'i okuma yuzeyine tek domain modeliyle verir.
+    /// <summary>Terminal sonucun ihracat artefakt baglarini domain modeli olarak getirir.</summary>
+    public static RunArtifactLinks ReadArtifactLinks(TestRunResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        return new RunArtifactLinks
+        {
+            CtrfBlobName = result.CtrfBlobName,
+            JUnitBlobName = result.JUnitBlobName,
+            SarifBlobName = result.SarifBlobName
+        };
+    }
+
     // En son attempt'i tek sorguda okuyup bir sonraki monoton degeri hesaplar.
     /// <summary>Verilen kosum icin bir sonraki bir tabanli attempt numarasini uretir.</summary>
     private async Task<int> GetNextAttemptAsync(Guid testRunId, CancellationToken cancellationToken)

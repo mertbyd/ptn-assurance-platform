@@ -31,6 +31,11 @@ public interface ITestRunAppService : IApplicationService
     /// <returns>Bulgulu ve teshisli kosum raporu.</returns>
     Task<TestReportDetailDto> GetReportAsync(Guid id);
 
+    /// <summary>Terminal sonucun ihracat artefaktlarina isaret eden baglarini getirir.</summary>
+    /// <param name="id">Baglari okunacak TestRunResult aggregate kimligi.</param>
+    /// <returns>Uc ihracat formatinin resource_link gorunumu.</returns>
+    Task<RunArtifactLinksDto> GetArtifactLinksAsync(Guid id);
+
     /// <summary>Tenant ortam ayarini cozip yeni Pending kosum olusturur.</summary>
     /// <param name="input">Kosum, ortam ve fingerprint girdileri.</param>
     /// <returns>Kalicilastirilan Pending kosum.</returns>

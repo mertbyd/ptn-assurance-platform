@@ -26,6 +26,9 @@ public static class TestRunRoutes
     /// <summary>Kimlige gore bulgulu ve teshisli kosum raporu rotasidir.</summary>
     public const string ReportById = "{id:guid}/report";
 
+    /// <summary>Terminal sonucun ihracat artefakt baglarini veren rotadir.</summary>
+    public const string ResultArtifactsById = "results/{id:guid}/artifacts";
+
     /// <summary>Test kosumu endpoint'lerinin Swagger grup adidir.</summary>
     public const string SwaggerGroupName = "test-module-runs";
 }

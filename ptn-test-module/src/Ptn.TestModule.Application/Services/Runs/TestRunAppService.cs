@@ -97,6 +97,16 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         return Mapper.Map(_testRunResultManager.EnsureReportFound(report, id));
     }
 
+    /// <summary>Terminal sonucun ihracat artefakt baglarini getirir; agir cikti satirda tutulmaz.</summary>
+    public async Task<RunArtifactLinksDto> GetArtifactLinksAsync(Guid id)
+    {
+        await CheckPolicyAsync(TestModulePermissions.Runs.View);
+        var entity = await _testRunResultManager.EnsureExistsAsync(
+            id,
+            cancellationToken: _cancellationTokenProvider.Token);
+        return Mapper.Map(TestRunResultManager.ReadArtifactLinks(entity));
+    }
+
     /// <summary>Kimligi verilen terminal sonucu tum bulgulariyla getirir.</summary>
     public async Task<TestRunResultDto> GetResultAsync(Guid id)
     {
