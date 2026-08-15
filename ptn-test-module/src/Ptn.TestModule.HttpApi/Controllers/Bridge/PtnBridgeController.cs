@@ -72,4 +72,40 @@ public class PtnBridgeController : TestModuleController
         var result = await AppService.GetToolCatalogAsync();
         return result;
     }
+
+    /// <summary>Tek ajan aninin tenant-scoped profilini getirir.</summary>
+    [HttpPost(PtnBridgeRoutes.AgentProfile)]
+    [Authorize(TestModulePermissions.Bridge.Profile)]
+    public virtual async Task<Result<AgentProfileDto>> ResolveAgentProfile([FromBody] AgentProfileRequestDto input)
+    {
+        var result = await AppService.ResolveAgentProfileAsync(input);
+        return result;
+    }
+
+    /// <summary>Tek tool cagrisini aktif an butcesine karsi denetler.</summary>
+    [HttpPost(PtnBridgeRoutes.ToolBudget)]
+    [Authorize(TestModulePermissions.Bridge.Profile)]
+    public virtual async Task<Result<ToolBudgetDecisionDto>> CheckToolBudget([FromBody] ToolBudgetRequestDto input)
+    {
+        var result = await AppService.CheckToolBudgetAsync(input);
+        return result;
+    }
+
+    /// <summary>Ic is durumunu MCP Task wire sozlugune esler.</summary>
+    [HttpPost(PtnBridgeRoutes.TaskStatus)]
+    [Authorize(TestModulePermissions.Bridge.Task)]
+    public virtual async Task<Result<McpTaskStatusDto>> MapTaskStatus([FromBody] McpTaskStatusRequestDto input)
+    {
+        var result = await AppService.MapTaskStatusAsync(input);
+        return result;
+    }
+
+    /// <summary>Bulguyla bagli inceleme-only OpenAPI Overlay onerisi uretir.</summary>
+    [HttpPost(PtnBridgeRoutes.OverlaySuggestion)]
+    [Authorize(TestModulePermissions.Bridge.PatchSuggest)]
+    public virtual async Task<Result<OverlayPatchSuggestionDto>> SuggestOverlayPatch([FromBody] OverlayPatchRequestDto input)
+    {
+        var result = await AppService.SuggestOverlayPatchAsync(input);
+        return result;
+    }
 }

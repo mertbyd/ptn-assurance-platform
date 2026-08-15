@@ -10,6 +10,10 @@ public static class PtnBridgeRoutes
     public const string Validate = "validate";
     public const string Knowledge = "knowledge";
     public const string ToolCatalog = "tools";
+    public const string AgentProfile = "agent-profile";
+    public const string ToolBudget = "tool-budget";
+    public const string TaskStatus = "task-status";
+    public const string OverlaySuggestion = "overlay-suggestion";
     public const string Resources = Root + "/resources";
     public const string SwaggerGroupName = "test-module-bridge";
 

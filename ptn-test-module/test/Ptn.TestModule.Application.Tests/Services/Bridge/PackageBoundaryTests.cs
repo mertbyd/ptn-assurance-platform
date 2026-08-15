@@ -43,6 +43,24 @@ public class PackageBoundaryTests
         content.ShouldNotContain("<CheckNexusVersion>");
     }
 
+    // MCP SDK'sinin yalniz composition hostta kaldigini ve model istemci paketinin eklenmedigini dogrular.
+    [Fact]
+    public void Mcp_protocol_should_stay_in_the_host_without_a_model_client()
+    {
+        var moduleRoot = FindModuleRoot();
+        var projects = Directory.GetFiles(moduleRoot.FullName, "*.csproj", SearchOption.AllDirectories);
+        var mcpOwners = projects.Where(file => File.ReadAllText(file).Contains("ModelContextProtocol.AspNetCore", StringComparison.Ordinal)).ToArray();
+        mcpOwners.Length.ShouldBe(1);
+        mcpOwners[0].ShouldEndWith(Path.Combine("host", "Ptn.TestModule.HttpApi.Host", "Ptn.TestModule.HttpApi.Host.csproj"));
+
+        var production = Directory.GetFiles(moduleRoot.FullName, "*.cs", SearchOption.AllDirectories)
+            .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}test{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase));
+        production.Select(File.ReadAllText).ShouldAllBe(content =>
+            !content.Contains("IChatClient", StringComparison.Ordinal) &&
+            !content.Contains("Gemini", StringComparison.Ordinal) &&
+            !content.Contains("OpenAIClient", StringComparison.Ordinal));
+    }
+
     // Test assembly konumundan cozum ve common.props sahibi modul kokunu bulur.
     private static DirectoryInfo FindModuleRoot()
     {

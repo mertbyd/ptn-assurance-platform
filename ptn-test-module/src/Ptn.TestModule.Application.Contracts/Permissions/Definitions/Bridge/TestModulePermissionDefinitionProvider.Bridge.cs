@@ -29,5 +29,8 @@ public partial class TestModulePermissionDefinitionProvider
         bridge.AddChild(
             TestModulePermissions.Bridge.Footprint,
             L(TestModuleLocalizationKeys.Permissions.BridgeFootprint));
+        bridge.AddChild(TestModulePermissions.Bridge.Profile, L(TestModuleLocalizationKeys.Permissions.BridgeProfile));
+        bridge.AddChild(TestModulePermissions.Bridge.Task, L(TestModuleLocalizationKeys.Permissions.BridgeTask));
+        bridge.AddChild(TestModulePermissions.Bridge.PatchSuggest, L(TestModuleLocalizationKeys.Permissions.BridgePatchSuggest));
     }
 }

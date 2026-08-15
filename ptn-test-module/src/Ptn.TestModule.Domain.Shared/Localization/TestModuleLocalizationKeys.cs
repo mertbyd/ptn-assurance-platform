@@ -33,6 +33,9 @@ public static class TestModuleLocalizationKeys
 
         /// <summary>Bridge footprint permission adinin anahtaridir.</summary>
         public const string BridgeFootprint = "Permission:Bridge.Footprint";
+        public const string BridgeProfile = "Permission:Bridge.Profile";
+        public const string BridgeTask = "Permission:Bridge.Task";
+        public const string BridgePatchSuggest = "Permission:Bridge.PatchSuggest";
 
         /// <summary>Senaryo permission adinin anahtaridir.</summary>
         public const string Scenarios = "Permission:Scenarios";

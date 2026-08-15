@@ -17,6 +17,11 @@ public class ToolCatalogManager : TestModuleDomainService
     {
         cancellationToken.ThrowIfCancellationRequested();
         EnsureBudget(PtnToolCodes.Active);
+        if (PtnToolCodes.Governed.Count > PtnToolCodes.ProtocolMax ||
+            PtnToolCodes.All.Intersect(PtnToolCodes.ReviewOnly).Any())
+        {
+            throw new BusinessException(TestModuleBridgeErrorCodes.ToolBudgetExceeded);
+        }
         return new ToolCatalog
         {
             ResponseFormat = responseFormat,

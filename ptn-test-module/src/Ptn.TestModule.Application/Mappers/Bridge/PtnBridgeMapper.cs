@@ -32,6 +32,10 @@ public partial class PtnBridgeMapper
     public partial ValidateResultDto Map(ValidationResult input);
     public partial KnowledgeResultDto Map(KnowledgeResult input);
     public partial ToolCatalogDto Map(ToolCatalog input);
+    public partial AgentProfileDto Map(AgentProfile input);
+    public partial ToolBudgetDecisionDto Map(ToolBudgetDecision input);
+    public partial McpTaskStatusDto Map(McpTaskStatus input);
+    public partial OverlayPatchSuggestionDto Map(OverlayPatchSuggestion input);
     public partial CapabilityLevelDto Map(CapabilityLevel input);
     public partial FootprintResultDto Map(FootprintResult input);
     public partial CoverageReportDto Map(CoverageReport input);

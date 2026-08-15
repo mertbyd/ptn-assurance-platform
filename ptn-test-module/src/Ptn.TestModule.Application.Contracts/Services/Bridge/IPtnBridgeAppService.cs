@@ -12,4 +12,8 @@ public interface IPtnBridgeAppService : IApplicationService
     Task<ValidateResultDto> ValidateAsync(ValidateRequestDto input);
     Task<KnowledgeResultDto> GetKnowledgeAsync(KnowledgeRequestDto input);
     Task<ToolCatalogDto> GetToolCatalogAsync();
+    Task<AgentProfileDto> ResolveAgentProfileAsync(AgentProfileRequestDto input);
+    Task<ToolBudgetDecisionDto> CheckToolBudgetAsync(ToolBudgetRequestDto input);
+    Task<McpTaskStatusDto> MapTaskStatusAsync(McpTaskStatusRequestDto input);
+    Task<OverlayPatchSuggestionDto> SuggestOverlayPatchAsync(OverlayPatchRequestDto input);
 }

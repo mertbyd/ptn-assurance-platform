@@ -18,6 +18,10 @@ public class ToolCatalogTests
 
         catalog.ActiveToolCodes.Count.ShouldBeLessThanOrEqualTo(PtnToolCodes.ActiveMax);
         PtnToolCodes.All.Count.ShouldBeLessThanOrEqualTo(12);
+        PtnToolCodes.Governed.Count.ShouldBe(PtnToolCodes.ProtocolMax);
+        PtnToolCodes.All.ShouldNotContain(PtnToolCodes.PatchSuggest);
+        PtnToolCodes.All.ShouldNotContain(PtnToolCodes.PatchReview);
+        PtnToolCodes.All.Intersect(PtnToolCodes.ReviewOnly).ShouldBeEmpty();
         PtnToolCodes.All.Distinct().Count().ShouldBe(PtnToolCodes.All.Count);
         catalog.ActiveToolCodes.Concat(catalog.DiscoverableToolCodes)
             .ShouldBe(PtnToolCodes.All, ignoreOrder: true);

@@ -24,6 +24,10 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     private readonly ProfilePackManager _profilePackManager;
     private readonly ProfilePackFileManager _profilePackFileManager;
     private readonly ToolCatalogManager _toolCatalogManager;
+    private readonly AgentProfileManager _agentProfileManager;
+    private readonly ToolBudgetManager _toolBudgetManager;
+    private readonly McpTaskStatusManager _mcpTaskStatusManager;
+    private readonly OverlayPatchManager _overlayPatchManager;
     private readonly ISchemaKnowledgeAppService _schemaKnowledgeAppService;
     private readonly IWriteSetCapabilityAppService _writeSetCapabilityService;
     private readonly IDatabaseOracleAppService _databaseOracleAppService;
@@ -31,6 +35,10 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     private readonly IValidator<ExplainRequestDto> _explainValidator;
     private readonly IValidator<ValidateRequestDto> _validateValidator;
     private readonly IValidator<KnowledgeRequestDto> _knowledgeValidator;
+    private readonly IValidator<AgentProfileRequestDto> _agentProfileValidator;
+    private readonly IValidator<ToolBudgetRequestDto> _toolBudgetValidator;
+    private readonly IValidator<McpTaskStatusRequestDto> _mcpTaskStatusValidator;
+    private readonly IValidator<OverlayPatchRequestDto> _overlayPatchValidator;
     private readonly ICancellationTokenProvider _cancellationTokenProvider;
 
     public PtnBridgeAppService(
@@ -39,6 +47,10 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         ProfilePackManager profilePackManager,
         ProfilePackFileManager profilePackFileManager,
         ToolCatalogManager toolCatalogManager,
+        AgentProfileManager agentProfileManager,
+        ToolBudgetManager toolBudgetManager,
+        McpTaskStatusManager mcpTaskStatusManager,
+        OverlayPatchManager overlayPatchManager,
         ISchemaKnowledgeAppService schemaKnowledgeAppService,
         IWriteSetCapabilityAppService writeSetCapabilityService,
         IDatabaseOracleAppService databaseOracleAppService,
@@ -46,6 +58,10 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         IValidator<ExplainRequestDto> explainValidator,
         IValidator<ValidateRequestDto> validateValidator,
         IValidator<KnowledgeRequestDto> knowledgeValidator,
+        IValidator<AgentProfileRequestDto> agentProfileValidator,
+        IValidator<ToolBudgetRequestDto> toolBudgetValidator,
+        IValidator<McpTaskStatusRequestDto> mcpTaskStatusValidator,
+        IValidator<OverlayPatchRequestDto> overlayPatchValidator,
         ICancellationTokenProvider cancellationTokenProvider)
     {
         _groundingManager = groundingManager;
@@ -53,6 +69,10 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         _profilePackManager = profilePackManager;
         _profilePackFileManager = profilePackFileManager;
         _toolCatalogManager = toolCatalogManager;
+        _agentProfileManager = agentProfileManager;
+        _toolBudgetManager = toolBudgetManager;
+        _mcpTaskStatusManager = mcpTaskStatusManager;
+        _overlayPatchManager = overlayPatchManager;
         _schemaKnowledgeAppService = schemaKnowledgeAppService;
         _writeSetCapabilityService = writeSetCapabilityService;
         _databaseOracleAppService = databaseOracleAppService;
@@ -60,6 +80,10 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         _explainValidator = explainValidator;
         _validateValidator = validateValidator;
         _knowledgeValidator = knowledgeValidator;
+        _agentProfileValidator = agentProfileValidator;
+        _toolBudgetValidator = toolBudgetValidator;
+        _mcpTaskStatusValidator = mcpTaskStatusValidator;
+        _overlayPatchValidator = overlayPatchValidator;
         _cancellationTokenProvider = cancellationTokenProvider;
     }
 
@@ -119,5 +143,40 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         var cancellationToken = _cancellationTokenProvider.Token;
         return Task.FromResult(Mapper.Map(
             _toolCatalogManager.GetCatalog(PtnResponseFormatCodes.Concise, cancellationToken)));
+    }
+
+    // Tenant-scoped ajan profilini ABP Setting zincirinden cozer.
+    public async Task<AgentProfileDto> ResolveAgentProfileAsync(AgentProfileRequestDto input)
+    {
+        var cancellationToken = _cancellationTokenProvider.Token;
+        await _agentProfileValidator.ValidateAndThrowAsync(input, cancellationToken);
+        return Mapper.Map(await _agentProfileManager.ResolveAsync(input.MomentCode, cancellationToken));
+    }
+
+    // Tek tool cagrisini aktif moment profilinin iki sayac tavanina karsi denetler.
+    public async Task<ToolBudgetDecisionDto> CheckToolBudgetAsync(ToolBudgetRequestDto input)
+    {
+        var cancellationToken = _cancellationTokenProvider.Token;
+        await _toolBudgetValidator.ValidateAndThrowAsync(input, cancellationToken);
+        var profile = await _agentProfileManager.ResolveAsync(input.MomentCode, cancellationToken);
+        return Mapper.Map(_toolBudgetManager.EnsureWithinBudget(
+            profile, input.ToolCode, input.UsedTurns, input.UsedTokens));
+    }
+
+    // Ic kosum ve onay durumunu MCP Task wire sozlugune cevirir.
+    public async Task<McpTaskStatusDto> MapTaskStatusAsync(McpTaskStatusRequestDto input)
+    {
+        await _mcpTaskStatusValidator.ValidateAndThrowAsync(input, _cancellationTokenProvider.Token);
+        return Mapper.Map(_mcpTaskStatusManager.Map(
+            input.TaskId, input.InternalStatus, input.ApprovalRequired,
+            input.InfrastructureFailure, input.TtlMs, input.PollIntervalMs));
+    }
+
+    // Bulguyla bagli Overlay belgesini uygulamadan uretir.
+    public async Task<OverlayPatchSuggestionDto> SuggestOverlayPatchAsync(OverlayPatchRequestDto input)
+    {
+        await _overlayPatchValidator.ValidateAndThrowAsync(input, _cancellationTokenProvider.Token);
+        return Mapper.Map(_overlayPatchManager.Suggest(
+            input.FindingFingerprint, input.Target, input.Description, input.UpdateJson));
     }
 }

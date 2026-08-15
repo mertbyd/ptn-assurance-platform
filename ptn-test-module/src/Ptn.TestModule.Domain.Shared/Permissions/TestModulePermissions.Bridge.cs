@@ -13,5 +13,8 @@ public partial class TestModulePermissions
         public const string Validate = Default + ".Validate";
         public const string Knowledge = Default + ".Knowledge";
         public const string Footprint = Default + ".Footprint";
+        public const string Profile = Default + ".Profile";
+        public const string Task = Default + ".Task";
+        public const string PatchSuggest = Default + ".PatchSuggest";
     }
 }
