@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Ptn.TestModule.Dtos.Runs;
 using Ptn.TestModule.Entities.Runs;
 using Ptn.TestModule.Models.Runs;
@@ -35,4 +36,10 @@ public partial class TestRunMapper
 
     /// <summary>Domain claim sonucunu public claim DTO'suna cevirir.</summary>
     public partial TestRunClaimDto Map(TestRunClaimResult source);
+
+    /// <summary>TestRun sayfasini tek collection eslemesiyle public DTO listesine cevirir.</summary>
+    public partial List<TestRunDto> Map(List<TestRun> source);
+
+    /// <summary>Domain rapor okuma modelini bulgulu ve teshisli public rapor DTO'suna cevirir.</summary>
+    public partial TestReportDetailDto Map(TestRunReport source);
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Ptn.TestModule.Dtos.Runs;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 
 namespace Ptn.TestModule.Services.Runs;
@@ -15,10 +16,20 @@ public interface ITestRunAppService : IApplicationService
     /// <returns>Guncel test kosumu gorunumu.</returns>
     Task<TestRunDto> GetAsync(Guid id);
 
+    /// <summary>Test kosumlarini kararli siralama ve sayfalamayla getirir.</summary>
+    /// <param name="input">Sayfalama girdisi.</param>
+    /// <returns>Agir rapor kolonlari tasimayan kosum sayfasi.</returns>
+    Task<PagedResultDto<TestRunDto>> GetListAsync(TestRunListInput input);
+
     /// <summary>Kimligi verilen terminal sonucu tum bulgulariyla getirir.</summary>
     /// <param name="id">Okunacak TestRunResult aggregate kimligi.</param>
     /// <returns>Bulgulu terminal sonuc gorunumu.</returns>
     Task<TestRunResultDto> GetResultAsync(Guid id);
+
+    /// <summary>Kosumu terminal hukmu, bulgulari ve teshis raporuyla birlikte getirir.</summary>
+    /// <param name="id">Raporu okunacak TestRun aggregate kimligi.</param>
+    /// <returns>Bulgulu ve teshisli kosum raporu.</returns>
+    Task<TestReportDetailDto> GetReportAsync(Guid id);
 
     /// <summary>Tenant ortam ayarini cozip yeni Pending kosum olusturur.</summary>
     /// <param name="input">Kosum, ortam ve fingerprint girdileri.</param>

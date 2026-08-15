@@ -1,13 +1,16 @@
 using System;
 using System.Threading.Tasks;
+using Nexum.Abp.Foundation.Querying;
 using Ptn.TestModule.BackgroundJobs.Runs;
 using Ptn.TestModule.Dtos.Runs;
+using Ptn.TestModule.Entities.Runs;
 using Ptn.TestModule.Interface.Runs;
 using Ptn.TestModule.Managers.Runs;
 using Ptn.TestModule.Mappers.Runs;
 using Ptn.TestModule.Models.Runs;
 using Ptn.TestModule.Permissions;
 using Volo.Abp;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Threading;
@@ -71,6 +74,27 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
             id,
             cancellationToken: _cancellationTokenProvider.Token);
         return Mapper.Map(entity);
+    }
+
+    /// <summary>Kosumlari kararli siralamayla sayfalar; agir rapor kolonlari bu uca girmez.</summary>
+    public async Task<PagedResultDto<TestRunDto>> GetListAsync(TestRunListInput input)
+    {
+        await CheckPolicyAsync(TestModulePermissions.Runs.View);
+        var page = await _testRunRepository.GetPageAsync(
+            new RepositoryQuery<TestRun>()
+                .OrderByDescending(entity => entity.CreationTime)
+                .ThenBy(entity => entity.TestKey)
+                .Page(input.SkipCount, input.MaxResultCount),
+            _cancellationTokenProvider.Token);
+        return new PagedResultDto<TestRunDto>(page.TotalCount, Mapper.Map([.. page.Items]));
+    }
+
+    /// <summary>Kosumu terminal hukmu, bulgulari ve teshis raporuyla birlikte getirir.</summary>
+    public async Task<TestReportDetailDto> GetReportAsync(Guid id)
+    {
+        await CheckPolicyAsync(TestModulePermissions.Runs.View);
+        var report = await _testRunRepository.GetReportAsync(id, _cancellationTokenProvider.Token);
+        return Mapper.Map(report ?? throw new EntityNotFoundException(typeof(TestRun), id));
     }
 
     /// <summary>Kimligi verilen terminal sonucu tum bulgulariyla getirir.</summary>

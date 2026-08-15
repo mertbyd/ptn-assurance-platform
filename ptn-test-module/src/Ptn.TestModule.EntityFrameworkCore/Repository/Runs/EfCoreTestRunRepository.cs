@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Nexum.Abp.Foundation.EntityFrameworkCore.Repositories;
 using Ptn.TestModule.Entities.Runs;
 using Ptn.TestModule.Interface.Runs;
+using Ptn.TestModule.Models.Runs;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -54,6 +55,32 @@ public class EfCoreTestRunRepository
                              entity.StartedAt.Value < startedBefore)
             .OrderBy(entity => entity.StartedAt)
             .ToListAsync(GetCancellationToken(cancellationToken));
+    }
+
+    // Kosumu ve en son denemeyi getirir; bulgular tek Include ile gelir, bulgu basina sorgu acilmaz.
+    /// <summary>Kosumun bulgulu ve teshisli terminal raporunu getirir.</summary>
+    public async Task<TestRunReport?> GetReportAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var token = GetCancellationToken(cancellationToken);
+        var dbContext = await GetDbContextAsync();
+        var run = await dbContext.Set<TestRun>()
+            .FirstOrDefaultAsync(entity => entity.Id == id, token);
+        if (run is null)
+        {
+            return null;
+        }
+
+        return new TestRunReport
+        {
+            Run = run,
+            Result = await dbContext.Set<TestRunResult>()
+                .Include(entity => entity.Findings)
+                .Where(entity => entity.TestRunId == id)
+                .OrderByDescending(entity => entity.Attempt)
+                .FirstOrDefaultAsync(token)
+        };
     }
 
     // Ortam ve aktif durum kumesini SQL Any sorgusuyla kontrol eder.

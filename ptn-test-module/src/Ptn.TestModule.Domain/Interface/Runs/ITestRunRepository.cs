@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Nexum.Abp.Foundation.Repositories;
 using Ptn.TestModule.Entities.Runs;
+using Ptn.TestModule.Models.Runs;
 
 namespace Ptn.TestModule.Interface.Runs;
 
@@ -25,6 +26,12 @@ public interface ITestRunRepository : IBaseRepository<TestRun, Guid>
     Task<IReadOnlyList<TestRun>> GetStaleRunningAsync(
         Guid runningStatusId,
         DateTime startedBefore,
+        CancellationToken cancellationToken = default);
+
+    // Kosumu ve en son terminal denemesini bulgulariyla birlikte tek Include sorgusunda getirir.
+    /// <summary>Kosumun bulgulu ve teshisli terminal raporunu getirir.</summary>
+    Task<TestRunReport?> GetReportAsync(
+        Guid id,
         CancellationToken cancellationToken = default);
 
     // Ortamda Pending veya Running bir kosum bulunup bulunmadigini veritabaninda hesaplar.

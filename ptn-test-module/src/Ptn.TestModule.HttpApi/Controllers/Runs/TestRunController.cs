@@ -8,6 +8,7 @@ using Ptn.TestModule.Dtos.Runs;
 using Ptn.TestModule.Permissions;
 using Ptn.TestModule.Services.Runs;
 using SystemStandards.Results;
+using Volo.Abp.Application.Dtos;
 
 namespace Ptn.TestModule.Controllers.Runs;
 
@@ -29,6 +30,29 @@ public class TestRunController : TestModuleController
     public virtual async Task<Result<TestRunDto>> Get(Guid id)
     {
         var result = await AppService.GetAsync(id);
+        return result;
+    }
+
+    /// <summary>Test kosumlarini kararli sayfalama ile getirir.</summary>
+    /// <param name="input">Sayfalama girdisi.</param>
+    /// <returns>Ev standardi icinde agir rapor kolonlari tasimayan kosum sayfasi.</returns>
+    [HttpGet]
+    [Authorize(TestModulePermissions.Runs.View)]
+    public virtual async Task<Result<PagedResultDto<TestRunDto>>> GetList(
+        [FromQuery] TestRunListInput input)
+    {
+        var result = await AppService.GetListAsync(input);
+        return result;
+    }
+
+    /// <summary>Kosumu terminal hukmu, bulgulari ve teshis raporuyla birlikte getirir.</summary>
+    /// <param name="id">Raporu okunacak TestRun aggregate kimligi.</param>
+    /// <returns>Ev standardi icinde bulgulu ve teshisli kosum raporu.</returns>
+    [HttpGet(TestRunRoutes.ReportById)]
+    [Authorize(TestModulePermissions.Runs.View)]
+    public virtual async Task<Result<TestReportDetailDto>> GetReport(Guid id)
+    {
+        var result = await AppService.GetReportAsync(id);
         return result;
     }
 
