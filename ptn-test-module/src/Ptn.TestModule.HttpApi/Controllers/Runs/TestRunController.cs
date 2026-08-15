@@ -59,6 +59,15 @@ public class TestRunController : TestModuleController
         return result;
     }
 
+    /// <summary>Kuru kosumun gozlem-sozlesme celiskisini yonlendirme vermeden getirir.</summary>
+    [HttpGet(TestRunRoutes.DryRunContradictionById)]
+    [Authorize(TestModulePermissions.Runs.View)]
+    public virtual async Task<Result<DryRunContradictionReportDto>> GetDryRunContradiction(Guid id)
+    {
+        var result = await AppService.GetDryRunContradictionAsync(id);
+        return result;
+    }
+
     /// <summary>Kosumu CTRF, JUnit ve SARIF formatlarina ihrac edip artefakt baglarini getirir.</summary>
     /// <param name="id">Ihrac edilecek TestRun aggregate kimligi.</param>
     /// <returns>Ev standardi icinde uretilen ihracat artefaktlarinin resource_link gorunumu.</returns>

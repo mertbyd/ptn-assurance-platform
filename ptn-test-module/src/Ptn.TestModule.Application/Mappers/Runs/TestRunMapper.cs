@@ -45,4 +45,7 @@ public partial class TestRunMapper
 
     /// <summary>Ihracat artefakt baglarini public resource_link DTO'suna cevirir.</summary>
     public partial RunArtifactLinksDto Map(RunArtifactLinks source);
+
+    /// <summary>Kuru kosum celiski modelini public ajan bildirimine cevirir.</summary>
+    public partial DryRunContradictionReportDto Map(DryRunContradictionReport source);
 }

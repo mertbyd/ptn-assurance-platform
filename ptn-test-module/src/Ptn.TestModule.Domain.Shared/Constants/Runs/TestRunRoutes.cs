@@ -26,6 +26,9 @@ public static class TestRunRoutes
     /// <summary>Kimlige gore bulgulu ve teshisli kosum raporu rotasidir.</summary>
     public const string ReportById = "{id:guid}/report";
 
+    /// <summary>Kuru kosum celiski bildirimini veren rotadir.</summary>
+    public const string DryRunContradictionById = "{id:guid}/dry-run-contradiction";
+
     /// <summary>Terminal sonucun ihracat artefakt baglarini veren rotadir.</summary>
     public const string ResultArtifactsById = "results/{id:guid}/artifacts";
 

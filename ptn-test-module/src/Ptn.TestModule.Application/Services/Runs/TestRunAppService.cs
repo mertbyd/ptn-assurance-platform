@@ -35,6 +35,9 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
     /// <summary>Tenant ayarindan ortam snapshot'i cozen Manager'dir.</summary>
     private readonly RunEnvironmentBindingManager _environmentBindingManager;
 
+    /// <summary>Kuru kosum celiski bildirimini sahiplenen Manager'dir.</summary>
+    private readonly DryRunContradictionManager _dryRunContradictionManager;
+
     /// <summary>TestRun aggregate kalicilik siniridir.</summary>
     private readonly ITestRunRepository _testRunRepository;
 
@@ -52,6 +55,7 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         TestRunManager testRunManager,
         TestRunResultManager testRunResultManager,
         RunEnvironmentBindingManager environmentBindingManager,
+        DryRunContradictionManager dryRunContradictionManager,
         ITestRunRepository testRunRepository,
         ITestRunResultRepository testRunResultRepository,
         ICancellationTokenProvider cancellationTokenProvider,
@@ -60,6 +64,7 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         _testRunManager = testRunManager;
         _testRunResultManager = testRunResultManager;
         _environmentBindingManager = environmentBindingManager;
+        _dryRunContradictionManager = dryRunContradictionManager;
         _testRunRepository = testRunRepository;
         _testRunResultRepository = testRunResultRepository;
         _cancellationTokenProvider = cancellationTokenProvider;
@@ -95,6 +100,15 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         await CheckPolicyAsync(TestModulePermissions.Runs.View);
         var report = await _testRunRepository.GetReportAsync(id, _cancellationTokenProvider.Token);
         return Mapper.Map(TestRunResultManager.MarkHealing(_testRunResultManager.EnsureReportFound(report, id)));
+    }
+
+    /// <summary>Kuru kosum gozlemini sozlesme hukmunu degistirmeyen celiski bildirimine cevirir.</summary>
+    public async Task<DryRunContradictionReportDto> GetDryRunContradictionAsync(Guid id)
+    {
+        await CheckPolicyAsync(TestModulePermissions.Runs.View);
+        var report = await _testRunRepository.GetReportAsync(id, _cancellationTokenProvider.Token);
+        return Mapper.Map(_dryRunContradictionManager.Create(
+            _testRunResultManager.EnsureReportFound(report, id)));
     }
 
     /// <summary>Terminal sonucun ihracat artefakt baglarini getirir; agir cikti satirda tutulmaz.</summary>

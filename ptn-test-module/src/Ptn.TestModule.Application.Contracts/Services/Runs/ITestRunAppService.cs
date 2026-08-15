@@ -31,6 +31,9 @@ public interface ITestRunAppService : IApplicationService
     /// <returns>Bulgulu ve teshisli kosum raporu.</returns>
     Task<TestReportDetailDto> GetReportAsync(Guid id);
 
+    /// <summary>Kuru kosumun sozlesmeyle celisip celismedigini yonlendirme vermeden bildirir.</summary>
+    Task<DryRunContradictionReportDto> GetDryRunContradictionAsync(Guid id);
+
     /// <summary>Terminal sonucun ihracat artefaktlarina isaret eden baglarini getirir.</summary>
     /// <param name="id">Baglari okunacak TestRunResult aggregate kimligi.</param>
     /// <returns>Uc ihracat formatinin resource_link gorunumu.</returns>
