@@ -24,6 +24,11 @@
     <PackageReference Include="Piton.Emailing.HttpApi" Version="$(PitonEmailingVersion)" />
     <PackageReference Include="Piton.Emailing.Infrastructure" Version="$(PitonEmailingVersion)" />
     <PackageReference Include="SystemStandards.AspNetCore" Version="$(SystemStandardsAspNetCoreVersion)" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="$(ModelContextProtocolVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Authoring\kurallar.md" />
   </ItemGroup>
 
   <ItemGroup>

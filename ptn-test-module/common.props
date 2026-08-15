@@ -35,6 +35,7 @@
     <SerilogAspNetCoreVersion>9.0.0</SerilogAspNetCoreVersion>
     <SerilogSinksAsyncVersion>2.1.0</SerilogSinksAsyncVersion>
     <YamlDotNetVersion>18.1.0</YamlDotNetVersion>
+    <ModelContextProtocolVersion>2.2.0</ModelContextProtocolVersion>
   </PropertyGroup>
 
   <ItemGroup>

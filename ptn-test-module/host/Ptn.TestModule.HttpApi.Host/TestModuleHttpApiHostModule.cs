@@ -14,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
+using ModelContextProtocol.AspNetCore;
+using Ptn.TestModule.Mcp;
 using Pintern.Notifications;
 using Piton.Emailing;
 using Ptn.TestModule.Constants;
@@ -87,6 +89,10 @@ public class TestModuleHttpApiHostModule : AbpModule
         ConfigureCors(context, configuration);
 
         context.Services.AddHealthChecks();
+        context.Services.AddMcpServer()
+            .WithHttpTransport()
+            .WithTools<PtnMcpTools>()
+            .WithResources<AuthoringRulesResource>();
     }
 
     // Gelistirmede embedded localization dosyalari yerine kaynak dosyalari kullanilir.
@@ -243,6 +249,10 @@ public class TestModuleHttpApiHostModule : AbpModule
         });
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
-        app.UseConfiguredEndpoints(endpoints => endpoints.MapHealthChecks("/health"));
+        app.UseConfiguredEndpoints(endpoints =>
+        {
+            endpoints.MapHealthChecks("/health");
+            endpoints.MapMcp("/mcp").RequireAuthorization();
+        });
     }
 }
