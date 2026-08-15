@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Ptn.TestModule.Services.Catalog;
 using Shouldly;
 using Xunit;
@@ -43,6 +45,27 @@ public class ServiceShapeTests
         mapperFields.ShouldAllBe(field => field.IsPrivate && field.IsStatic && field.IsInitOnly);
     }
 
+    // Servis kaynaklarinda guard veya dogrudan throw ifadesinin yeniden yerlesmesini engeller.
+    [Fact]
+    public void Application_service_sources_should_not_contain_guards_or_throw_expressions()
+    {
+        var serviceRoot = Path.Combine(
+            FindModuleRoot().FullName,
+            "src",
+            "Ptn.TestModule.Application",
+            "Services");
+        var offenders = Directory.GetFiles(serviceRoot, "*.cs", SearchOption.AllDirectories)
+            .SelectMany(file => File.ReadAllLines(file)
+                .Select((line, index) => new { File = file, Line = line, Number = index + 1 }))
+            .Where(item => item.Line.Contains("ThrowIf", StringComparison.Ordinal) ||
+                           Regex.IsMatch(item.Line, @"\bthrow\b"))
+            .Select(item => $"{Path.GetRelativePath(serviceRoot, item.File)}:{item.Number}")
+            .OrderBy(location => location, StringComparer.Ordinal)
+            .ToArray();
+
+        offenders.ShouldBeEmpty();
+    }
+
     // Application assembly'sindeki somut servis tiplerini getirir.
     private static IReadOnlyList<Type> GetServiceTypes()
     {
@@ -50,5 +73,17 @@ public class ServiceShapeTests
             .Where(type => type.IsClass && !type.IsAbstract && type.IsPublic)
             .Where(type => type.Namespace?.StartsWith(ServiceNamespaceRoot, StringComparison.Ordinal) == true)
             .ToList();
+    }
+
+    // Test kosucusunun bin klasorunden solution kokune cikar.
+    private static DirectoryInfo FindModuleRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Ptn.TestModule.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        return directory ?? throw new DirectoryNotFoundException("Ptn.TestModule.slnx");
     }
 }
