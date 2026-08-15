@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using ApiAssertionDerivabilityCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.AssertionDerivabilityCodes;
 using ApiConformanceOutcomeCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.ConformanceOutcomeCodes;
 using ApiDiagnosisConfidenceCodes = Ptn.ApiContractChecker.Constants.Diagnosis.DiagnosisConfidenceCodes;
@@ -14,6 +15,9 @@ using DatabaseCapabilityReasonCodes = Ptn.DatabaseChecker.Constants.Capabilities
 using DatabaseProjectionOutcomeCodes = Ptn.DatabaseChecker.Constants.Comparison.Projections.ProjectionOutcomeCodes;
 using DatabaseAssertionDerivabilityCodes = Ptn.DatabaseChecker.Constants.Comparison.Assertions.AssertionDerivabilityCodes;
 using ApiOperationLinkSourceCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.OperationLinkSourceCodes;
+using ApiConformanceProfileCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.ConformanceProfileCodes;
+using DatabaseForeignKeyDirectionCodes = Ptn.DatabaseChecker.Constants.Comparison.ForeignKeyDirectionCodes;
+using DatabaseSchemaLintWarningCodes = Ptn.DatabaseChecker.Constants.Comparison.SchemaLintWarningCodes;
 using ApiSampleKindCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.SampleKindCodes;
 using ApiSamplePositionCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.SamplePositionCodes;
 using ApiSampleExpectedOutcomeCodes = Ptn.ApiContractChecker.Constants.Conformance.Lookups.SampleExpectedOutcomeCodes;
@@ -68,10 +72,22 @@ public class VocabularyDriftTests
     public void Api_authoring_surface_vocabulary_should_not_drift()
     {
         ApiOperationLinkSourceCodes.All.ShouldBe(OperationLinkSources, ignoreOrder: true);
+        PtnOperationLinkSourceCodes.All.ShouldBe(ApiOperationLinkSourceCodes.All, ignoreOrder: true);
         ApiSampleKindCodes.All.ShouldBe(SampleKinds, ignoreOrder: true);
         ApiSamplePositionCodes.All.ShouldBe(SamplePositions, ignoreOrder: true);
         ApiSampleExpectedOutcomeCodes.All.ShouldBe(SampleExpectedOutcomes, ignoreOrder: true);
         ApiConstraintCodes.All.ShouldBe(ConstraintKinds, ignoreOrder: true);
+    }
+
+    // Yeni DB yazarlik ve API profil sozluklerini yayimlanan checker paketlerine birebir kilitler.
+    [Fact]
+    public void Bridge_authoring_vocabulary_should_mirror_published_checker_codes()
+    {
+        PtnForeignKeyDirectionCodes.All.ShouldBe(
+            ReadConstantValues(typeof(DatabaseForeignKeyDirectionCodes)),
+            ignoreOrder: true);
+        PtnSchemaLintWarningCodes.All.ShouldBe(DatabaseSchemaLintWarningCodes.All, ignoreOrder: true);
+        PtnConformanceProfileCodes.All.ShouldBe(ApiConformanceProfileCodes.All, ignoreOrder: true);
     }
 
     // Public string sabitlerinin degerlerini reflection ile kapali bir kumeye cevirir.

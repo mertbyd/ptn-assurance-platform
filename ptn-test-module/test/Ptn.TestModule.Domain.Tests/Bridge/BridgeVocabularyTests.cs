@@ -17,7 +17,13 @@ public class BridgeVocabularyTests
         typeof(Location),
         typeof(DiagnosisReport),
         typeof(DiagnosisHypothesis),
-        typeof(Evidence)
+        typeof(Evidence),
+        typeof(OperationLinkResult),
+        typeof(OperationLinkCandidate),
+        typeof(TableDescription),
+        typeof(ForeignKeyNeighbor),
+        typeof(SchemaLintWarning),
+        typeof(ResponseObservation)
     ];
 
     // Kapsam icindeki konum ve rapor tiplerinde yasakli SchemaName adini arar.
