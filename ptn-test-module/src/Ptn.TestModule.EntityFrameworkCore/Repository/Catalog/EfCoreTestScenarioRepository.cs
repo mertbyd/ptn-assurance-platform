@@ -145,6 +145,29 @@ public class EfCoreTestScenarioRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<ScenarioCoverageSource>> GetPublishedCoverageSourcesAsync(
+        Guid publishedStateId,
+        int maxResultCount,
+        CancellationToken cancellationToken = default)
+    {
+        var queryable = await GetQueryableAsync();
+        return await queryable
+            .AsNoTracking()
+            .Where(entity => entity.StateId == publishedStateId)
+            .OrderBy(entity => entity.ScenarioKey)
+            .ThenByDescending(entity => entity.VersionNo)
+            .Take(maxResultCount)
+            .Select(entity => new ScenarioCoverageSource
+            {
+                ScenarioId = entity.Id,
+                ScenarioKey = entity.ScenarioKey,
+                SpecSnapshotId = entity.SpecSnapshotId,
+                CompiledDocument = entity.CompiledDocument
+            })
+            .ToListAsync(GetCancellationToken(cancellationToken));
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<DueScenarioModel>> GetPublishedBySpecSnapshotAsync(
         Guid specSnapshotId,
         Guid publishedStateId,

@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Nexum.Abp.Foundation.Repositories;
 using Ptn.TestModule.Entities.Runs;
+using Ptn.TestModule.Models.Catalog;
 using Ptn.TestModule.Models.Runs;
 
 namespace Ptn.TestModule.Interface.Runs;
@@ -67,6 +68,11 @@ public interface ITestRunRepository : IBaseRepository<TestRun, Guid>
     /// <summary>Kosumun deterministik ihracat girdisini getirir.</summary>
     Task<RunExportSource?> GetExportSourceAsync(
         Guid id,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Yayinlanmis senaryolarin bulgularindaki kural referanslarini senaryo sayilariyla gruplar.</summary>
+    Task<IReadOnlyList<ScenarioCoverageRuleGroup>> GetRuleCoverageAsync(
+        Guid publishedStateId,
         CancellationToken cancellationToken = default);
 
     /// <summary>Ayni tetikleyici turu, referansi ve senaryosu icin daha once uretilmis kosumu getirir.</summary>

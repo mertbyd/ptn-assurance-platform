@@ -45,6 +45,12 @@ public interface ITestScenarioRepository : IBaseRepository<TestScenario, Guid>
         IReadOnlyCollection<Guid> ids,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Kapsam raporunun okudugu yayinlanmis senaryo derleme kaynaklarini sinirli sayida getirir.</summary>
+    Task<IReadOnlyList<ScenarioCoverageSource>> GetPublishedCoverageSourcesAsync(
+        Guid publishedStateId,
+        int maxResultCount,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Verilen snapshot'a muhurlenmis yayinlanmis ve karantinasiz senaryolari getirir.</summary>
     Task<IReadOnlyList<DueScenarioModel>> GetPublishedBySpecSnapshotAsync(
         Guid specSnapshotId,
