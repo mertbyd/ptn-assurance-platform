@@ -1,13 +1,18 @@
+using System;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Pintern.Authenticator.EntityFrameworkCore;
 using Pintern.Notifications.EntityFrameworkCore;
 using Ptn.TestModule.Constants;
+using Ptn.TestModule.Data;
 using Ptn.TestModule.Entities.Lookups;
 using Ptn.TestModule.Entities.Runs;
 using Ptn.TestModule.EntityFrameworkCore.Repository.Lookups;
 using Ptn.TestModule.EntityFrameworkCore.Repository.Runs;
+using Volo.Abp;
+using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.PostgreSql;
 using Volo.Abp.Modularity;
@@ -58,6 +63,50 @@ public class TestModuleEntityFrameworkCoreModule : AbpModule
             options.AddRepository<TestRun, EfCoreTestRunRepository>();
             options.AddRepository<TestRunResult, EfCoreTestRunResultRepository>();
         });
+    }
+
+    // Migration ve seed yalniz bu modulun sahip oldugu context ve lookup contributor'u icin kosar.
+    public override async Task OnPreApplicationInitializationAsync(ApplicationInitializationContext context)
+    {
+        var configuration = context.ServiceProvider.GetRequiredService<IConfiguration>();
+        var autoMigrate = configuration.GetValue<bool>(TestModuleConfigurationKeys.DatabaseAutoMigrate);
+        var seedOnStartup = configuration.GetValue<bool>(TestModuleConfigurationKeys.DatabaseSeedOnStartup);
+
+        EnsureValidDatabaseInitializationOptions(autoMigrate, seedOnStartup);
+        if (!autoMigrate)
+        {
+            return;
+        }
+
+        using var scope = context.ServiceProvider.CreateScope();
+        await MigrateAndSeedAsync(scope.ServiceProvider, seedOnStartup);
+    }
+
+    // Seed'in migration tamamlanmadan kosulmasini engeller.
+    private static void EnsureValidDatabaseInitializationOptions(bool autoMigrate, bool seedOnStartup)
+    {
+        if (seedOnStartup && !autoMigrate)
+        {
+            throw new InvalidOperationException(
+                $"{TestModuleConfigurationKeys.DatabaseSeedOnStartup} requires " +
+                $"{TestModuleConfigurationKeys.DatabaseAutoMigrate}.");
+        }
+    }
+
+    // Sahip olunan semayi kurar ve istenirse yalniz Test Module lookup verisini uretir.
+    private static async Task MigrateAndSeedAsync(IServiceProvider serviceProvider, bool seedOnStartup)
+    {
+        await serviceProvider
+            .GetRequiredService<TestModuleDbContext>()
+            .Database
+            .MigrateAsync();
+
+        if (seedOnStartup)
+        {
+            await serviceProvider
+                .GetRequiredService<TestModuleLookupDataSeedContributor>()
+                .SeedAsync(new DataSeedContext());
+        }
     }
 
     // Sema adlari ortam bazli ezilebilir; ezme yoksa Domain.Shared varsayilanlari korunur.
