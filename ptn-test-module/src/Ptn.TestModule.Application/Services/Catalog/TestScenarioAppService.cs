@@ -7,8 +7,10 @@ using Nexum.Abp.Foundation.Application.Services;
 using Nexum.Abp.Foundation.Querying;
 using Ptn.TestModule.Dtos.Catalog;
 using Ptn.TestModule.Entities.Catalog;
+using Ptn.TestModule.Interface.Bridge;
 using Ptn.TestModule.Interface.Catalog;
 using Ptn.TestModule.Interface.Compilation;
+using Ptn.TestModule.Managers.Bridge.Profiles;
 using Ptn.TestModule.Managers.Catalog;
 using Ptn.TestModule.Managers.Runs;
 using Ptn.TestModule.Mappers.Catalog;
@@ -43,20 +45,24 @@ public class TestScenarioAppService : BaseApplicationService<
     private readonly ScenarioQuarantineManager _quarantineManager;
     private readonly IValidator<UpdateScenarioScheduleDto> _scheduleValidator;
     private readonly IClock _clock;
+    private readonly IBusinessRuleSourcePort _businessRuleSource;
+    private readonly BusinessRuleFingerprintManager _fingerprintManager;
 
     protected override string GetPolicyName => TestModulePermissions.Scenarios.Default;
     protected override string CreatePolicyName => TestModulePermissions.Scenarios.Create;
     protected override string UpdatePolicyName => TestModulePermissions.Scenarios.Update;
     protected override string DeletePolicyName => TestModulePermissions.Scenarios.Delete;
 
-    // Yayin kapisini, sema fingerprint capability'sini ve makine derlemesini katalog akimina baglar.
+    // Yayin kapisini, sema ve is kurali fingerprint capability'lerini ve makine derlemesini katalog akimina baglar.
     public TestScenarioAppService(
         ScenarioPublicationGateManager publicationGateManager,
         ISchemaKnowledgeAppService schemaKnowledgeAppService,
         IScenarioCompilationPort compilationPort,
         ScenarioQuarantineManager quarantineManager,
         IValidator<UpdateScenarioScheduleDto> scheduleValidator,
-        IClock clock)
+        IClock clock,
+        IBusinessRuleSourcePort businessRuleSource,
+        BusinessRuleFingerprintManager fingerprintManager)
     {
         _publicationGateManager = publicationGateManager;
         _schemaKnowledgeAppService = schemaKnowledgeAppService;
@@ -64,6 +70,8 @@ public class TestScenarioAppService : BaseApplicationService<
         _quarantineManager = quarantineManager;
         _scheduleValidator = scheduleValidator;
         _clock = clock;
+        _businessRuleSource = businessRuleSource;
+        _fingerprintManager = fingerprintManager;
     }
     // Senaryoyu sinirli sureyle karantinaya alir; sure kararini Manager verir.
     public async Task<TestScenarioDto> QuarantineAsync(Guid id, QuarantineTestScenarioDto input)
@@ -166,7 +174,7 @@ public class TestScenarioAppService : BaseApplicationService<
             .OrderBy(entity => entity.ScenarioKey)
             .ThenByDescending(entity => entity.VersionNo);
     }
-    // Guncel DB sema fingerprint'ini material seal'e uygulayip Manager ile Draft entity kurar.
+    // Guncel DB sema ve is kurali fingerprint'lerini material seal'e uygulayip Manager ile Draft entity kurar.
     protected override async Task<TestScenario> CreateEntityAsync(
         TestScenarioCreateModel model,
         CancellationToken cancellationToken)
@@ -177,10 +185,13 @@ public class TestScenarioAppService : BaseApplicationService<
                 model.MaterialSeal.DbConnectionId.Value, cancellationToken);
             Manager.ApplyDbSchemaFingerprint(model.MaterialSeal, fingerprint);
         }
+
+        var rules = await _businessRuleSource.ReadAsync(cancellationToken);
+        Manager.ApplyRulesFingerprint(model.MaterialSeal, _fingerprintManager.ComputeFingerprint(rules));
         return await Manager.CreateAsync(model, cancellationToken);
     }
 
-    // Guncel DB sema fingerprint'ini material seal'e uygulayip Manager mutasyonunu calistirir.
+    // Guncel DB sema ve is kurali fingerprint'lerini material seal'e uygulayip Manager mutasyonunu calistirir.
     protected override async Task<TestScenario> UpdateEntityAsync(
         TestScenario entity,
         TestScenarioUpdateModel model,
@@ -192,6 +203,9 @@ public class TestScenarioAppService : BaseApplicationService<
                 model.MaterialSeal.DbConnectionId.Value, cancellationToken);
             Manager.ApplyDbSchemaFingerprint(model.MaterialSeal, fingerprint);
         }
+
+        var rules = await _businessRuleSource.ReadAsync(cancellationToken);
+        Manager.ApplyRulesFingerprint(model.MaterialSeal, _fingerprintManager.ComputeFingerprint(rules));
         return await Manager.UpdateAsync(entity, model, cancellationToken);
     }
 

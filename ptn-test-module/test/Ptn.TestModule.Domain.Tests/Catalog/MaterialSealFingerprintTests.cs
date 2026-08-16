@@ -43,4 +43,46 @@ public class MaterialSealFingerprintTests
         var result = TestScenarioManager.StripFingerprintPrefix(invalid);
         result.ShouldBe(invalid);
     }
+
+    // Istemci deger tasimadiginda sunucudaki aktif kural muhru prefikssiz olarak muhre yazilmalidir.
+    [Fact]
+    public void An_empty_rules_fingerprint_should_take_the_active_server_value()
+    {
+        var seal = new TestScenarioMaterialSeal();
+
+        CreateManager().ApplyRulesFingerprint(seal, "sha256:" + ValidHash);
+
+        seal.RulesFingerprint.ShouldBe(ValidHash);
+    }
+
+    // Istemcinin prefiksli veya prefikssiz tasidigi ayni deger kabul edilmeli ve prefikssiz saklanmalidir.
+    [Theory]
+    [InlineData(ValidHash)]
+    [InlineData("sha256:" + ValidHash)]
+    public void A_matching_rules_fingerprint_should_be_accepted(string provided)
+    {
+        var seal = new TestScenarioMaterialSeal { RulesFingerprint = provided };
+
+        CreateManager().ApplyRulesFingerprint(seal, "sha256:" + ValidHash);
+
+        seal.RulesFingerprint.ShouldBe(ValidHash);
+    }
+
+    // Bayat veya uydurulmus kural muhru sunucudaki aktif bayta baglanmadigi icin reddedilmelidir.
+    [Fact]
+    public void A_stale_rules_fingerprint_should_be_rejected()
+    {
+        var seal = new TestScenarioMaterialSeal { RulesFingerprint = new string('b', 64) };
+
+        var exception = Should.Throw<BusinessException>(
+            () => CreateManager().ApplyRulesFingerprint(seal, "sha256:" + ValidHash));
+
+        exception.Code.ShouldBe(TestModuleScenarioErrorCodes.InvalidHash);
+    }
+
+    // Muhur kurallari repository'e ugramadigi icin Manager bagimliliksiz kurulabilir.
+    private static TestScenarioManager CreateManager()
+    {
+        return new TestScenarioManager(null!, null!, null!);
+    }
 }

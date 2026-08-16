@@ -172,7 +172,7 @@ public class TestScenarioCatalogTests : TestModuleEntityFrameworkCoreTestBase
     {
         return new TestScenarioMaterialSeal
         {
-            RulesFingerprint = null,
+            RulesFingerprint = Hash('e'),
             SpecSnapshotId = Guid.NewGuid(),
             SpecFingerprint = Hash('f'),
             DbConnectionId = Guid.NewGuid(),
