@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -93,7 +94,17 @@ public class TestModuleHttpApiHostModule : AbpModule
         var hostingEnvironment = context.Services.GetHostingEnvironment();
         var configuration = context.Services.GetConfiguration();
 
-        Configure<AbpDbContextOptions>(options => options.UseNpgsql());
+        // Paylasilan abp semasini kuran Authenticator context'i ile ayni adlandirma kuralini kullanir.
+        // Varsayilan eylem butun context'leri kapsar; aksi halde Setting/Permission sorgulari "Id" arar
+        // ve semada duran snake_case kolonu bulamaz (RULE-0002, ADR-0016 SS A).
+        Configure<AbpDbContextOptions>(options =>
+        {
+            options.Configure(dbContext =>
+            {
+                dbContext.UseNpgsql();
+                dbContext.DbContextOptions.UseSnakeCaseNamingConvention();
+            });
+        });
         Configure<AbpMultiTenancyOptions>(options => options.IsEnabled = MultiTenancyConsts.IsEnabled);
 
         ConfigureVirtualFileSystem(hostingEnvironment);
