@@ -115,6 +115,24 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
         seal.RulesFingerprint = active;
     }
 
+    // Sunucudaki aktif spec muhrunu uygular; istemci deger tasidiysa ayni bayta baglanmasini sart kosar.
+    public void ApplySpecFingerprint(TestScenarioMaterialSeal seal, string fingerprint)
+    {
+        ArgumentNullException.ThrowIfNull(seal);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fingerprint);
+
+        var active = NormalizeRequiredHash(
+            StripFingerprintPrefix(fingerprint.Trim()),
+            nameof(seal.SpecFingerprint));
+        var provided = NormalizeOptionalHash(seal.SpecFingerprint, nameof(seal.SpecFingerprint));
+        if (provided is not null && !string.Equals(provided, active, StringComparison.Ordinal))
+        {
+            throw new BusinessException(TestModuleScenarioErrorCodes.InvalidHash);
+        }
+
+        seal.SpecFingerprint = active;
+    }
+
     // Draft surumu insan onayi bekleyen duruma tasir.
     public async Task<TestScenario> SubmitForApprovalAsync(
         TestScenario entity,

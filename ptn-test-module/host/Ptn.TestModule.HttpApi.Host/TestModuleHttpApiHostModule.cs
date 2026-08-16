@@ -36,6 +36,9 @@ using Volo.Abp.EntityFrameworkCore.PostgreSql;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.PermissionManagement;
+using Volo.Abp.PermissionManagement.EntityFrameworkCore;
+using Volo.Abp.PermissionManagement.HttpApi;
 using Volo.Abp.SettingManagement;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
 using Volo.Abp.Swashbuckle;
@@ -67,6 +70,10 @@ namespace Ptn.TestModule;
     typeof(AbpSettingManagementApplicationModule),
     typeof(AbpSettingManagementEntityFrameworkCoreModule),
     typeof(AbpSettingManagementHttpApiModule),
+    // Yetki yuzeyi ABP'nin kendisidir; paralel bir yetki CRUD'u yazilmaz. Tablo sahibi Authenticator'dir (RULE-0002).
+    typeof(AbpPermissionManagementApplicationModule),
+    typeof(AbpPermissionManagementEntityFrameworkCoreModule),
+    typeof(AbpPermissionManagementHttpApiModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpSwashbuckleModule)
 )]
@@ -244,6 +251,12 @@ public class TestModuleHttpApiHostModule : AbpModule
     {
         var app = context.GetApplicationBuilder();
         var environment = context.GetEnvironment();
+        var configuration = context.ServiceProvider.GetRequiredService<IConfiguration>();
+
+        if (!configuration.GetValue<bool>(TestModuleConfigurationKeys.EnsureSharedAbpSchema))
+        {
+            throw new InvalidOperationException("Host environment is not configured for shared ABP schema. Provide EnsureSharedAbpSchema=true flag.");
+        }
 
         if (environment.IsDevelopment())
         {

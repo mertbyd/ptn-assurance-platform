@@ -14,6 +14,7 @@ using Volo.Abp.Application.Dtos;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Threading;
+using Ptn.ApiContractChecker.Services.Snapshots;
 
 namespace Ptn.TestModule.Services.Runs;
 
@@ -60,6 +61,7 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
     /// <summary>Otomatik tetikleyicilerin idempotency kararini sahiplenen Manager'dir.</summary>
     private readonly AutomatedRunTriggerManager _automatedRunTriggerManager;
     private readonly IValidator<WebhookTestRunDto> _webhookValidator;
+    private readonly ISpecSnapshotAppService _specSnapshotAppService;
 
     /// <summary>Application orkestrasyonunu Manager ve repository bagimliliklariyla kurar.</summary>
     public TestRunAppService(
@@ -77,7 +79,8 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         RunCancellationManager runCancellationManager,
         RunWebhookManager runWebhookManager,
         AutomatedRunTriggerManager automatedRunTriggerManager,
-        IValidator<WebhookTestRunDto> webhookValidator)
+        IValidator<WebhookTestRunDto> webhookValidator,
+        ISpecSnapshotAppService specSnapshotAppService)
     {
         _runWebhookManager = runWebhookManager;
         _automatedRunTriggerManager = automatedRunTriggerManager;
@@ -94,6 +97,7 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         _artifactStore = artifactStore;
         _harArtifactStore = harArtifactStore;
         _runCancellationManager = runCancellationManager;
+        _specSnapshotAppService = specSnapshotAppService;
     }
 
     /// <summary>Kimligi verilen test kosumunu permission kontrolunden sonra getirir.</summary>
@@ -203,11 +207,19 @@ public class TestRunAppService : TestModuleAppService, ITestRunAppService
         await CheckPolicyAsync(TestModulePermissions.Runs.Trigger);
         var cancellationToken = _cancellationTokenProvider.Token;
         var binding = await _environmentBindingManager.ResolveAsync(input.EnvironmentKey, cancellationToken);
+        
+        string? specFingerprint = null;
+        if (binding.SpecSnapshotId != Guid.Empty)
+        {
+            var snapshot = await _specSnapshotAppService.GetAsync(binding.SpecSnapshotId);
+            specFingerprint = snapshot?.SpecContent?.CanonicalHash;
+        }
+
         var entity = await _testRunManager.CreateAsync(
             Mapper.Map(input),
             binding,
             input.CanonicalInputs,
-            input.SpecFingerprint,
+            specFingerprint,
             input.DbSchemaFingerprint,
             input.RunnerRef,
             cancellationToken);

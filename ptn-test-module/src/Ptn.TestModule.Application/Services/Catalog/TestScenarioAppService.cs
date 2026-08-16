@@ -20,6 +20,7 @@ using Ptn.TestModule.Services.Bridge;
 using Volo.Abp;
 using Volo.Abp.Timing;
 using Volo.Abp.Users;
+using Ptn.ApiContractChecker.Services.Snapshots;
 
 namespace Ptn.TestModule.Services.Catalog;
 
@@ -47,6 +48,7 @@ public class TestScenarioAppService : BaseApplicationService<
     private readonly IClock _clock;
     private readonly IBusinessRuleSourcePort _businessRuleSource;
     private readonly BusinessRuleFingerprintManager _fingerprintManager;
+    private readonly ISpecSnapshotAppService _specSnapshotAppService;
 
     protected override string GetPolicyName => TestModulePermissions.Scenarios.Default;
     protected override string CreatePolicyName => TestModulePermissions.Scenarios.Create;
@@ -62,7 +64,8 @@ public class TestScenarioAppService : BaseApplicationService<
         IValidator<UpdateScenarioScheduleDto> scheduleValidator,
         IClock clock,
         IBusinessRuleSourcePort businessRuleSource,
-        BusinessRuleFingerprintManager fingerprintManager)
+        BusinessRuleFingerprintManager fingerprintManager,
+        ISpecSnapshotAppService specSnapshotAppService)
     {
         _publicationGateManager = publicationGateManager;
         _schemaKnowledgeAppService = schemaKnowledgeAppService;
@@ -72,6 +75,7 @@ public class TestScenarioAppService : BaseApplicationService<
         _clock = clock;
         _businessRuleSource = businessRuleSource;
         _fingerprintManager = fingerprintManager;
+        _specSnapshotAppService = specSnapshotAppService;
     }
     // Senaryoyu sinirli sureyle karantinaya alir; sure kararini Manager verir.
     public async Task<TestScenarioDto> QuarantineAsync(Guid id, QuarantineTestScenarioDto input)
@@ -186,6 +190,12 @@ public class TestScenarioAppService : BaseApplicationService<
             Manager.ApplyDbSchemaFingerprint(model.MaterialSeal, fingerprint);
         }
 
+        if (model.MaterialSeal.SpecSnapshotId.HasValue)
+        {
+            var snapshot = await _specSnapshotAppService.GetAsync(model.MaterialSeal.SpecSnapshotId.Value);
+            Manager.ApplySpecFingerprint(model.MaterialSeal, snapshot.SpecContent.CanonicalHash);
+        }
+
         var rules = await _businessRuleSource.ReadAsync(cancellationToken);
         Manager.ApplyRulesFingerprint(model.MaterialSeal, _fingerprintManager.ComputeFingerprint(rules));
         return await Manager.CreateAsync(model, cancellationToken);
@@ -202,6 +212,12 @@ public class TestScenarioAppService : BaseApplicationService<
             var fingerprint = await _schemaKnowledgeAppService.GetSchemaFingerprintAsync(
                 model.MaterialSeal.DbConnectionId.Value, cancellationToken);
             Manager.ApplyDbSchemaFingerprint(model.MaterialSeal, fingerprint);
+        }
+
+        if (model.MaterialSeal.SpecSnapshotId.HasValue)
+        {
+            var snapshot = await _specSnapshotAppService.GetAsync(model.MaterialSeal.SpecSnapshotId.Value);
+            Manager.ApplySpecFingerprint(model.MaterialSeal, snapshot.SpecContent.CanonicalHash);
         }
 
         var rules = await _businessRuleSource.ReadAsync(cancellationToken);

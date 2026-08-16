@@ -65,7 +65,11 @@ public class BridgeAuthorizationTests
             .GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
             .Count(method => method.DeclaringType == typeof(PtnBridgeAppService));
 
-        serviceMethodCount.ShouldBe(9);
+        var controllerAuthorizeCount = typeof(Ptn.TestModule.Controllers.Bridge.PtnBridgeController)
+            .GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Count(method => method.GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute), false).Any());
+
+        serviceMethodCount.ShouldBe(controllerAuthorizeCount);
     }
 
     // Test assembly konumundan Test Module cozum kokunu bulur.
