@@ -32,6 +32,7 @@ public partial class PtnBridgeMapper
     public partial CheckerWriteSetCaptureRequestDto Map(WriteSetCaptureRequest input);
     public partial FootprintResult Map(CheckerWriteSetResultDto input);
     public partial GroundResultDto Map(GroundingResult input);
+    public partial GroundingResult Map(GroundResultDto input);
     public partial ValidateResultDto Map(ValidationResult input);
     public partial KnowledgeResultDto Map(KnowledgeResult input);
     public partial ToolCatalogDto Map(ToolCatalog input);

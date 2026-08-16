@@ -15,6 +15,12 @@ public static class TestModuleScenarioErrorCodes
     public const string DeletionNotAllowed = $"{Prefix}:DeletionNotAllowed";
     public const string InvalidScenarioKey = $"{Prefix}:InvalidScenarioKey";
     public const string InvalidHash = $"{Prefix}:InvalidHash";
+    public const string AuthoringSessionNotFound = $"{Prefix}:AuthoringSessionNotFound";
+    public const string AuthoringSessionTenantMismatch = $"{Prefix}:AuthoringSessionTenantMismatch";
+    public const string AuthoringAnswerInvalid = $"{Prefix}:AuthoringAnswerInvalid";
+    public const string AuthoringQuestionsUnanswered = $"{Prefix}:AuthoringQuestionsUnanswered";
+    public const string AuthoringOperationNotGrounded = $"{Prefix}:AuthoringOperationNotGrounded";
+    public const string AuthoringStepAlreadyExists = $"{Prefix}:AuthoringStepAlreadyExists";
 
     /// <summary>Zamanlamanin yayinlanmamis bir surume yazilmaya calisildigini bildirir.</summary>
     public const string ScheduleRequiresPublishedVersion = $"{Prefix}:ScheduleRequiresPublishedVersion";
@@ -49,5 +55,15 @@ public static class TestModuleScenarioErrorCodes
         public const string SourceDescriptionInvalid = $"{Prefix}:Validation:SourceDescriptionInvalid";
         public const string ScheduleCronRequired = $"{Prefix}:Validation:ScheduleCronRequired";
         public const string ScheduleCronTooLong = $"{Prefix}:Validation:ScheduleCronTooLong";
+        public const string AuthoringGroundingRequired = $"{Prefix}:Validation:AuthoringGroundingRequired";
+        public const string AuthoringWorkflowIdInvalid = $"{Prefix}:Validation:AuthoringWorkflowIdInvalid";
+        public const string AuthoringWorkflowSummaryRequired = $"{Prefix}:Validation:AuthoringWorkflowSummaryRequired";
+        public const string AuthoringSourceUrlInvalid = $"{Prefix}:Validation:AuthoringSourceUrlInvalid";
+        public const string AuthoringQuestionCodeRequired = $"{Prefix}:Validation:AuthoringQuestionCodeRequired";
+        public const string AuthoringSelectedOptionRequired = $"{Prefix}:Validation:AuthoringSelectedOptionRequired";
+        public const string AuthoringStepIdInvalid = $"{Prefix}:Validation:AuthoringStepIdInvalid";
+        public const string AuthoringOperationReferenceRequired = $"{Prefix}:Validation:AuthoringOperationReferenceRequired";
+        public const string AuthoringAssertionPathInvalid = $"{Prefix}:Validation:AuthoringAssertionPathInvalid";
+        public const string AuthoringRequestBodyInvalid = $"{Prefix}:Validation:AuthoringRequestBodyInvalid";
     }
 }

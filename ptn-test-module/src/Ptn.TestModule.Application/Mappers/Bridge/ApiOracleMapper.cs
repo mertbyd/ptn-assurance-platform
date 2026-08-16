@@ -57,6 +57,7 @@ public partial class ApiOracleMapper
     public partial RequestExample Map(CheckerRequestExampleDto input);
     public partial DerivabilityResult Map(CheckerDerivabilityResultDto input);
     public partial ConformanceResult Map(CheckerConformanceResultDto input);
+    [MapperIgnoreTarget(nameof(OperationSuggestion.ReferenceId))]
     public partial OperationSuggestion MapSuggestion(CheckerOperationSuggestionDto input);
     public partial SnapshotOperationPage Map(CheckerSnapshotOperationInventoryDto input);
     public partial SnapshotOperationRow Map(CheckerSnapshotOperationRowDto input);

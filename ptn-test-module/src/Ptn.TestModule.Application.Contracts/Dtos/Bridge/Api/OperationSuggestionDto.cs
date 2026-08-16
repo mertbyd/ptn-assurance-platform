@@ -1,9 +1,15 @@
+using System;
+
 namespace Ptn.TestModule.Dtos.Bridge.Api;
 
 // islevi: Tek operasyon adayinin adres, puan ve alan baglamalarini tasir.
 // sistemdeki gorevi: Istemciye sirali ve tipli esleme adayi sunar.
 public sealed class OperationSuggestionDto
 {
+    /// <summary>
+    /// Checker envanteri satirinin kapali ve kararli referans kimligini belirtir.
+    /// </summary>
+    public Guid ReferenceId { get; set; }
     /// <summary>
     /// Ilgili kaynagin kararli kimligini veya referansini belirtir.
     /// </summary>

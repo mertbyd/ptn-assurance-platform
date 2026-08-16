@@ -226,6 +226,7 @@ public class GroundingManager : TestModuleDomainService
             OutcomeCode = inventory.OutcomeCode,
             Suggestions = items.Select(item => new OperationSuggestion
             {
+                ReferenceId = item.ReferenceId,
                 SourceOperationId = item.OperationId,
                 SourceMethod = item.Method,
                 SourcePath = item.Path,
