@@ -12,8 +12,10 @@ using Ptn.TestModule.Constants.Runs.Lookups;
 using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Entities.Lookups;
 using Ptn.TestModule.ExceptionCodes.Catalog;
+using Ptn.TestModule.Interface.Bridge;
 using Ptn.TestModule.Interface.Catalog;
 using Ptn.TestModule.Interface.Lookups;
+using Ptn.TestModule.Managers.Bridge.Profiles;
 using Ptn.TestModule.Models.Catalog;
 using Ptn.TestModule.Models.Compilation;
 using Volo.Abp;
@@ -28,6 +30,8 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
     private readonly ITestScenarioRepository _repository;
     private readonly ITestScenarioStateRepository _stateRepository;
     private readonly ScenarioScheduleManager _scheduleManager;
+    private readonly IBusinessRuleSourcePort _businessRuleSourcePort;
+    private readonly BusinessRuleFingerprintManager _businessRuleFingerprintManager;
 
     protected override string AlreadyExistsErrorCode => TestModuleScenarioErrorCodes.VersionAlreadyExists;
 
@@ -35,12 +39,16 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
     public TestScenarioManager(
         ITestScenarioRepository repository,
         ITestScenarioStateRepository stateRepository,
-        ScenarioScheduleManager scheduleManager)
+        ScenarioScheduleManager scheduleManager,
+        IBusinessRuleSourcePort businessRuleSourcePort,
+        BusinessRuleFingerprintManager businessRuleFingerprintManager)
         : base(repository)
     {
         _repository = repository;
         _stateRepository = stateRepository;
         _scheduleManager = scheduleManager;
+        _businessRuleSourcePort = businessRuleSourcePort;
+        _businessRuleFingerprintManager = businessRuleFingerprintManager;
     }
 
     // Yeni senaryoyu kanoniklestirir, siradaki surumu ve iki benzersizlik kuralini uygular.
@@ -49,6 +57,7 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(model);
+        await ApplySealCompletionAsync(model.MaterialSeal, cancellationToken);
         var normalized = Normalize(model);
         var versionNo = await _repository.GetNextVersionNoAsync(normalized.ScenarioKey, cancellationToken);
 
@@ -74,6 +83,7 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
         ArgumentNullException.ThrowIfNull(model);
         await EnsureEditableStateAsync(entity, cancellationToken);
 
+        await ApplySealCompletionAsync(model.MaterialSeal, cancellationToken);
         var normalized = Normalize(model);
         await EnsureContentAvailableAsync(entity.ScenarioKey, normalized.SourceHash!, entity.Id, cancellationToken);
         var sourceChanged = !string.Equals(entity.SourceHash, normalized.SourceHash, StringComparison.Ordinal);
@@ -95,6 +105,27 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
 
         var normalized = StripFingerprintPrefix(fingerprint.Trim());
         seal.DbSchemaFingerprint = NormalizeRequiredHash(normalized, nameof(seal.DbSchemaFingerprint));
+    }
+
+    // Sunucu uzerindeki aktif is kurallarini muhre basar. Istemci sagladiysa aktif olanla eslesmesini sart kosar.
+    private async Task ApplySealCompletionAsync(TestScenarioMaterialSeal seal, CancellationToken cancellationToken)
+    {
+        var rulesBytes = await _businessRuleSourcePort.ReadAsync(cancellationToken);
+        var activeRulesFingerprint = _businessRuleFingerprintManager.ComputeFingerprint(rulesBytes);
+        
+        if (string.IsNullOrWhiteSpace(seal.RulesFingerprint))
+        {
+            seal.RulesFingerprint = activeRulesFingerprint;
+        }
+        else
+        {
+            var provided = NormalizeOptionalHash(seal.RulesFingerprint, nameof(seal.RulesFingerprint));
+            if (!string.Equals(provided, activeRulesFingerprint, StringComparison.Ordinal))
+            {
+                throw new BusinessException(TestModuleScenarioErrorCodes.Validation.HashInvalid);
+            }
+            seal.RulesFingerprint = activeRulesFingerprint;
+        }
     }
 
     // Draft surumu insan onayi bekleyen duruma tasir.
@@ -444,7 +475,7 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
     {
         ArgumentNullException.ThrowIfNull(sourceDocument);
         
-        var normalizedDocument = sourceDocument.Replace("\r\n", "\n").TrimEnd();
+        var normalizedDocument = sourceDocument.TrimStart('\uFEFF').Replace("\r\n", "\n").TrimEnd();
         
         var lines = normalizedDocument.Split('\n');
         for (var i = 0; i < lines.Length; i++)

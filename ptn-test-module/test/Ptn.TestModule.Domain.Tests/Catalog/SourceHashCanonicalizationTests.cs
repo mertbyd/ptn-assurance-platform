@@ -27,6 +27,7 @@ public class SourceHashCanonicalizationTests
     [InlineData("Feature: Kanoniklesme \n  Scenario: Test 1  \n    Given X \n    Then Y   ")] // Sonda bosluklar
     [InlineData("Feature: Kanoniklesme\n  Scenario: Test 1\n    Given X\n    Then Y\n")] // Dosya sonu yeni satir
     [InlineData("Feature: Kanoniklesme\n  Scenario: Test 1\n    Given X\n    Then Y\n\n  \n")] // Dosya sonu bosluklu yeni satirlar
+    [InlineData("\uFEFFFeature: Kanoniklesme\n  Scenario: Test 1\n    Given X\n    Then Y")] // BOM'lu baslangic
     public void ComputeSourceHash_should_normalize_line_endings_and_trailing_whitespaces(string document)
     {
         var hash = TestScenarioManager.ComputeSourceHash(document);
