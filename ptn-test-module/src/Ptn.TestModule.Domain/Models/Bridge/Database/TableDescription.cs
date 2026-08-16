@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Ptn.TestModule.Models.Bridge;
@@ -13,4 +14,8 @@ public sealed class TableDescription
     public List<TableKey> UniqueIndexes { get; set; } = [];
     public List<ForeignKeyNeighbor> ForeignKeyNeighbors { get; set; } = [];
     public List<SchemaLintWarning> LintWarnings { get; set; } = [];
+    public Guid TableReferenceId { get; set; }
+    public List<string> AssertableFields { get; set; } = [];
+    public List<string> AllowedMatchers { get; set; } = [];
+    public List<string> KeyCandidates { get; set; } = [];
 }

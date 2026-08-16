@@ -3,6 +3,8 @@ using FluentValidation;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Dtos.Bridge;
 using Ptn.TestModule.ExceptionCodes.Bridge;
+using Ptn.TestModule.ExceptionCodes.Catalog;
+using Ptn.TestModule.FluentValidation.Authoring;
 
 namespace Ptn.TestModule.FluentValidation.Bridge.Agent;
 
@@ -21,5 +23,12 @@ public sealed class GroundRequestDtoValidator : AbstractValidator<GroundRequestD
             .WithMessage(TestModuleBridgeErrorCodes.Validation.StepIntentRequired);
         RuleFor(input => input.ResponseFormat).Must(PtnResponseFormatCodes.All.Contains)
             .WithMessage(TestModuleBridgeErrorCodes.Validation.ResponseFormatInvalid);
+        RuleFor(input => input.SessionId)
+            .NotEmpty()
+            .When(input => input.ProposedStep is not null)
+            .WithMessage(TestModuleScenarioErrorCodes.Validation.AuthoringSessionRequired);
+        RuleFor(input => input.ProposedStep!)
+            .SetValidator(new AddAuthoringStepDtoValidator())
+            .When(input => input.ProposedStep is not null);
     }
 }

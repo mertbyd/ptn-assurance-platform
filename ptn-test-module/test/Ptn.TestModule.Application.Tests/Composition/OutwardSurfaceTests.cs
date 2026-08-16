@@ -14,7 +14,7 @@ namespace Ptn.TestModule.Application.Tests.Composition;
 // sistemdeki gorevi: Tuketici portu Bridge istisnasi disinda ulasilamaz AppService regresyonunu engeller.
 public class OutwardSurfaceTests
 {
-    private const int ExpectedControllerActionCount = 58;
+    private const int ExpectedControllerActionCount = 65;
     private const string ServiceNamespace = "Ptn.TestModule.Services";
     private const string BridgeNamespace = "Ptn.TestModule.Services.Bridge";
 

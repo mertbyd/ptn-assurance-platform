@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Ptn.DatabaseChecker.Constants;
 using Ptn.TestModule.Constants.Runs;
 using Ptn.TestModule.ExceptionCodes.Runs;
@@ -40,6 +41,83 @@ public class HarInterpreter : TestModuleDomainService
             CreatorVersion = ReadCreator(log, HarFields.Version),
             HasUnboundEntries = entries.Any(entry => entry.StepKey is null)
         };
+    }
+
+    // Kimlik tasiyan baslik ve cerez degerlerini artefakt kalici depoya girmeden once maskeler.
+    /// <summary>HAR govdesini sir tasimayan kalici artefakt bicimine cevirir.</summary>
+    public string Redact(string harContent)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(harContent);
+        var document = ParseNode(harContent);
+        if (document?[HarFields.Log]?[HarFields.Entries] is not JsonArray entries)
+        {
+            return harContent;
+        }
+
+        var maskedCount = 0;
+        foreach (var entry in entries)
+        {
+            maskedCount += RedactExchange(entry?[HarFields.Request]);
+            maskedCount += RedactExchange(entry?[HarFields.Response]);
+        }
+
+        // Maskelenecek deger yoksa artefakt bayt bayt korunur.
+        return maskedCount > 0 ? document.ToJsonString() : harContent;
+    }
+
+    // Bir istek veya yanit tarafindaki tum kimlik kanallarini maskeler.
+    /// <summary>Verilen istek/yanit tarafinin baslik ve cerez degerlerini maskeler.</summary>
+    private static int RedactExchange(JsonNode? exchange)
+    {
+        return MaskValues(exchange?[HarFields.Headers] as JsonArray, HarArtifactConsts.SensitiveHeaderNames) +
+               MaskValues(exchange?[HarFields.Cookies] as JsonArray, names: null);
+    }
+
+    // Ad/deger ciftlerinden hassas olanlarin degerini sabit maskeyle degistirir.
+    /// <summary>Ad kumesine giren ciftlerin degerini maskeler; kume yoksa tumunu maskeler.</summary>
+    private static int MaskValues(JsonArray? pairs, IReadOnlyCollection<string>? names)
+    {
+        var maskedCount = 0;
+        foreach (var pair in pairs ?? [])
+        {
+            if (pair is JsonObject item && IsSensitive(item, names))
+            {
+                item[HarFields.Value] = HarArtifactConsts.RedactedValue;
+                maskedCount++;
+            }
+        }
+
+        return maskedCount;
+    }
+
+    // Cerez dizisinin tamami hassastir; baslik dizisinde yalniz bildirilen adlar hassastir.
+    /// <summary>Ad/deger ciftinin maskelenmesi gerektigini bildirir.</summary>
+    private static bool IsSensitive(JsonObject pair, IReadOnlyCollection<string>? names)
+    {
+        if (names is null)
+        {
+            return true;
+        }
+
+        return pair.TryGetPropertyValue(HarFields.Name, out var name) &&
+               name?.GetValueKind() == JsonValueKind.String &&
+               names.Contains(name.GetValue<string>());
+    }
+
+    // HAR metnini degistirilebilir dugum agacina cozer; bozuk govdeyi kararli koda cevirir.
+    /// <summary>HAR icerigini degistirilebilir JSON dugumune cozer.</summary>
+    private static JsonNode? ParseNode(string harContent)
+    {
+        try
+        {
+            return JsonNode.Parse(harContent);
+        }
+        catch (JsonException exception)
+        {
+            throw new BusinessException(
+                TestModuleRunErrorCodes.HarNotProduced,
+                innerException: exception);
+        }
     }
 
     // HAR metnini tek JSON belgesi olarak okur; bozuk govdeyi kararli koda cevirir.

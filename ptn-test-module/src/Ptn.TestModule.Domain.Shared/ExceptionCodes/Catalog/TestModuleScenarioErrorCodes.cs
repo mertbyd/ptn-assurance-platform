@@ -65,5 +65,12 @@ public static class TestModuleScenarioErrorCodes
         public const string AuthoringOperationReferenceRequired = $"{Prefix}:Validation:AuthoringOperationReferenceRequired";
         public const string AuthoringAssertionPathInvalid = $"{Prefix}:Validation:AuthoringAssertionPathInvalid";
         public const string AuthoringRequestBodyInvalid = $"{Prefix}:Validation:AuthoringRequestBodyInvalid";
+        public const string AuthoringSessionRequired = $"{Prefix}:Validation:AuthoringSessionRequired";
+        public const string AuthoringTableReferenceInvalid = $"{Prefix}:Validation:AuthoringTableReferenceInvalid";
+        public const string AuthoringOperationCodeInvalid = $"{Prefix}:Validation:AuthoringOperationCodeInvalid";
+        public const string AuthoringTimeoutInvalid = $"{Prefix}:Validation:AuthoringTimeoutInvalid";
+        public const string AuthoringPollIntervalInvalid = $"{Prefix}:Validation:AuthoringPollIntervalInvalid";
+        public const string AuthoringColumnNameInvalid = $"{Prefix}:Validation:AuthoringColumnNameInvalid";
+        public const string AuthoringMatcherCodeInvalid = $"{Prefix}:Validation:AuthoringMatcherCodeInvalid";
     }
 }

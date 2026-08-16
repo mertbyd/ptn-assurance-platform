@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="Authenticator.EntityFrameworkCore" Version="$(AuthenticatorVersion)" />
+    <!-- Secret deposu sozlesmesi provider katmaninda kalir; Application checker Domain paketine bagimli olmaz. -->
+    <PackageReference Include="CheckNexus.ApiContracts.Domain" Version="$(CheckNexusApiContractsVersion)" />
     <PackageReference Include="Pintern.SaaS.Notifications.EntityFrameworkCore" Version="$(NotificationsVersion)" />
   </ItemGroup>
 

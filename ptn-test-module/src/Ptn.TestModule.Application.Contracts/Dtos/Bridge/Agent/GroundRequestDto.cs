@@ -1,6 +1,8 @@
+using Ptn.TestModule.Dtos.Authoring;
+
 namespace Ptn.TestModule.Dtos.Bridge;
 
-// islevi: ptn_ground tool'unun profil, snapshot, baglanti ve kapali referans girdilerini tasir.
+// islevi: ptn_ground tool'unun profil, snapshot, baglanti, kapali referans ve oturum girdilerini tasir.
 // sistemdeki gorevi: StepIntent disinda serbest operasyon, tablo, kolon, kod veya scope metni tasimaz.
 public sealed class GroundRequestDto
 {
@@ -36,4 +38,12 @@ public sealed class GroundRequestDto
     /// Ilgili yetenek, sonuc veya durumun etkin olup olmadigini belirtir.
     /// </summary>
     public bool HasExclusiveSandbox { get; set; }
+    /// <summary>
+    /// Surdurulecek yazarlik oturumunun kimligini belirtir; bos birakilirsa oturum okunmaz.
+    /// </summary>
+    public Guid? SessionId { get; set; }
+    /// <summary>
+    /// Oturuma eklenecek tek yapilandirilmis adim onerisini tasir.
+    /// </summary>
+    public AddAuthoringStepDto? ProposedStep { get; set; }
 }

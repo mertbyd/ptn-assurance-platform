@@ -21,6 +21,9 @@ public class TestRunEnvironmentBinding
     /// <summary>Database Checker baglanti kimligidir.</summary>
     public Guid DbConnectionId { get; set; }
 
-    /// <summary>Secret degeri yerine tasinan mantiksal secret referansidir.</summary>
+    /// <summary>Veritabani sirri yerine tasinan mantiksal secret referansidir.</summary>
     public string SecretRef { get; set; } = string.Empty;
+
+    /// <summary>Korumali API ucu icin tasinan opsiyonel mantiksal secret referansidir; bos ise kosum kimliksiz gider.</summary>
+    public string ApiSecretRef { get; set; } = string.Empty;
 }

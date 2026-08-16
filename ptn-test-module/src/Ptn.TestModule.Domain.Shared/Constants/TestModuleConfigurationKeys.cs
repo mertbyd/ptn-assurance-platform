@@ -19,6 +19,7 @@ public static class TestModuleConfigurationKeys
     public const string RedisConfiguration = "Redis:Configuration";
     public const string DatabaseAutoMigrate = "Database:AutoMigrate";
     public const string DatabaseSeedOnStartup = "Database:SeedOnStartup";
+    public const string EnsureSharedAbpSchema = "Database:EnsureSharedAbpSchema";
 
     public const string AspNetCoreEnvironmentVariable = "ASPNETCORE_ENVIRONMENT";
     public const string AppSettingsFileName = "appsettings.json";

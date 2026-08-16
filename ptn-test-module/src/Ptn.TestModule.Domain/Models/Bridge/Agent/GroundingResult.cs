@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Footprint;
@@ -18,4 +19,7 @@ public sealed class GroundingResult
     public FootprintResult Footprint { get; set; } = new();
     public List<ClosedQuestion> Questions { get; set; } = [];
     public string? ResourceLink { get; set; }
+    public Guid? SessionId { get; set; }
+    public int StepCount { get; set; }
+    public List<string> PendingQuestionCodes { get; set; } = [];
 }

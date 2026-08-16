@@ -47,4 +47,16 @@ public sealed class GroundResultDto
     /// Ayrintili kaynaga erisim adresini belirtir.
     /// </summary>
     public string? ResourceLink { get; set; }
+    /// <summary>
+    /// Surdurulen yazarlik oturumunun kimligini belirtir; oturum verilmediyse bostur.
+    /// </summary>
+    public Guid? SessionId { get; set; }
+    /// <summary>
+    /// Isleme ait sayisal sinir, sira veya durum degerini belirtir.
+    /// </summary>
+    public int StepCount { get; set; }
+    /// <summary>
+    /// Kontrollu sozlukteki ilgili kodlari kararli sirada listeler.
+    /// </summary>
+    public List<string> PendingQuestionCodes { get; set; } = [];
 }

@@ -20,24 +20,30 @@ public sealed class HarArtifactService : IHarArtifactStore, ITransientDependency
     // HAR artefaktlarinin adiyla cozulmus BLOB Storing container'idir.
     private readonly IBlobContainer _blobContainer;
     private readonly WorkflowRunPlanner _planner;
+    private readonly HarInterpreter _harInterpreter;
 
     // Artefakt sinirini Domain.Shared'daki container adina bir kez baglar.
-    public HarArtifactService(IBlobContainerFactory blobContainerFactory, WorkflowRunPlanner planner)
+    public HarArtifactService(
+        IBlobContainerFactory blobContainerFactory,
+        WorkflowRunPlanner planner,
+        HarInterpreter harInterpreter)
     {
         _blobContainer = blobContainerFactory.Create(HarArtifactConsts.ContainerName);
         _planner = planner;
+        _harInterpreter = harInterpreter;
     }
 
-    // Manager'in urettigi blob adiyla artefakti yazar ve adi cagirana geri verir.
+    // Manager'in urettigi blob adiyla maskelenmis artefakti yazar ve adi cagirana geri verir.
     public async Task<string> SaveAsync(
         string blobName,
         string harContent,
         CancellationToken cancellationToken = default)
     {
         _planner.EnsureArtifactIsValid(blobName, harContent);
+        var redacted = _harInterpreter.Redact(harContent);
         await _blobContainer.SaveAsync(
             blobName,
-            Encoding.UTF8.GetBytes(harContent),
+            Encoding.UTF8.GetBytes(redacted),
             overrideExisting: true,
             cancellationToken);
         return blobName;

@@ -1,22 +1,22 @@
 using System.ComponentModel;
-using System.IO;
-using System.Reflection;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using ModelContextProtocol.Server;
+using Ptn.TestModule.Interface.Bridge;
 
 namespace Ptn.TestModule.Mcp;
 
 // islevi: Git'te tutulan ajan politikasini MCP Resource olarak sunar.
-// sistemdeki gorevi: Ajanin nasil davranacagini anlatan politikayi is kurallarindan ayri Resource'ta tutar.
+// sistemdeki gorevi: Politikayi is kurallariyla ayni ayarli kokten okur; assembly kopyasi tutmaz.
 [McpServerResourceType]
 public sealed class AgentPolicyResource
 {
     [McpServerResource(Name = "ptn_agent_policy", UriTemplate = "ptn://authoring/agent-policy.md", MimeType = "text/markdown")]
     [Description("Deterministic authoring agent policy for the PTN test platform.")]
-    public static string Read()
+    public static async Task<string> Read(IAgentPolicySourcePort source, CancellationToken cancellationToken)
     {
-        using var stream = Assembly.GetExecutingAssembly()
-            .GetManifestResourceStream("Ptn.TestModule.Authoring.agent-policy.md")!;
-        using var reader = new StreamReader(stream);
-        return reader.ReadToEnd();
+        var content = await source.ReadAsync(cancellationToken);
+        return Encoding.UTF8.GetString(content);
     }
 }

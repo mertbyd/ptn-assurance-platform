@@ -35,6 +35,34 @@ public class ProfilePackManager : TestModuleDomainService
         return GetValidated(pack, profileKey, currentFingerprint);
     }
 
+    // Yazilan paketin ad, boyut ve saklanan icerik muhrunu tek modelde toplar.
+    public AuthoringSourceSeal Seal(ProfilePack stored, string fileName, int byteCount)
+    {
+        ArgumentNullException.ThrowIfNull(stored);
+        return new AuthoringSourceSeal
+        {
+            FileName = fileName,
+            ByteCount = byteCount,
+            Fingerprint = stored.ContentFingerprint
+        };
+    }
+
+    // Yuklu paketi listeleme yuzeyine cikacak kapsam sayilariyla ozetler.
+    public ProfilePackSummary Summarize(ProfilePack pack)
+    {
+        ArgumentNullException.ThrowIfNull(pack);
+        return new ProfilePackSummary
+        {
+            ProfileKey = pack.ProfileKey,
+            Revision = pack.Revision,
+            ContentFingerprint = pack.ContentFingerprint,
+            DbSchemaFingerprint = pack.DbSchemaFingerprint,
+            BindingCount = pack.Bindings.Count,
+            ApprovedBindingCount = pack.Bindings.Count(item => item.StateCode == PtnBindingStateCodes.Approved),
+            EvidencePathCount = pack.Paths.Count
+        };
+    }
+
     // Yuklenmis profili kapali sozluklerle dogrular ve sema kaymasinda onaylari geri alir.
     public ProfilePack GetValidated(
         ProfilePack pack,

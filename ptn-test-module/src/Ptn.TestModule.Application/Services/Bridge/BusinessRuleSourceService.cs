@@ -49,4 +49,21 @@ public sealed class BusinessRuleSourceService : IBusinessRuleSourcePort, ITransi
         await stream.ReadExactlyAsync(bytes, cancellationToken);
         return bytes;
     }
+
+    // Ayni kok ve ayni dosya adina yazar; okuma yolu bir sonraki cagrida yeni baytlari gorur.
+    public async Task WriteAsync(byte[] content, CancellationToken cancellationToken = default)
+    {
+        var configured = await _settingProvider.GetOrNullAsync(PtnBridgeSettingNames.BusinessRulesPath)
+                         ?? PtnBridgeSettingNames.DefaultBusinessRulesPath;
+        var root = Path.IsPathRooted(configured)
+            ? Path.GetFullPath(configured)
+            : Path.GetFullPath(Path.Combine(_hostEnvironment.ContentRootPath, configured));
+        var filePath = Path.GetFullPath(Path.Combine(root, PtnBridgeSettingNames.BusinessRulesFileName));
+        _manager.EnsureSourceIsWithinRoot(
+            root.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar,
+            filePath);
+        _manager.EnsureWithinBudget(content.LongLength);
+        Directory.CreateDirectory(root);
+        await File.WriteAllBytesAsync(filePath, content, cancellationToken);
+    }
 }

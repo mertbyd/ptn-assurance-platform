@@ -27,6 +27,9 @@ public class TestModuleSettingDefinitionProvider : SettingDefinitionProvider
             TestModuleSettings.BusinessRulesPath,
             PtnBridgeSettingNames.DefaultBusinessRulesPath));
         context.Add(new SettingDefinition(
+            TestModuleSettings.AgentPolicyPath,
+            PtnBridgeSettingNames.DefaultAgentPolicyPath));
+        context.Add(new SettingDefinition(
             TestModuleSettings.EnvironmentBindings,
             TestModuleRunSettingNames.DefaultEnvironmentBindings));
         context.Add(new SettingDefinition(
@@ -38,6 +41,13 @@ public class TestModuleSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(new SettingDefinition(
             TestModuleSettings.RunnerMaxFetchTimeoutSeconds,
             WorkflowRunnerConsts.DefaultMaxFetchTimeoutSeconds.ToString(CultureInfo.InvariantCulture)));
+        // Ag ayarlari bos birakildiginda docker arguman listesi bugunku haliyle birebir korunur.
+        context.Add(new SettingDefinition(
+            TestModuleSettings.RunnerNetworkMode,
+            TestModuleRunSettingNames.DefaultRunnerNetworkMode));
+        context.Add(new SettingDefinition(
+            TestModuleSettings.RunnerExtraHosts,
+            TestModuleRunSettingNames.DefaultRunnerExtraHosts));
         context.Add(new SettingDefinition(
             TestModuleSettings.HarRetentionDays,
             TestModuleRunSettingNames.DefaultHarRetentionDays));

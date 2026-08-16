@@ -33,5 +33,6 @@ public partial class TestModulePermissionDefinitionProvider
         bridge.AddChild(TestModulePermissions.Bridge.Task, L(TestModuleLocalizationKeys.Permissions.BridgeTask));
         bridge.AddChild(TestModulePermissions.Bridge.PatchSuggest, L(TestModuleLocalizationKeys.Permissions.BridgePatchSuggest));
         bridge.AddChild(TestModulePermissions.Bridge.Invariant, L(TestModuleLocalizationKeys.Permissions.BridgeInvariant));
+        bridge.AddChild(TestModulePermissions.Bridge.ManageSources, L(TestModuleLocalizationKeys.Permissions.BridgeManageSources));
     }
 }

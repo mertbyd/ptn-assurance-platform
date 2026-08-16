@@ -1,4 +1,6 @@
-﻿using Volo.Abp.Modularity;
+using Volo.Abp.Modularity;
+using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 
 namespace Ptn.TestModule;
 
@@ -8,5 +10,8 @@ namespace Ptn.TestModule;
     )]
 public class TestModuleApplicationTestModule : AbpModule
 {
-
+    public override void ConfigureServices(ServiceConfigurationContext context)
+    {
+        context.Services.AddSingleton(Substitute.For<Ptn.ApiContractChecker.Services.Snapshots.ISpecSnapshotAppService>());
+    }
 }

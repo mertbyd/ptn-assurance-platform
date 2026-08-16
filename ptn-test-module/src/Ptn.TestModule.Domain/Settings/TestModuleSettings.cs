@@ -23,6 +23,9 @@ public static class TestModuleSettings
     /// <summary>Test edilecek yazilimin is kurali belgesinin kok yolu ayar adidir.</summary>
     public const string BusinessRulesPath = PtnBridgeSettingNames.BusinessRulesPath;
 
+    /// <summary>Ajan politikasi belgesinin kok yolu ayar adidir.</summary>
+    public const string AgentPolicyPath = PtnBridgeSettingNames.AgentPolicyPath;
+
     /// <summary>Tenant-scoped test ortami baglama haritasi ayar adidir.</summary>
     public const string EnvironmentBindings = TestModuleRunSettingNames.EnvironmentBindings;
 
@@ -34,6 +37,12 @@ public static class TestModuleSettings
 
     /// <summary>Tek HTTP cagrisinin runner tarafindaki azami sure ayar adidir.</summary>
     public const string RunnerMaxFetchTimeoutSeconds = TestModuleRunSettingNames.RunnerMaxFetchTimeoutSeconds;
+
+    /// <summary>Runner konteynerinin baglanacagi docker ag modu ayar adidir.</summary>
+    public const string RunnerNetworkMode = TestModuleRunSettingNames.RunnerNetworkMode;
+
+    /// <summary>Runner konteynerine eklenecek ek host kayitlari ayar adidir.</summary>
+    public const string RunnerExtraHosts = TestModuleRunSettingNames.RunnerExtraHosts;
 
     /// <summary>HAR artefaktlarinin gun cinsinden saklama suresi ayar adidir.</summary>
     public const string HarRetentionDays = TestModuleRunSettingNames.HarRetentionDays;

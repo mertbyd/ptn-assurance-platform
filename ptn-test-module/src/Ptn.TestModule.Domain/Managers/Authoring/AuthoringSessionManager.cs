@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Ptn.TestModule.Constants.Authoring;
 using Ptn.TestModule.Constants.Bridge;
@@ -107,6 +108,55 @@ public class AuthoringSessionManager : TestModuleDomainService
         });
         session.SourceDocument = _compilerManager.BuildAuthoringDocument(session);
         return session;
+    }
+
+    // Cevaplanmis veritabani zemin adayini tek adima cozer ve tam belgeyi mekanik yeniden uretir.
+    public AuthoringSession AddDatabaseStep(
+        AuthoringSession session,
+        Guid? tenantId,
+        AuthoringDatabaseStep step)
+    {
+        EnsureAvailable(session, tenantId);
+        EnsureQuestionsAnswered(session);
+
+        if (session.DatabaseSteps.Any(item => item.StepId == step.StepId))
+        {
+            throw new BusinessException(TestModuleScenarioErrorCodes.AuthoringStepAlreadyExists);
+        }
+
+        // Anahtar baglamalari kolon adiyla eslesir; buyuk-kucuk harf farki adim uretmemelidir.
+        step.KeyBindings = new Dictionary<string, string?>(step.KeyBindings, StringComparer.OrdinalIgnoreCase);
+        session.DatabaseSteps.Add(step);
+        session.SourceDocument = _compilerManager.BuildAuthoringDocument(session);
+        return session;
+    }
+
+    // Zemin cagrisinda verilen oturumu dogrular ve onerilen adim varsa ayni AddStep yolundan gecirir.
+    public AuthoringSession Continue(
+        AuthoringSession? session,
+        Guid? tenantId,
+        AuthoringStepModel? model)
+    {
+        var current = EnsureAvailable(session, tenantId);
+        return model is null ? current : AddStep(current, tenantId, model);
+    }
+
+    // Zemin sonucuna oturum kimligini, adim sayisini ve bekleyen kapali sorulari ekler.
+    public GroundingResult Attach(GroundingResult grounding, AuthoringSession? session)
+    {
+        ArgumentNullException.ThrowIfNull(grounding);
+        if (session is null)
+        {
+            return grounding;
+        }
+        grounding.SessionId = session.Id;
+        grounding.StepCount = session.Steps.Count;
+        grounding.PendingQuestionCodes = session.Questions
+            .Where(question => !session.Answers.ContainsKey(question.QuestionCode))
+            .Select(question => question.QuestionCode)
+            .OrderBy(code => code, StringComparer.Ordinal)
+            .ToList();
+        return grounding;
     }
 
     // Tum deterministik sorular cevaplanmadan model adimi kabul etmez.

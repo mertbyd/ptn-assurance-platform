@@ -31,6 +31,15 @@ public static class WorkflowRunnerConsts
     /// <summary>Runner'in urettigi JSON ozet dosya adidir.</summary>
     public const string JsonOutputFileName = "run.json";
 
+    /// <summary>Konteynerin baglanacagi docker ag modunu veren bayraktir.</summary>
+    public const string NetworkArgument = "--network";
+
+    /// <summary>Konteyner icine ek host kaydi ekleyen bayraktir.</summary>
+    public const string AddHostArgument = "--add-host";
+
+    /// <summary>Ek host ayarindaki kayitlari ayiran karakterdir.</summary>
+    public const char ExtraHostSeparator = ',';
+
     /// <summary>Belgenin salt-okunur baglandigi konteyner ici klasordur.</summary>
     public const string DocumentMountTarget = "/spec";
 
@@ -97,5 +106,11 @@ public static class WorkflowRunnerConsts
         public const string SpecSnapshotId = "specSnapshotId";
         public const string DbConnectionId = "dbConnectionId";
         public const string TraceId = "traceId";
+
+        /// <summary>Korumali hedefe gonderilecek kimlik basliginin adini tasiyan girdi anahtaridir.</summary>
+        public const string AuthHeaderName = "authHeaderName";
+
+        /// <summary>Kimlik basliginin degerini yalniz runner ortam degiskenine tasiyan girdi anahtaridir.</summary>
+        public const string AuthHeaderValue = "authHeaderValue";
     }
 }

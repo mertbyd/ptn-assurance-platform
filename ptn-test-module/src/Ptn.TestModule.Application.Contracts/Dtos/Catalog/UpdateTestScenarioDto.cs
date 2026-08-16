@@ -7,7 +7,7 @@ public sealed class UpdateTestScenarioDto
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string SourceDocument { get; set; } = string.Empty;
-    public string SourceHash { get; set; } = string.Empty;
+    public string? SourceHash { get; set; }
     public TestScenarioMaterialSealDto MaterialSeal { get; set; } = new();
     public string? DerivabilityCode { get; set; }
     public bool AuthoredByAgent { get; set; }

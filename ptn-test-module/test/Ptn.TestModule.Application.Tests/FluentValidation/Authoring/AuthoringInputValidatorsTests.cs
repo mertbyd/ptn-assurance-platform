@@ -1,5 +1,6 @@
 using System;
 using Ptn.TestModule.Constants.Bridge;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Dtos.Authoring;
 using Ptn.TestModule.Dtos.Bridge;
 using Ptn.TestModule.ExceptionCodes.Catalog;
@@ -99,6 +100,59 @@ public class AuthoringInputValidatorsTests
         new AnswerAuthoringSessionDtoValidator().Validate(answer).IsValid.ShouldBeTrue();
         new AddAuthoringStepDtoValidator().Validate(step).IsValid.ShouldBeTrue();
     }
+
+    // Kapali kume disindaki matcher kodunu reddederek ajanin serbest matcher yazmasini engeller (RULE-0007).
+    [Fact]
+    public void Should_reject_a_database_step_outside_the_closed_matcher_set()
+    {
+        var step = ValidDatabaseStep();
+        step.Expectations[0].MatcherCode = "StartsWith";
+
+        var result = new AddDatabaseAuthoringStepDtoValidator().Validate(step);
+
+        result.Errors.ShouldContain(error =>
+            error.ErrorCode == TestModuleScenarioErrorCodes.Validation.AuthoringMatcherCodeInvalid);
+    }
+
+    // Bos tablo referansi ve bos kolon adi ayri kararli kodlarla reddedilir.
+    [Fact]
+    public void Should_reject_an_unbound_database_step()
+    {
+        var step = ValidDatabaseStep();
+        step.TableReferenceId = Guid.Empty;
+        step.Expectations[0].ColumnName = string.Empty;
+
+        var result = new AddDatabaseAuthoringStepDtoValidator().Validate(step);
+
+        result.Errors.ShouldContain(error =>
+            error.ErrorCode == TestModuleScenarioErrorCodes.Validation.AuthoringTableReferenceInvalid);
+        result.Errors.ShouldContain(error =>
+            error.ErrorCode == TestModuleScenarioErrorCodes.Validation.AuthoringColumnNameInvalid);
+    }
+
+    // Kapali kumeden secilmis gecerli veritabani adimini kabul eder.
+    [Fact]
+    public void Should_accept_a_grounded_database_step()
+    {
+        new AddDatabaseAuthoringStepDtoValidator().Validate(ValidDatabaseStep()).IsValid.ShouldBeTrue();
+    }
+
+    // Kapali kumeden secilmis tek satir beklentisi tasiyan gecerli veritabani adimini kurar.
+    private static AddDatabaseAuthoringStepDto ValidDatabaseStep() => new()
+    {
+        StepId = "verify-ticket-row",
+        TableReferenceId = Guid.Parse("66666666-6666-6666-6666-666666666666"),
+        OperationCode = "assertRow",
+        Expectations =
+        [
+            new AuthoringExpectationDto
+            {
+                ColumnName = "status",
+                MatcherCode = PtnDatabaseMatcherCodes.Equals,
+                Value = "Open"
+            }
+        ]
+    };
 
     // Validator testleri icin gercek grounding zorunluluklarini tasiyan gecerli create girdisini kurar.
     private static CreateAuthoringSessionDto ValidCreate()

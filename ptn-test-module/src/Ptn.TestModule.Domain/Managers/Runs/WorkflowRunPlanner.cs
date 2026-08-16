@@ -117,10 +117,11 @@ public class WorkflowRunPlanner : TestModuleDomainService
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
         var image = await ResolveImageAsync();
+        var network = await ResolveNetworkAsync();
 
         return new WorkflowRunPlan
         {
-            Process = CreateProcessPlan(request, image),
+            Process = CreateProcessPlan(request, image, network),
             RunnerRef = CreateRunnerRef(image),
             HarFilePath = HarFilePath,
             JsonFilePath = JsonFilePath
@@ -172,12 +173,15 @@ public class WorkflowRunPlanner : TestModuleDomainService
 
     // Belgeyi, artefakt yollarini, bayraklari ve butceyi tek surec planinda toplar.
     /// <summary>Runner surecinin tam cagri planini kurar.</summary>
-    private static ProcessExecutionPlan CreateProcessPlan(WorkflowRunRequest request, string image)
+    private static ProcessExecutionPlan CreateProcessPlan(
+        WorkflowRunRequest request,
+        string image,
+        RunnerNetworkPlan network)
     {
         return new ProcessExecutionPlan
         {
             Executable = WorkflowRunnerConsts.DockerExecutable,
-            Arguments = BuildArguments(request, image),
+            Arguments = BuildArguments(request, image, network),
             EnvironmentVariables = BuildEnvironmentVariables(request),
             WorkspaceName = WorkflowRunnerConsts.WorkspaceName,
             InputFiles = [CreateDocumentFile(request)],
@@ -267,12 +271,16 @@ public class WorkflowRunPlanner : TestModuleDomainService
 
     // Belgeyi salt-okunur, artefakt klasorunu yazilabilir baglayip resmi respect komutunu kurar.
     /// <summary>Runner surecinin kararli argument listesini olusturur.</summary>
-    private static IReadOnlyList<string> BuildArguments(WorkflowRunRequest request, string image)
+    private static IReadOnlyList<string> BuildArguments(
+        WorkflowRunRequest request,
+        string image,
+        RunnerNetworkPlan network)
     {
         return
         [
             "run",
             "--rm",
+            .. BuildNetworkArguments(network),
             "--env",
             WorkflowRunnerConsts.InputEnvironmentVariableName,
             "--mount",
@@ -288,6 +296,23 @@ public class WorkflowRunPlanner : TestModuleDomainService
             $"--execution-timeout={request.ExecutionTimeoutSeconds.ToString(CultureInfo.InvariantCulture)}",
             $"--max-fetch-timeout={request.MaxFetchTimeoutSeconds.ToString(CultureInfo.InvariantCulture)}"
         ];
+    }
+
+    // Hedef sistem konteyner disinda kostugunda ag modunu ve host kayitlarini bayraga cevirir; ayar bossa hicbir sey eklemez.
+    /// <summary>Ag ayarlarindan docker ag argumanlarini uretir.</summary>
+    private static IEnumerable<string> BuildNetworkArguments(RunnerNetworkPlan network)
+    {
+        if (!string.IsNullOrWhiteSpace(network.Mode))
+        {
+            yield return WorkflowRunnerConsts.NetworkArgument;
+            yield return network.Mode;
+        }
+
+        foreach (var extraHost in network.ExtraHosts)
+        {
+            yield return WorkflowRunnerConsts.AddHostArgument;
+            yield return extraHost;
+        }
     }
 
     // Girdileri CLI bayragi yerine tek ortam degiskenine tasir (AUDIT-0002 BULGU-09).
@@ -379,6 +404,31 @@ public class WorkflowRunPlanner : TestModuleDomainService
         return string.IsNullOrWhiteSpace(configured)
             ? WorkflowRunnerConsts.RedoclyCliImage
             : configured.Trim();
+    }
+
+    // Ag modunu ve ek host listesini ayardan cozer; ikisi de bos birakilabilir.
+    /// <summary>Runner konteynerinin ag sinirini ayarlardan getirir.</summary>
+    private async Task<RunnerNetworkPlan> ResolveNetworkAsync()
+    {
+        var mode = await _settingProvider.GetOrNullAsync(TestModuleRunSettingNames.RunnerNetworkMode);
+        var extraHosts = await _settingProvider.GetOrNullAsync(TestModuleRunSettingNames.RunnerExtraHosts);
+
+        return new RunnerNetworkPlan
+        {
+            Mode = mode?.Trim() ?? string.Empty,
+            ExtraHosts = SplitExtraHosts(extraHosts)
+        };
+    }
+
+    // Virgulle ayrilmis host kayitlarini bosluklardan arindirilmis listeye cevirir.
+    /// <summary>Ek host ayarini kararli kayit listesine cevirir.</summary>
+    private static IReadOnlyList<string> SplitExtraHosts(string? configured)
+    {
+        return string.IsNullOrWhiteSpace(configured)
+            ? []
+            : configured.Split(
+                WorkflowRunnerConsts.ExtraHostSeparator,
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 
     // Zaman asimi ayarini pozitif tam sayi olarak cozer, gecersiz degeri sessizce varsayilana indirmez.

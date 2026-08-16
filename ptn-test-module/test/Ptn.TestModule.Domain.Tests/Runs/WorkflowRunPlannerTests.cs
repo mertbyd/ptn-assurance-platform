@@ -20,6 +20,7 @@ namespace Ptn.TestModule.Runs;
 public class WorkflowRunPlannerTests
 {
     private const string SecretValue = "s3cr3t-token";
+    private const string CredentialValue = "Bearer runner-only-credential";
     private const string TraceId = "0123456789abcdef0123456789abcdef";
 
     // Dort kontrolun tamami her kosumda acikca set edilmeli; SCHEMA_CHECK kalici hukmu vermemeli.
@@ -112,11 +113,79 @@ public class WorkflowRunPlannerTests
         plan.RunnerRef.ShouldContain(WorkflowRunnerConsts.RedoclyCliImage);
     }
 
+    // Cozulmus API kimligi yalniz ortam degiskenine girmeli; arguman listesine ve RunnerRef'e hic dusmemelidir.
+    [Fact]
+    public async Task Should_keep_the_api_credential_out_of_arguments_and_runner_ref()
+    {
+        var planner = CreatePlanner();
+        var context = CreateContext(CreateFacts());
+        context.Inputs = new Dictionary<string, string>(context.Inputs, StringComparer.Ordinal)
+        {
+            [WorkflowRunnerConsts.Inputs.AuthHeaderName] = "Authorization",
+            [WorkflowRunnerConsts.Inputs.AuthHeaderValue] = CredentialValue
+        };
+        var request = await planner.CreateRequestAsync(context);
+
+        var plan = await planner.CreatePlanAsync(request);
+
+        plan.Process.EnvironmentVariables[WorkflowRunnerConsts.InputEnvironmentVariableName]
+            .ShouldContain(CredentialValue);
+        plan.Process.Arguments
+            .Any(argument => argument.Contains(CredentialValue, StringComparison.Ordinal))
+            .ShouldBeFalse();
+        plan.RunnerRef.ShouldNotContain(CredentialValue);
+        plan.Process.InputFiles.ShouldAllBe(file => !file.Content.Contains(CredentialValue, StringComparison.Ordinal));
+    }
+
+    // Ag ayarlari bos birakildiginda arguman listesi bugunku haliyle birebir kalmalidir.
+    [Fact]
+    public async Task Should_keep_the_argument_list_unchanged_when_network_settings_are_empty()
+    {
+        var plan = await CreatePlanAsync(CreatePlanner());
+
+        plan.Process.Arguments.ShouldNotContain(WorkflowRunnerConsts.NetworkArgument);
+        plan.Process.Arguments.ShouldNotContain(WorkflowRunnerConsts.AddHostArgument);
+        plan.Process.Arguments.Take(3).ShouldBe(["run", "--rm", "--env"]);
+    }
+
+    // Ag modu ayarlandiginda konteyner o aga baglanmalidir.
+    [Fact]
+    public async Task Should_bind_the_container_to_the_configured_network_mode()
+    {
+        var plan = await CreatePlanAsync(CreatePlanner(networkMode: "host"));
+
+        plan.Process.Arguments.Take(4).ShouldBe(["run", "--rm", WorkflowRunnerConsts.NetworkArgument, "host"]);
+    }
+
+    // Ek host kayitlari runner'in host uzerindeki SUT'a ulasmasini saglamalidir.
+    [Fact]
+    public async Task Should_add_every_configured_extra_host()
+    {
+        var plan = await CreatePlanAsync(CreatePlanner(
+            extraHosts: "host.docker.internal:host-gateway, sut.local:10.0.0.5"));
+
+        var arguments = plan.Process.Arguments.ToList();
+        arguments.Count(argument => argument == WorkflowRunnerConsts.AddHostArgument).ShouldBe(2);
+        arguments.ShouldContain("host.docker.internal:host-gateway");
+        arguments.ShouldContain("sut.local:10.0.0.5");
+        arguments.IndexOf(WorkflowRunnerConsts.AddHostArgument)
+            .ShouldBeLessThan(arguments.IndexOf(WorkflowRunnerConsts.RedoclyCliImage));
+    }
+
+    // Varsayilan olgularla dogrulanmis kosum planini uretir.
+    private static async Task<WorkflowRunPlan> CreatePlanAsync(WorkflowRunPlanner planner)
+    {
+        var request = await planner.CreateRequestAsync(CreateContext(CreateFacts()));
+        return await planner.CreatePlanAsync(request);
+    }
+
     // Pinli imaj ve butce ayarlarini varsayilana dusuren setting provider ile planner kurar.
-    private static WorkflowRunPlanner CreatePlanner()
+    private static WorkflowRunPlanner CreatePlanner(string? networkMode = null, string? extraHosts = null)
     {
         var settingProvider = Substitute.For<ISettingProvider>();
         settingProvider.GetOrNullAsync(Arg.Any<string>()).Returns((string?)null);
+        settingProvider.GetOrNullAsync(TestModuleRunSettingNames.RunnerNetworkMode).Returns(networkMode);
+        settingProvider.GetOrNullAsync(TestModuleRunSettingNames.RunnerExtraHosts).Returns(extraHosts);
         return new WorkflowRunPlanner(settingProvider);
     }
 

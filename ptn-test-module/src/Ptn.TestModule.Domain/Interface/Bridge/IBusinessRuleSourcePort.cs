@@ -13,4 +13,8 @@ public interface IBusinessRuleSourcePort
     // Ayarli kokten is kurali belgesini okur ve ham baytlarini getirir.
     /// <summary>Yapilandirilmis is kurali belgesinin ham baytlarini getirir.</summary>
     Task<byte[]> ReadAsync(CancellationToken cancellationToken = default);
+
+    // Ayarli koke ayni dosya adiyla yazar; okuma ve muhur ayni baytlari gorur.
+    /// <summary>Is kurali belgesini yapilandirilmis kokteki sabit adina yazar.</summary>
+    Task WriteAsync(byte[] content, CancellationToken cancellationToken = default);
 }
