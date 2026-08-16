@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace Ptn.TestModule.Models.Catalog;
 
 // islevi: Yayinlanmis senaryolarin dokundugu operasyon ve kural kumelerini snapshot bazinda tasir.
-// sistemdeki gorevi: Kapsamin yalniz payini bildirir; payda checker'da acilmadigi icin bilinmiyor isaretlenir.
+// sistemdeki gorevi: Kapsamin payini ve checker envanterinden kanitli payda durumunu bildirir.
 public class ScenarioCoverageReport
 {
     public int PublishedScenarioCount { get; set; }

@@ -1,3 +1,13 @@
+using System;
+using NSubstitute;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
+using Ptn.TestModule.Constants.Catalog;
+using Ptn.TestModule.Interface.Catalog;
+using Ptn.TestModule.Interface.Lookups;
+using Ptn.TestModule.Interface.Runs;
+using Ptn.TestModule.Models.Bridge.Api;
+using Ptn.TestModule.Models.Catalog;
+using Ptn.TestModule.Managers.Catalog;
 using Ptn.TestModule.Managers.Compilation;
 using Shouldly;
 using Xunit;
@@ -51,4 +61,71 @@ public class ScenarioCoverageManagerTests
     {
         ArazzoCompilerManager.ReadTouchedOperations(document).ShouldBeEmpty();
     }
+
+    // Eksiksiz Passed checker envanteri gercek toplam sayiyi ve Known durumunu rapora uygular.
+    [Fact]
+    public void Complete_snapshot_inventory_should_make_the_denominator_known()
+    {
+        var snapshotId = Guid.NewGuid();
+        var report = Report(snapshotId);
+
+        CreateManager().ApplyOperationInventories(report,
+        [
+            new SnapshotOperationInventory
+            {
+                SnapshotId = snapshotId,
+                OutcomeCode = PtnOutcomeCodes.Passed,
+                TotalCount = 7,
+                IsComplete = true
+            }
+        ]);
+
+        report.DenominatorState.ShouldBe(ScenarioCoverageConsts.DenominatorKnownState);
+        report.DenominatorUnknownReason.ShouldBeEmpty();
+        report.Snapshots[0].TotalOperationCount.ShouldBe(7);
+    }
+
+    // Checker'in bulamadigi snapshot icin yanlis sifir yerine aciklanabilir Unknown korur.
+    [Fact]
+    public void Missing_snapshot_should_keep_an_explainable_unknown_denominator()
+    {
+        var snapshotId = Guid.NewGuid();
+        var report = Report(snapshotId);
+
+        CreateManager().ApplyOperationInventories(report,
+        [
+            new SnapshotOperationInventory
+            {
+                SnapshotId = snapshotId,
+                OutcomeCode = PtnOutcomeCodes.SnapshotNotFound,
+                TotalCount = 0,
+                IsComplete = true
+            }
+        ]);
+
+        report.DenominatorState.ShouldBe(ScenarioCoverageConsts.DenominatorUnknownState);
+        report.DenominatorUnknownReason.ShouldBe(ScenarioCoverageConsts.SnapshotNotFoundReason);
+        report.Snapshots[0].TotalOperationCount.ShouldBeNull();
+    }
+
+    // Domain karar testleri icin persistence cagirmayan coverage Manager'ini kurar.
+    private static ScenarioCoverageManager CreateManager() => new(
+        Substitute.For<ITestScenarioRepository>(),
+        Substitute.For<ITestScenarioStateRepository>(),
+        Substitute.For<ITestRunRepository>());
+
+    // Tek snapshot grubuyla denominator karari verilecek en kucuk raporu kurar.
+    private static ScenarioCoverageReport Report(Guid snapshotId) => new()
+    {
+        Snapshots =
+        [
+            new ScenarioCoverageSnapshotGroup
+            {
+                SpecSnapshotId = snapshotId,
+                TotalOperationCount = null
+            }
+        ],
+        DenominatorState = ScenarioCoverageConsts.DenominatorUnknownState,
+        DenominatorUnknownReason = ScenarioCoverageConsts.DenominatorUnknownReason
+    };
 }

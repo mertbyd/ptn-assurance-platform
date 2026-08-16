@@ -40,6 +40,7 @@ public class ApiOracleManager : TestModuleDomainService
         }).ToList();
         return new SnapshotOperationInventory
         {
+            SnapshotId = snapshotId,
             OutcomeCode = first is null ? PtnOutcomeCodes.Unavailable : NormalizeOutcome(first.OutcomeCode),
             TotalCount = first?.TotalCount ?? 0,
             IsComplete = first is not null && items.Count == first.TotalCount,

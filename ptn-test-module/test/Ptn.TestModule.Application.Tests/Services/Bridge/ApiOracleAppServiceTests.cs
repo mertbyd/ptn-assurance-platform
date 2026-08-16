@@ -169,6 +169,7 @@ public class ApiOracleAppServiceTests
             CancellationToken.None);
 
         result.IsComplete.ShouldBeTrue();
+        result.SnapshotId.ShouldBe(System.Guid.Parse("11111111-1111-1111-1111-111111111111"));
         result.Items.Count.ShouldBe(2);
         result.Items.Select(item => item.ReferenceId).Distinct().Count().ShouldBe(2);
         await snapshots.Received(2).ListOperationsAsync(
