@@ -5,9 +5,9 @@ using System.Text.RegularExpressions;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.ExceptionCodes.Bridge;
-using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Agent;
+using Ptn.TestModule.Models.Compilation;
 using Volo.Abp;
 
 namespace Ptn.TestModule.Managers.Bridge;
@@ -17,10 +17,12 @@ namespace Ptn.TestModule.Managers.Bridge;
 public class ProfilePackManager : TestModuleDomainService
 {
     // Sema muhru yalniz bagli bir veritabani varsa dis yuzeyden okunur.
-    public IReadOnlyList<Guid> CreateSchemaFingerprintRequests(TestScenario scenario)
+    public IReadOnlyList<Guid> CreateSchemaFingerprintRequests(ScenarioPublicationCandidate candidate)
     {
-        ArgumentNullException.ThrowIfNull(scenario);
-        return scenario.DbConnectionId.HasValue ? [scenario.DbConnectionId.Value] : [];
+        ArgumentNullException.ThrowIfNull(candidate);
+        return candidate.DbConnectionId.HasValue
+            ? [candidate.DbConnectionId.Value]
+            : [];
     }
 
     // Dis yuzeyden okunan muhru, yoksa paketin kendi muhrunu kullanarak profili dogrular.

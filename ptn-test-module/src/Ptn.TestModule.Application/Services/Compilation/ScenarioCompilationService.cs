@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Managers.Bridge.Profiles;
 using Ptn.TestModule.Interface.Compilation;
@@ -57,24 +56,27 @@ public sealed class ScenarioCompilationService : IScenarioCompilationPort, ITran
 
     // Senaryonun muhurlu malzemesinden yayin kapisinin okudugu tam makine kanitini uretir.
     public async Task<ScenarioCompilationEvidence> CompileAsync(
-        TestScenario scenario,
+        ScenarioPublicationCandidate candidate,
+        string? profileKey = null,
         CancellationToken cancellationToken = default)
     {
-        var fingerprintRequests = _profilePackManager.CreateSchemaFingerprintRequests(scenario);
-        var profileKey = await _settingProvider.GetOrNullAsync(TestModuleSettings.ProfilePackKey);
-        var pack = await _profilePackFileManager.LoadAsync(profileKey!, cancellationToken);
+        var fingerprintRequests = _profilePackManager.CreateSchemaFingerprintRequests(candidate);
+        var resolvedProfileKey = profileKey ??
+                                 await _settingProvider.GetOrNullAsync(TestModuleSettings.ProfilePackKey);
+        var pack = await _profilePackFileManager.LoadAsync(resolvedProfileKey!, cancellationToken);
         var fingerprints = new List<string>();
         foreach (var connectionId in fingerprintRequests)
         {
             fingerprints.Add(await _schemaKnowledgeAppService.GetSchemaFingerprintAsync(connectionId, cancellationToken));
         }
-        var profilePack = _profilePackManager.GetValidatedForCompilation(pack, profileKey!, fingerprints);
+        var profilePack = _profilePackManager.GetValidatedForCompilation(
+            pack, resolvedProfileKey!, fingerprints);
         var compilation = await _compilerManager.CompileAsync(
-            scenario.SourceDocument,
+            candidate.SourceDocument,
             profilePack,
-            scenario.SpecSnapshotId ?? Guid.Empty,
+            candidate.SpecSnapshotId ?? Guid.Empty,
             cancellationToken);
-        var plan = _compilerManager.CreateDerivabilityPlan(scenario, compilation);
+        var plan = _compilerManager.CreateDerivabilityPlan(candidate, compilation);
         var apiResults = new List<DerivabilityResult>();
         foreach (var request in plan.ApiRequests)
         {

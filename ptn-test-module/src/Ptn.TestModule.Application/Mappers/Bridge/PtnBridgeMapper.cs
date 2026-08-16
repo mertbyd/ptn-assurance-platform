@@ -1,10 +1,12 @@
 using Ptn.TestModule.Dtos.Bridge;
 using Ptn.TestModule.Dtos.Bridge.Api;
 using Ptn.TestModule.Dtos.Bridge.Database;
+using Ptn.TestModule.Dtos.Catalog;
 using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Agent;
 using Ptn.TestModule.Models.Bridge.Database;
 using Ptn.TestModule.Models.Bridge.Footprint;
+using Ptn.TestModule.Models.Catalog;
 using Riok.Mapperly.Abstractions;
 using CheckerCapabilityLevelDto = Ptn.DatabaseChecker.Dtos.Capabilities.CapabilityLevelDto;
 using CheckerCapabilityProbeRequestDto = Ptn.DatabaseChecker.Dtos.Capabilities.CapabilityProbeRequestDto;
@@ -22,6 +24,7 @@ public partial class PtnBridgeMapper
     public partial GroundRequest Map(GroundRequestDto input);
     public partial ExplainRequest Map(ExplainRequestDto input);
     public partial ValidateRequest Map(ValidateRequestDto input);
+    private partial TestScenarioMaterialSeal Map(TestScenarioMaterialSealDto input);
     public partial KnowledgeRequest Map(KnowledgeRequestDto input);
     public partial CapabilityLevel Map(CapabilityLevelDto input);
     public partial CheckerCapabilityLevel Map(CheckerCapabilityLevelDto input);

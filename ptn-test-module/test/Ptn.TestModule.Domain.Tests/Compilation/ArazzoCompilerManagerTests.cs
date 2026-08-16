@@ -184,6 +184,7 @@ public class ArazzoCompilerManagerTests
             databaseDerivability: new DatabaseDerivabilityResult { AllDerivable = true });
 
         evidence.AreAssertionsDerivable.ShouldBeTrue();
+        evidence.DatabaseDerivability!.AllDerivable.ShouldBeTrue();
         evidence.AssertionCount.ShouldBe(3);
         evidence.CompiledHash.ShouldBe(compilation.CompiledHash);
     }

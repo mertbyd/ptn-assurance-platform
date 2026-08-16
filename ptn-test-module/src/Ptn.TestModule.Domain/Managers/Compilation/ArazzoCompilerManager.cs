@@ -14,7 +14,6 @@ using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Constants.Compilation;
 using Ptn.TestModule.Constants.Runs;
-using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.ExceptionCodes.Compilation;
 using Ptn.TestModule.Interface.Compilation;
 using Ptn.TestModule.Managers.Bridge;
@@ -72,6 +71,8 @@ public class ArazzoCompilerManager : TestModuleDomainService
             AssertionCount = compilation.CompiledAssertionCount,
             IsSchemaValid = compilation.IsSchemaValid,
             AreAssertionsDerivable = IsFullyDerivable(compilation, apiDerivability, databaseDerivability),
+            ApiDerivability = apiDerivability,
+            DatabaseDerivability = databaseDerivability,
             SourceDescriptionSpecSnapshotIds = compilation.SourceDescriptionSpecSnapshotIds,
             LintDiagnostics = compilation.LintDiagnostics,
             SchemaLintWarnings = schemaLintWarnings?.ToList() ?? []
@@ -80,15 +81,15 @@ public class ArazzoCompilerManager : TestModuleDomainService
 
     // Derleme ciktisindan gercekten sorgulanacak checker isteklerini fail-closed planlar.
     public ScenarioDerivabilityPlan CreateDerivabilityPlan(
-        TestScenario scenario,
+        ScenarioPublicationCandidate candidate,
         ArazzoCompilationResult compilation)
     {
-        ArgumentNullException.ThrowIfNull(scenario);
+        ArgumentNullException.ThrowIfNull(candidate);
         ArgumentNullException.ThrowIfNull(compilation);
         return new ScenarioDerivabilityPlan
         {
             ApiRequests = compilation.ApiAssertions,
-            DatabaseRequests = CreateDatabaseRequests(scenario, compilation)
+            DatabaseRequests = CreateDatabaseRequests(candidate, compilation)
         };
     }
 
@@ -108,10 +109,10 @@ public class ArazzoCompilerManager : TestModuleDomainService
 
     // Bagli veritabani ve derlenmis assertion birlikte varsa tek checker istegi kurar.
     private static IReadOnlyList<DatabaseDerivabilityRequest> CreateDatabaseRequests(
-        TestScenario scenario,
+        ScenarioPublicationCandidate candidate,
         ArazzoCompilationResult compilation)
     {
-        if (compilation.DatabaseAssertions.Count == 0 || !scenario.DbConnectionId.HasValue)
+        if (compilation.DatabaseAssertions.Count == 0 || !candidate.DbConnectionId.HasValue)
         {
             return [];
         }
@@ -120,7 +121,7 @@ public class ArazzoCompilerManager : TestModuleDomainService
         [
             new DatabaseDerivabilityRequest
             {
-                ConnectionId = scenario.DbConnectionId.Value,
+                ConnectionId = candidate.DbConnectionId.Value,
                 Assertions = compilation.DatabaseAssertions
             }
         ];

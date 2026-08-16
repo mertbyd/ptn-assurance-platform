@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Ptn.TestModule.Models.Bridge;
+using Ptn.TestModule.Models.Bridge.Database;
 
 namespace Ptn.TestModule.Models.Compilation;
 
@@ -13,6 +14,8 @@ public sealed class ScenarioCompilationEvidence
     public int AssertionCount { get; set; }
     public bool IsSchemaValid { get; set; }
     public bool AreAssertionsDerivable { get; set; }
+    public DerivabilityResult? ApiDerivability { get; set; }
+    public DatabaseDerivabilityResult? DatabaseDerivability { get; set; }
     public List<Guid> SourceDescriptionSpecSnapshotIds { get; set; } = [];
     public string LintDiagnostics { get; set; } = string.Empty;
     public List<SchemaLintWarning> SchemaLintWarnings { get; set; } = [];

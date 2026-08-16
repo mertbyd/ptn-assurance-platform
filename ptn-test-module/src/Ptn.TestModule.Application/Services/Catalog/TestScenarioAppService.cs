@@ -124,8 +124,10 @@ public class TestScenarioAppService : BaseApplicationService<
     {
         await CheckPolicyAsync(TestModulePermissions.Scenarios.Publish);
         var entity = await Manager.EnsureExistsAsync(id, cancellationToken: CancellationTokenProvider.Token);
-        var evidence = await _compilationPort.CompileAsync(entity, CancellationTokenProvider.Token);
-        return Mapper.Map(_publicationGateManager.Evaluate(entity, evidence));
+        var candidate = Mapper.MapToPublicationCandidate(entity);
+        var evidence = await _compilationPort.CompileAsync(
+            candidate, cancellationToken: CancellationTokenProvider.Token);
+        return Mapper.Map(_publicationGateManager.Evaluate(candidate, evidence));
     }
     // Onayi source hash'e baglar, belgeyi yeniden derler ve kapilar gectiyse kaniti satira yazar.
     public async Task<TestScenarioDto> PublishAsync(Guid id)
@@ -134,8 +136,10 @@ public class TestScenarioAppService : BaseApplicationService<
         await CheckPolicyAsync(TestModulePermissions.Scenarios.Publish);
         var entity = await Manager.EnsureExistsAsync(id, cancellationToken: CancellationTokenProvider.Token);
         await Manager.BindApprovalAsync(entity, CurrentUser.GetId(), Clock.Now, CancellationTokenProvider.Token);
-        var evidence = await _compilationPort.CompileAsync(entity, CancellationTokenProvider.Token);
-        var decision = _publicationGateManager.Evaluate(entity, evidence);
+        var candidate = Mapper.MapToPublicationCandidate(entity);
+        var evidence = await _compilationPort.CompileAsync(
+            candidate, cancellationToken: CancellationTokenProvider.Token);
+        var decision = _publicationGateManager.Evaluate(candidate, evidence);
         var published = await Manager.PublishAsync(entity, decision, evidence, CancellationTokenProvider.Token);
         var saved = await Repository.UpdateAsync(
             published,

@@ -1,11 +1,15 @@
 using System;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
+using Ptn.TestModule.Constants.Catalog.Lookups;
 using Ptn.TestModule.Managers.Bridge;
+using Ptn.TestModule.Managers.Catalog;
 using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Agent;
 using Ptn.TestModule.Models.Bridge.Api;
 using Ptn.TestModule.Models.Bridge.Footprint;
+using Ptn.TestModule.Models.Catalog;
+using Ptn.TestModule.Models.Compilation;
 using Shouldly;
 using Xunit;
 
@@ -77,6 +81,61 @@ public class GroundingManagerTests
         result.TableDescription.ShouldNotBeNull();
     }
 
+    // Kaynak belge yoksa checker kaniti uydurmaz ve eski referanslari kapali soru olarak korur.
+    [Fact]
+    public void Should_keep_validate_inconclusive_when_publication_evidence_is_absent()
+    {
+        var manager = CreateManager();
+        var request = CreateValidateRequest(includeSource: false);
+
+        var candidate = manager.CreatePublicationCandidate(request);
+        var result = manager.Validate(
+            request, CreatePack(), "schema-fingerprint", null, null);
+
+        candidate.ShouldBeNull();
+        result.IsPublishable.ShouldBeFalse();
+        result.DecisionCode.ShouldBe(PtnVerdictCodes.Inconclusive);
+        result.Questions.Count.ShouldBe(1);
+    }
+
+    // Mevcut bes gate gectiginde Bridge sonucu gercek Confirmed yayin karari vermelidir.
+    [Fact]
+    public void Should_confirm_validate_when_the_existing_publication_gate_passes()
+    {
+        var manager = CreateManager();
+        var request = CreateValidateRequest();
+        var candidate = manager.CreatePublicationCandidate(request)!;
+        var evidence = CreatePublicationEvidence();
+        var decision = new ScenarioPublicationGateManager().Evaluate(candidate, evidence);
+
+        var result = manager.Validate(
+            request, CreatePack(), "schema-fingerprint", evidence, decision);
+
+        result.IsPublishable.ShouldBeTrue();
+        result.DecisionCode.ShouldBe(PtnVerdictCodes.Confirmed);
+        result.AssertionCount.ShouldBe(1);
+        result.FailedGateCodes.ShouldBeEmpty();
+        result.Questions.ShouldBeEmpty();
+    }
+
+    // Turetilebilirlik kaniti dusen mevcut gate koduyla aciklanabilir RuledOut sonucu vermelidir.
+    [Fact]
+    public void Should_rule_out_validate_with_the_existing_failed_gate_codes()
+    {
+        var manager = CreateManager();
+        var request = CreateValidateRequest();
+        var candidate = manager.CreatePublicationCandidate(request)!;
+        var evidence = CreatePublicationEvidence(areAssertionsDerivable: false);
+        var decision = new ScenarioPublicationGateManager().Evaluate(candidate, evidence);
+
+        var result = manager.Validate(
+            request, CreatePack(), "schema-fingerprint", evidence, decision);
+
+        result.IsPublishable.ShouldBeFalse();
+        result.DecisionCode.ShouldBe(PtnVerdictCodes.RuledOut);
+        result.FailedGateCodes.ShouldBe([ScenarioGateCodes.Derivability]);
+    }
+
     // Gercek test bagimliliklariyla GroundingManager sahipligini kurar.
     private static GroundingManager CreateManager() => new(
         new ProfilePackManager(),
@@ -111,6 +170,39 @@ public class GroundingManagerTests
         StepIntent = stepIntent,
         ResponseFormat = PtnResponseFormatCodes.Detailed
     };
+
+    // Validate testleri icin derlenebilir kaynak ve eksiksiz malzeme muhrunu kurar.
+    private static ValidateRequest CreateValidateRequest(bool includeSource = true) => new()
+    {
+        ProfileKey = "unit-profile",
+        SpecSnapshotId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+        ConnectionId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+        SourceDocument = includeSource ? "arazzo: 1.0.1" : null,
+        MaterialSeal = new TestScenarioMaterialSeal
+        {
+            RulesFingerprint = Hash('a'),
+            SpecSnapshotId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            SpecFingerprint = Hash('b'),
+            DbConnectionId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+            DbSchemaFingerprint = Hash('c'),
+            ProfileFingerprint = Hash('d')
+        },
+        ResponseFormat = PtnResponseFormatCodes.Detailed
+    };
+
+    // Mevcut gate Manager'in bes olumlu kanitini en kucuk gercek modelle kurar.
+    private static ScenarioCompilationEvidence CreatePublicationEvidence(
+        bool areAssertionsDerivable = true) => new()
+    {
+        AssertionCount = 1,
+        IsSchemaValid = true,
+        AreAssertionsDerivable = areAssertionsDerivable,
+        SourceDescriptionSpecSnapshotIds =
+            [Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")]
+    };
+
+    // Malzeme fingerprint'lerini katalog sozlesmesinin 64 karakterlik biciminde uretir.
+    private static string Hash(char value) => new(value, 64);
 
     // Tam ve Passed operasyon envanterini verilen gercek satirlardan kurar.
     private static SnapshotOperationInventory CreateInventory(params SnapshotOperation[] items) => new()

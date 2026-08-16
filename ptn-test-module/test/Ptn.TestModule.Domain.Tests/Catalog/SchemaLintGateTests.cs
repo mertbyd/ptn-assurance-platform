@@ -1,6 +1,5 @@
 using System;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
-using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Managers.Catalog;
 using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Catalog;
@@ -42,29 +41,18 @@ public class SchemaLintGateTests
     }
 
     // Gate testine eksiksiz malzeme muhru tasiyan en kucuk senaryo kabugunu kurar.
-    private static TestScenario CreateScenario(Guid snapshotId)
+    private static ScenarioPublicationCandidate CreateScenario(Guid snapshotId)
     {
-        return new TestScenario(
-            Guid.NewGuid(),
-            1,
-            Guid.NewGuid(),
-            null,
-            new TestScenarioCreateModel
-            {
-                ScenarioKey = "catalog.schema-lint",
-                Title = "Schema lint scenario",
-                SourceDocument = "source",
-                SourceHash = Hash('a'),
-                MaterialSeal = new TestScenarioMaterialSeal
-                {
-                    RulesFingerprint = Hash('b'),
-                    SpecSnapshotId = snapshotId,
-                    SpecFingerprint = Hash('c'),
-                    DbConnectionId = Guid.NewGuid(),
-                    DbSchemaFingerprint = Hash('d'),
-                    ProfileFingerprint = Hash('e')
-                }
-            });
+        return new ScenarioPublicationCandidate
+        {
+            SourceDocument = "source",
+            RulesFingerprint = Hash('b'),
+            SpecSnapshotId = snapshotId,
+            SpecFingerprint = Hash('c'),
+            DbConnectionId = Guid.NewGuid(),
+            DbSchemaFingerprint = Hash('d'),
+            ProfileFingerprint = Hash('e')
+        };
     }
 
     // Test fingerprint'lerini kalici modelin digest butcesinde uretir.

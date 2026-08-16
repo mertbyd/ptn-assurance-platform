@@ -12,8 +12,13 @@ public sealed class ValidationResult
     public CoverageReport Coverage { get; set; } = new();
     public bool IsPublishable { get; set; }
     public string DecisionCode { get; set; } = string.Empty;
+    public bool IsSchemaValid { get; set; }
+    public int AssertionCount { get; set; }
     public DerivabilityResult? Derivability { get; set; }
     public DatabaseDerivabilityResult? DatabaseDerivability { get; set; }
+    public IReadOnlyList<string> FailedGateCodes { get; set; } = [];
+    public IReadOnlyList<string> Warnings { get; set; } = [];
+    public string LintDiagnostics { get; set; } = string.Empty;
     public List<ClosedQuestion> Questions { get; set; } = [];
     public string? ResourceLink { get; set; }
 }

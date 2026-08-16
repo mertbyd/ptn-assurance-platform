@@ -12,11 +12,13 @@ using Ptn.TestModule.Models.Bridge.Agent;
 using Ptn.TestModule.Models.Bridge.Footprint;
 using Ptn.TestModule.Models.Bridge.Database;
 using Ptn.TestModule.Models.Bridge.Api;
+using Ptn.TestModule.Models.Catalog;
+using Ptn.TestModule.Models.Compilation;
 
 namespace Ptn.TestModule.Managers.Bridge;
 
-// islevi: Profil kapsami ve ortam yetenegini tek ptn_ground sonucunda birlestirir.
-// sistemdeki gorevi: Cozulemeyen operasyon referansini aday listesi veya tahmin yerine kapali soruya cevirir.
+// islevi: Profil kapsami, grounding kaniti ve mevcut yayin gate kararini Bridge sonucunda birlestirir.
+// sistemdeki gorevi: Cozulemeyen yazarlik kanitini tahmin yerine kapali soruya cevirir.
 public class GroundingManager : TestModuleDomainService
 {
     private readonly ProfilePackManager _profilePackManager;
@@ -122,31 +124,54 @@ public class GroundingManager : TestModuleDomainService
         DbSchemaName = binding.DbSchemaName,
         TableName = binding.TableName
     };
-    // Yayin kapisini referans cozulemediginde kapali ve ogreten bir sonuc olarak kapatir.
+    // Validate girdisinde derlenebilir kaynak kaniti varsa ortak yayin adayi kurar.
+    public ScenarioPublicationCandidate? CreatePublicationCandidate(ValidateRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrWhiteSpace(request.SourceDocument) || request.MaterialSeal is null)
+        {
+            return null;
+        }
+        return new ScenarioPublicationCandidate
+        {
+            SourceDocument = request.SourceDocument,
+            RulesFingerprint = request.MaterialSeal.RulesFingerprint,
+            SpecSnapshotId = request.MaterialSeal.SpecSnapshotId,
+            SpecFingerprint = request.MaterialSeal.SpecFingerprint,
+            DbConnectionId = request.MaterialSeal.DbConnectionId,
+            DbSchemaFingerprint = request.MaterialSeal.DbSchemaFingerprint,
+            ProfileFingerprint = request.MaterialSeal.ProfileFingerprint
+        };
+    }
+    // Mevcut yayin gate kararini Bridge'in ozet-once ve aciklanabilir sonucuna cevirir.
     public ValidationResult Validate(
         ValidateRequest request,
         ProfilePack pack,
         string currentFingerprint,
-        DatabaseDerivabilityResult? databaseDerivability = null)
+        ScenarioCompilationEvidence? evidence,
+        TestScenarioPublishDecision? decision)
     {
         _profilePackManager.GetValidated(pack, request.ProfileKey, currentFingerprint);
+        var hasEvidence = evidence is not null && decision is not null;
         return new ValidationResult
         {
             ResponseFormat = request.ResponseFormat,
             Coverage = _profilePackManager.BuildCoverage(pack, PtnConceptCodes.All),
-            IsPublishable = false,
-            DecisionCode = PtnVerdictCodes.Inconclusive,
-            DatabaseDerivability = databaseDerivability,
-            Questions = [AssertionQuestion(request.AssertionReferenceIds)],
+            IsPublishable = decision?.IsPublishable ?? false,
+            DecisionCode = !hasEvidence
+                ? PtnVerdictCodes.Inconclusive
+                : decision!.IsPublishable ? PtnVerdictCodes.Confirmed : PtnVerdictCodes.RuledOut,
+            IsSchemaValid = evidence?.IsSchemaValid ?? false,
+            AssertionCount = evidence?.AssertionCount ?? 0,
+            Derivability = evidence?.ApiDerivability,
+            DatabaseDerivability = evidence?.DatabaseDerivability,
+            FailedGateCodes = decision?.FailedGateCodes ?? [],
+            Warnings = decision?.Warnings ?? [],
+            LintDiagnostics = evidence?.LintDiagnostics ?? string.Empty,
+            Questions = hasEvidence ? [] : [AssertionQuestion(request.AssertionReferenceIds)],
             ResourceLink = ResourceLink(request.ResponseFormat, PtnToolCodes.Validate)
         };
     }
-    // Validate domain girdisinden DB checker turetilebilirlik istegini tek yerde kurar.
-    public DatabaseDerivabilityRequest CreateDatabaseDerivabilityRequest(ValidateRequest request) => new()
-    {
-        ConnectionId = request.ConnectionId,
-        Assertions = request.DatabaseAssertions.ToList()
-    };
     // Cozulemeyen operasyon referansini tek kapali onay sorusuna cevirir.
     private static ClosedQuestion OperationQuestion(IEnumerable<Guid> operationReferenceIds) => new()
     {
