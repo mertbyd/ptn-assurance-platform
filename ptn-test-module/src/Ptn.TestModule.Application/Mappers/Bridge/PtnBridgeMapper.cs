@@ -47,6 +47,8 @@ public partial class PtnBridgeMapper
     public partial FieldBindingDto Map(FieldBinding input);
     public partial RequestExampleDto Map(RequestExample input);
     public partial TableDescriptionDto Map(TableDescription input);
+    public partial TableDescription Map(TableDescriptionDto input);
+    public partial TableQueryDto Map(TableQuery input);
     public partial TableColumnDto Map(TableColumn input);
     public partial TableKeyDto Map(TableKey input);
     public partial DerivabilityResultDto Map(DerivabilityResult input);

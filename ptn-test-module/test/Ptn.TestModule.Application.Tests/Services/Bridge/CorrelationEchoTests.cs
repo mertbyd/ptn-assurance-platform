@@ -99,6 +99,7 @@ public class CorrelationEchoTests
             });
         var service = new ApiOracleAppService(
             checker,
+            Substitute.For<Ptn.ApiContractChecker.Services.Snapshots.ISpecSnapshotAppService>(),
             new ApiOracleManager(),
             new OperationQueryDtoValidator(),
             new OperationLinkRequestDtoValidator(),

@@ -42,6 +42,7 @@ public static class TestModuleBridgeErrorCodes
         public const string ProfileKeyRequired = $"{Prefix}:Validation:ProfileKeyRequired";
         public const string InvariantPatternInvalid = $"{Prefix}:Validation:InvariantPatternInvalid";
         public const string OperationReferenceRequired = $"{Prefix}:Validation:OperationReferenceRequired";
+        public const string StepIntentRequired = $"{Prefix}:Validation:StepIntentRequired";
         public const string SourceOperationIdRequired = $"{Prefix}:Validation:SourceOperationIdRequired";
         public const string OperationLinkCandidateLimitInvalid = $"{Prefix}:Validation:OperationLinkCandidateLimitInvalid";
         public const string AssertionReferenceRequired = $"{Prefix}:Validation:AssertionReferenceRequired";

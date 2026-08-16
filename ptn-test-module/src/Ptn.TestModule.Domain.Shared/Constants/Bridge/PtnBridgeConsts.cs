@@ -14,6 +14,7 @@ public static class PtnBridgeConsts
     public const int MinimumOperationScore = 70;
     public const int DefaultOperationLinkCandidates = 5;
     public const int MaxOperationLinkCandidates = 5;
+    public const int OperationInventoryPageSize = 100;
     public const string ReferenceIdFormat = "D";
     public const string EvidenceReferenceSeparator = ":";
 }

@@ -41,6 +41,7 @@ public class ApiOracleAppServiceTests
             });
         var oracleService = new ApiOracleAppService(
             service,
+            Substitute.For<Ptn.ApiContractChecker.Services.Snapshots.ISpecSnapshotAppService>(),
             new ApiOracleManager(),
             new OperationQueryDtoValidator(),
             new OperationLinkRequestDtoValidator(),
@@ -91,6 +92,7 @@ public class ApiOracleAppServiceTests
             });
         var oracleService = new ApiOracleAppService(
             service,
+            Substitute.For<Ptn.ApiContractChecker.Services.Snapshots.ISpecSnapshotAppService>(),
             new ApiOracleManager(),
             new OperationQueryDtoValidator(),
             new OperationLinkRequestDtoValidator(),
@@ -109,5 +111,68 @@ public class ApiOracleAppServiceTests
         result.Candidates.Single().SourceCode.ShouldBe(PtnOperationLinkSourceCodes.DeclaredLink);
         result.Candidates.Single().ParameterMap.Single().TargetParameterName.ShouldBe("orderId");
         result.Candidates.Single().RequiresHumanApproval.ShouldBeTrue();
+    }
+
+    // Checker sayfalarini toplam sayiya kadar tuketip her satira kararli kapali referans verir.
+    [Fact]
+    public async Task Should_consume_the_complete_snapshot_operation_inventory()
+    {
+        var conformance = Substitute.For<IResponseConformanceAppService>();
+        var snapshots = Substitute.For<Ptn.ApiContractChecker.Services.Snapshots.ISpecSnapshotAppService>();
+        snapshots.ListOperationsAsync(
+                Arg.Any<System.Guid>(),
+                Arg.Any<Ptn.ApiContractChecker.Dtos.Snapshots.ListSnapshotOperationsInput>())
+            .Returns(call =>
+            {
+                var input = call.Arg<Ptn.ApiContractChecker.Dtos.Snapshots.ListSnapshotOperationsInput>();
+                return input.SkipCount == 0
+                    ? new Ptn.ApiContractChecker.Dtos.Snapshots.SnapshotOperationInventoryDto
+                    {
+                        OutcomeCode = ConformanceOutcomeCodes.Passed,
+                        TotalCount = 2,
+                        Items =
+                        [
+                            new Ptn.ApiContractChecker.Dtos.Snapshots.SnapshotOperationRowDto
+                            {
+                                OperationId = "create-ticket",
+                                Method = "POST",
+                                Path = "/tickets"
+                            }
+                        ]
+                    }
+                    : new Ptn.ApiContractChecker.Dtos.Snapshots.SnapshotOperationInventoryDto
+                    {
+                        OutcomeCode = ConformanceOutcomeCodes.Passed,
+                        TotalCount = 2,
+                        Items =
+                        [
+                            new Ptn.ApiContractChecker.Dtos.Snapshots.SnapshotOperationRowDto
+                            {
+                                OperationId = "get-ticket",
+                                Method = "GET",
+                                Path = "/tickets/{id}"
+                            }
+                        ]
+                    };
+            });
+        var oracleService = new ApiOracleAppService(
+            conformance,
+            snapshots,
+            new ApiOracleManager(),
+            new OperationQueryDtoValidator(),
+            new OperationLinkRequestDtoValidator(),
+            new DerivabilityRequestDtoValidator(),
+            new ResponseObservationDtoValidator());
+
+        var result = await oracleService.ListSnapshotOperationsAsync(
+            System.Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            CancellationToken.None);
+
+        result.IsComplete.ShouldBeTrue();
+        result.Items.Count.ShouldBe(2);
+        result.Items.Select(item => item.ReferenceId).Distinct().Count().ShouldBe(2);
+        await snapshots.Received(2).ListOperationsAsync(
+            Arg.Any<System.Guid>(),
+            Arg.Any<Ptn.ApiContractChecker.Dtos.Snapshots.ListSnapshotOperationsInput>());
     }
 }

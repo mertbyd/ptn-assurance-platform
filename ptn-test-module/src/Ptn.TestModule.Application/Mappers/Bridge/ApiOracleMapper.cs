@@ -19,6 +19,8 @@ using CheckerOperationSuggestionDto = Ptn.ApiContractChecker.Dtos.Conformance.Op
 using CheckerRequestExampleDto = Ptn.ApiContractChecker.Dtos.Conformance.RequestExampleDto;
 using CheckerResponseObservationDto = Ptn.ApiContractChecker.Dtos.Conformance.ResponseConformanceDto;
 using CheckerCorrelationRefDto = Ptn.ApiContractChecker.Dtos.Correlation.CorrelationRefDto;
+using CheckerSnapshotOperationInventoryDto = Ptn.ApiContractChecker.Dtos.Snapshots.SnapshotOperationInventoryDto;
+using CheckerSnapshotOperationRowDto = Ptn.ApiContractChecker.Dtos.Snapshots.SnapshotOperationRowDto;
 
 namespace Ptn.TestModule.Mappers.Bridge;
 
@@ -28,6 +30,10 @@ namespace Ptn.TestModule.Mappers.Bridge;
 public partial class ApiOracleMapper
 {
     public partial OperationQuery Map(OperationQueryDto input);
+    public partial OperationQueryDto Map(OperationQuery input);
+    public partial SnapshotOperationInventoryDto Map(SnapshotOperationInventory input);
+    public partial SnapshotOperationInventory MapResult(SnapshotOperationInventoryDto input);
+    public partial RequestExample MapResult(RequestExampleDto input);
     public partial OperationBindingDto Map(OperationBinding input);
     public partial OperationLinkRequest Map(OperationLinkRequestDto input);
     public partial OperationLinkResultDto Map(OperationLinkResult input);
@@ -52,6 +58,8 @@ public partial class ApiOracleMapper
     public partial DerivabilityResult Map(CheckerDerivabilityResultDto input);
     public partial ConformanceResult Map(CheckerConformanceResultDto input);
     public partial OperationSuggestion MapSuggestion(CheckerOperationSuggestionDto input);
+    public partial SnapshotOperationPage Map(CheckerSnapshotOperationInventoryDto input);
+    public partial SnapshotOperationRow Map(CheckerSnapshotOperationRowDto input);
     public partial FieldBinding MapFieldBinding(CheckerFieldBindingDto input);
     public partial DerivabilityItem MapDerivabilityItem(CheckerDerivabilityItemDto input);
     public partial ConformanceViolation MapViolation(CheckerConformanceViolationDto input);

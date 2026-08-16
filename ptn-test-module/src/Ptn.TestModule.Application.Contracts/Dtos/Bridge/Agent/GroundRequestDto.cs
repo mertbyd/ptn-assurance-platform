@@ -19,7 +19,7 @@ public sealed class GroundRequestDto
     /// <summary>
     /// Cozumlenecek operasyonun kararli referans kimligini belirtir.
     /// </summary>
-    public Guid OperationReferenceId { get; set; }
+    public Guid? OperationReferenceId { get; set; }
     /// <summary>
     /// Hedef tablonun varsa kararli referans kimligini belirtir.
     /// </summary>
