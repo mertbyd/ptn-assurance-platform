@@ -61,4 +61,11 @@ public partial class TestRunMapper
     public partial RunArtifactContentDto Map(RunArtifactContent source);
     public partial TestEnvironmentBindingDto Map(TestRunEnvironmentBinding source);
     public partial List<TestEnvironmentBindingDto> Map(List<TestRunEnvironmentBinding> source);
+
+    /// <summary>Yeni ortam baglama DTO'sunu Manager girdisi olan domain modeline cevirir.</summary>
+    public partial TestRunEnvironmentBinding Map(CreateTestEnvironmentBindingDto source);
+
+    /// <summary>Ortam guncelleme DTO'sunu Manager girdisi olan domain modeline cevirir; anahtar rotadan gelir.</summary>
+    [MapperIgnoreTarget(nameof(TestRunEnvironmentBinding.EnvironmentKey))]
+    public partial TestRunEnvironmentBinding Map(UpdateTestEnvironmentBindingDto source);
 }

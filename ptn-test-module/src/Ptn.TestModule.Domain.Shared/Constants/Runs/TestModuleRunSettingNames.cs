@@ -120,4 +120,10 @@ public static class TestModuleRunSettingNames
 
     /// <summary>Webhook teslim kimliginin azami karakter sayisidir.</summary>
     public const int MaxWebhookDeliveryIdLength = 128;
+
+    /// <summary>Ortam taban adresinin azami karakter sayisidir.</summary>
+    public const int MaxBaseUrlLength = 512;
+
+    /// <summary>Mantiksal secret referansinin azami karakter sayisidir.</summary>
+    public const int MaxSecretRefLength = 256;
 }

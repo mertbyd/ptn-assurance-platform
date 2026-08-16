@@ -83,6 +83,9 @@ public static class TestModuleLocalizationKeys
         public const string RunsCancel = "Permission:Runs.Cancel";
         public const string RunsSandboxReset = "Permission:Runs.SandboxReset";
 
+        /// <summary>Ortam baglama yazma permission adinin anahtaridir.</summary>
+        public const string RunsManageEnvironments = "Permission:Runs.ManageEnvironments";
+
         /// <summary>Test lookup okuma permission adinin anahtaridir.</summary>
         public const string Lookups = "Permission:Lookups";
     }

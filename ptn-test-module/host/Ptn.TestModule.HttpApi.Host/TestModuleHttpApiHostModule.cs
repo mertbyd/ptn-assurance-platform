@@ -36,6 +36,8 @@ using Volo.Abp.EntityFrameworkCore.PostgreSql;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.SettingManagement;
+using Volo.Abp.SettingManagement.EntityFrameworkCore;
 using Volo.Abp.Swashbuckle;
 using Volo.Abp.VirtualFileSystem;
 
@@ -61,6 +63,10 @@ namespace Ptn.TestModule;
     typeof(AbpBlobStoringFileSystemModule),
     typeof(AbpCachingStackExchangeRedisModule),
     typeof(AbpEntityFrameworkCorePostgreSqlModule),
+    // Ayar yuzeyi ABP'nin kendisidir; paralel bir ayar CRUD'u yazilmaz. Tablo sahibi Authenticator'dir (RULE-0002).
+    typeof(AbpSettingManagementApplicationModule),
+    typeof(AbpSettingManagementEntityFrameworkCoreModule),
+    typeof(AbpSettingManagementHttpApiModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpSwashbuckleModule)
 )]

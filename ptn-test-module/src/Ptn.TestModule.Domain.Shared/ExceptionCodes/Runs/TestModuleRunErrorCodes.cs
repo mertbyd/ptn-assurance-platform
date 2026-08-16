@@ -16,6 +16,15 @@ public static class TestModuleRunErrorCodes
     /// <summary>API ve veritabani hedeflerinin farkli ortam anahtarlari tasidigini bildirir.</summary>
     public const string EnvironmentMismatch = $"{Prefix}:EnvironmentMismatch";
 
+    /// <summary>Ayni mantiksal ortam anahtarinin haritada zaten bagli oldugunu bildirir.</summary>
+    public const string EnvironmentAlreadyBound = $"{Prefix}:EnvironmentAlreadyBound";
+
+    /// <summary>Ortam taban adresinin mutlak http veya https adresi olmadigini bildirir.</summary>
+    public const string EnvironmentBaseUrlInvalid = $"{Prefix}:EnvironmentBaseUrlInvalid";
+
+    /// <summary>Ortam baglamasinin bos snapshot veya baglanti kimligi tasidigini bildirir.</summary>
+    public const string EnvironmentTargetInvalid = $"{Prefix}:EnvironmentTargetInvalid";
+
     /// <summary>Kosumun Pending disinda bir durumdan claim edilmeye calisildigini bildirir.</summary>
     public const string RunAlreadyClaimed = $"{Prefix}:RunAlreadyClaimed";
 
@@ -264,5 +273,23 @@ public static class TestModuleRunErrorCodes
 
         /// <summary>Senaryo anahtarinin kalici siniri astigini bildirir.</summary>
         public const string ScenarioKeyTooLong = $"{Prefix}:Validation:ScenarioKeyTooLong";
+
+        /// <summary>Ortam taban adresinin verilmedigini bildirir.</summary>
+        public const string BaseUrlRequired = $"{Prefix}:Validation:BaseUrlRequired";
+
+        /// <summary>Ortam taban adresinin kalici siniri astigini bildirir.</summary>
+        public const string BaseUrlTooLong = $"{Prefix}:Validation:BaseUrlTooLong";
+
+        /// <summary>Secret referansinin verilmedigini bildirir.</summary>
+        public const string SecretRefRequired = $"{Prefix}:Validation:SecretRefRequired";
+
+        /// <summary>Secret referansinin kalici siniri astigini bildirir.</summary>
+        public const string SecretRefTooLong = $"{Prefix}:Validation:SecretRefTooLong";
+
+        /// <summary>Spec snapshot kimliginin bos Guid oldugunu bildirir.</summary>
+        public const string SpecSnapshotIdInvalid = $"{Prefix}:Validation:SpecSnapshotIdInvalid";
+
+        /// <summary>Veritabani baglanti kimliginin bos Guid oldugunu bildirir.</summary>
+        public const string DbConnectionIdInvalid = $"{Prefix}:Validation:DbConnectionIdInvalid";
     }
 }

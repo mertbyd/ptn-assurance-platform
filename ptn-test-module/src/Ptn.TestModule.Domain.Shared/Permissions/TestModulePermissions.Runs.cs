@@ -31,5 +31,8 @@ public partial class TestModulePermissions
 
         /// <summary>Yazma yetkili sandbox verisini sifirlama permission'idir.</summary>
         public const string SandboxReset = Default + ".SandboxReset";
+
+        /// <summary>Tenant ortam baglama haritasini yazma permission'idir.</summary>
+        public const string ManageEnvironments = Default + ".ManageEnvironments";
     }
 }
