@@ -13,4 +13,5 @@ public interface IAuthoringSessionAppService : IApplicationService
     Task<AuthoringSessionDto> GetAsync(Guid id);
     Task<AuthoringSessionDto> AnswerAsync(Guid id, AnswerAuthoringSessionDto input);
     Task<AuthoringSessionDto> AddStepAsync(Guid id, AddAuthoringStepDto input);
+    Task<AuthoringSessionDto> AddDatabaseStepAsync(Guid id, AddDatabaseAuthoringStepDto input);
 }

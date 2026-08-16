@@ -14,6 +14,7 @@ public sealed class AuthoringSessionDto
     public List<ClosedQuestionDto> Questions { get; set; } = [];
     public Dictionary<string, string> Answers { get; set; } = [];
     public List<AuthoringStepDto> Steps { get; set; } = [];
+    public List<AddDatabaseAuthoringStepDto> DatabaseSteps { get; set; } = [];
     public string SourceDocument { get; set; } = string.Empty;
     public long TtlMs { get; set; }
 }

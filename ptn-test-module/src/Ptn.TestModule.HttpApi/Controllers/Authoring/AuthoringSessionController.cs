@@ -10,8 +10,10 @@ using SystemStandards.Results;
 
 namespace Ptn.TestModule.Controllers.Authoring;
 
-// islevi: Tenant authoring session baslatma, okuma, cevaplama ve tek-adim islemlerini HTTP'ye acar.
-// sistemdeki gorevi: Route, binding ve permission tasiyip her action'i tek AppService cagrisina yonlendirir.
+/// <summary>
+/// islevi: Tenant authoring session baslatma, okuma, cevaplama ve tek-adim islemlerini HTTP'ye acar.
+/// sistemdeki gorevi: Route, binding ve permission tasiyip her action'i tek AppService cagrisina yonlendirir.
+/// </summary>
 [Route(AuthoringSessionRoutes.Root)]
 [ApiExplorerSettings(GroupName = AuthoringSessionRoutes.SwaggerGroupName)]
 public class AuthoringSessionController : TestModuleController
@@ -19,7 +21,7 @@ public class AuthoringSessionController : TestModuleController
     private IAuthoringSessionAppService AppService =>
         LazyGetRequiredService<IAuthoringSessionAppService>();
 
-    // Gercek grounding sonucuyla yeni tenant authoring session'i baslatir.
+    /// <summary>Gercek grounding sonucuyla yeni tenant authoring session'i baslatir.</summary>
     [HttpPost]
     [Authorize(TestModulePermissions.Scenarios.Create)]
     public virtual async Task<Result<AuthoringSessionDto>> Create(
@@ -29,7 +31,7 @@ public class AuthoringSessionController : TestModuleController
         return result;
     }
 
-    // Cache'teki guncel authoring session durumunu getirir.
+    /// <summary>Cache'teki guncel authoring session durumunu getirir.</summary>
     [HttpGet(AuthoringSessionRoutes.ById)]
     [Authorize(TestModulePermissions.Scenarios.Update)]
     public virtual async Task<Result<AuthoringSessionDto>> Get(Guid id)
@@ -38,7 +40,7 @@ public class AuthoringSessionController : TestModuleController
         return result;
     }
 
-    // Tek kapali sorunun secilmis cevabini session'a yazar.
+    /// <summary>Tek kapali sorunun secilmis cevabini session'a yazar.</summary>
     [HttpPost(AuthoringSessionRoutes.Answer)]
     [Authorize(TestModulePermissions.Scenarios.Update)]
     public virtual async Task<Result<AuthoringSessionDto>> Answer(
@@ -49,7 +51,7 @@ public class AuthoringSessionController : TestModuleController
         return result;
     }
 
-    // Tek yapilandirilmis adimi mekanik Arazzo belgesine birlestirir.
+    /// <summary>Tek yapilandirilmis adimi mekanik Arazzo belgesine birlestirir.</summary>
     [HttpPost(AuthoringSessionRoutes.Step)]
     [Authorize(TestModulePermissions.Scenarios.Update)]
     public virtual async Task<Result<AuthoringSessionDto>> AddStep(
@@ -57,6 +59,17 @@ public class AuthoringSessionController : TestModuleController
         [FromBody] AddAuthoringStepDto input)
     {
         var result = await AppService.AddStepAsync(id, input);
+        return result;
+    }
+
+    /// <summary>Tipli veritabani adimini mekanik Arazzo belgesine x-checknexus-db yoluyla birlestirir.</summary>
+    [HttpPost(AuthoringSessionRoutes.DatabaseStep)]
+    [Authorize(TestModulePermissions.Scenarios.Update)]
+    public virtual async Task<Result<AuthoringSessionDto>> AddDatabaseStep(
+        Guid id,
+        [FromBody] AddDatabaseAuthoringStepDto input)
+    {
+        var result = await AppService.AddDatabaseStepAsync(id, input);
         return result;
     }
 }

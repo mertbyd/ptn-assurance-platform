@@ -50,6 +50,25 @@ public class GroundingManager : TestModuleDomainService
                          requestExample?.OutcomeCode == PtnOutcomeCodes.Passed &&
                          tableBinding is not null &&
                          tableDescription is not null;
+        if (tableBinding is not null && tableDescription is not null)
+        {
+            tableDescription.TableReferenceId = CreateTableReferenceId(request.ProfileKey, tableBinding);
+            tableDescription.AssertableFields = tableDescription.Columns.Select(c => c.Name).ToList();
+            tableDescription.AllowedMatchers = PtnDatabaseMatcherCodes.All.ToList();
+            tableDescription.KeyCandidates = tableDescription.UniqueIndexes
+                .Select(k => string.Join(",", k.Columns.OrderBy(c => c)))
+                .ToList();
+            
+            if (tableDescription.PrimaryKey is not null)
+            {
+                var pkString = string.Join(",", tableDescription.PrimaryKey.Columns.OrderBy(c => c));
+                if (!tableDescription.KeyCandidates.Contains(pkString))
+                {
+                    tableDescription.KeyCandidates.Insert(0, pkString);
+                }
+            }
+        }
+
         var result = new GroundingResult
         {
             ResponseFormat = request.ResponseFormat,

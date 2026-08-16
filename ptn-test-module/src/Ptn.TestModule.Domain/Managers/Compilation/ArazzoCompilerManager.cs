@@ -66,7 +66,8 @@ public class ArazzoCompilerManager : TestModuleDomainService
             { ArazzoCompilationConsts.Fields.WorkflowId, session.WorkflowId },
             { ArazzoCompilationConsts.Fields.Summary, session.WorkflowSummary },
             { ArazzoCompilationConsts.Fields.Steps, new YamlSequenceNode(
-                session.Steps.Select(BuildAuthoringStep)) }
+                session.Steps.Select(BuildAuthoringStep).Concat(
+                    session.DatabaseSteps.Select(BuildAuthoringDatabaseStep))) }
         };
         var root = new YamlMappingNode
         {
@@ -188,6 +189,61 @@ public class ArazzoCompilerManager : TestModuleDomainService
             });
         }
         return result;
+    }
+
+    // Cache oturumundaki DB adimlarini mekanik x-checknexus-db uzantisina cevirir.
+    private static YamlMappingNode BuildAuthoringDatabaseStep(AuthoringDatabaseStep step)
+    {
+        var dbExtension = new YamlMappingNode
+        {
+            { ArazzoCompilationConsts.Fields.Operation, step.OperationCode },
+            { ArazzoCompilationConsts.Fields.Concept, step.TableReferenceId.ToString() }
+        };
+
+        if (step.KeyBindings.Count > 0)
+        {
+            var keyNode = new YamlMappingNode();
+            foreach (var kvp in step.KeyBindings)
+            {
+                keyNode.Add(kvp.Key, kvp.Value ?? string.Empty);
+            }
+            dbExtension.Add(ArazzoCompilationConsts.Fields.Key, keyNode);
+        }
+
+        if (step.Expectations.Count > 0)
+        {
+            var expectNode = new YamlSequenceNode();
+            foreach (var exp in step.Expectations)
+            {
+                var expNode = new YamlMappingNode
+                {
+                    { ArazzoCompilationConsts.Fields.ColumnName, exp.ColumnName },
+                    { ArazzoCompilationConsts.Fields.Matcher, exp.MatcherCode }
+                };
+                if (exp.Value != null)
+                {
+                    expNode.Add(ArazzoCompilationConsts.Fields.Value, exp.Value);
+                }
+                expectNode.Add(expNode);
+            }
+            dbExtension.Add(ArazzoCompilationConsts.Fields.Expect, expectNode);
+        }
+
+        if (step.TimeoutMs > 0)
+        {
+            dbExtension.Add(ArazzoCompilationConsts.Fields.TimeoutMs, step.TimeoutMs.ToString(CultureInfo.InvariantCulture));
+        }
+
+        if (step.PollIntervalMs > 0)
+        {
+            dbExtension.Add(ArazzoCompilationConsts.Fields.PollIntervalMs, step.PollIntervalMs.ToString(CultureInfo.InvariantCulture));
+        }
+
+        return new YamlMappingNode
+        {
+            { ArazzoCompilationConsts.Fields.StepId, step.StepId },
+            { ArazzoCompilationConsts.DatabaseExtension, dbExtension }
+        };
     }
 
     // API yolunu Arazzo sourceDescription JSON Pointer operationPath adresine cevirir.

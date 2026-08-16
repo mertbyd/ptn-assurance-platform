@@ -12,5 +12,6 @@ public partial class AuthoringSessionMapper
     public partial AuthoringSessionCreateModel Map(CreateAuthoringSessionDto source);
     public partial AuthoringAnswerModel Map(AnswerAuthoringSessionDto source);
     public partial AuthoringStepModel Map(AddAuthoringStepDto source);
+    public partial AuthoringDatabaseStep Map(AddDatabaseAuthoringStepDto source);
     public partial AuthoringSessionDto Map(AuthoringSession source);
 }

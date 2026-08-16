@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Ptn.TestModule.Constants.Authoring;
 using Ptn.TestModule.Constants.Bridge;
@@ -105,6 +106,27 @@ public class AuthoringSessionManager : TestModuleDomainService
             RequestBodyJson = model.RequestBodyJson,
             AssertionPaths = model.AssertionPaths.ToList()
         });
+        session.SourceDocument = _compilerManager.BuildAuthoringDocument(session);
+        return session;
+    }
+
+    // Cevaplanmis veritabani zemin adayini tek adima cozer ve tam belgeyi mekanik yeniden uretir.
+    public AuthoringSession AddDatabaseStep(
+        AuthoringSession session,
+        Guid? tenantId,
+        AuthoringDatabaseStep step)
+    {
+        EnsureAvailable(session, tenantId);
+        EnsureQuestionsAnswered(session);
+
+        if (session.DatabaseSteps.Any(item => item.StepId == step.StepId))
+        {
+            throw new BusinessException(TestModuleScenarioErrorCodes.AuthoringStepAlreadyExists);
+        }
+
+        // Anahtar baglamalari kolon adiyla eslesir; buyuk-kucuk harf farki adim uretmemelidir.
+        step.KeyBindings = new Dictionary<string, string?>(step.KeyBindings, StringComparer.OrdinalIgnoreCase);
+        session.DatabaseSteps.Add(step);
         session.SourceDocument = _compilerManager.BuildAuthoringDocument(session);
         return session;
     }

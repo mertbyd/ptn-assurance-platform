@@ -23,6 +23,7 @@ public sealed class AuthoringSession
     public Dictionary<string, string> Answers { get; set; } = new(StringComparer.Ordinal);
     public List<OperationSuggestion> Operations { get; set; } = [];
     public List<AuthoringStep> Steps { get; set; } = [];
+    public List<AuthoringDatabaseStep> DatabaseSteps { get; set; } = [];
     public string SourceDocument { get; set; } = string.Empty;
     public long TtlMs { get; set; }
 }

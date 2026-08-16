@@ -25,6 +25,7 @@ public class AuthoringSessionAppService : TestModuleAppService, IAuthoringSessio
     private readonly IValidator<CreateAuthoringSessionDto> _createValidator;
     private readonly IValidator<AnswerAuthoringSessionDto> _answerValidator;
     private readonly IValidator<AddAuthoringStepDto> _stepValidator;
+    private readonly IValidator<AddDatabaseAuthoringStepDto> _databaseStepValidator;
     private readonly ICancellationTokenProvider _cancellationTokenProvider;
 
     // Authoring use-case'lerini mevcut grounding, cache ve domain sahiplerine baglar.
@@ -35,6 +36,7 @@ public class AuthoringSessionAppService : TestModuleAppService, IAuthoringSessio
         IValidator<CreateAuthoringSessionDto> createValidator,
         IValidator<AnswerAuthoringSessionDto> answerValidator,
         IValidator<AddAuthoringStepDto> stepValidator,
+        IValidator<AddDatabaseAuthoringStepDto> databaseStepValidator,
         ICancellationTokenProvider cancellationTokenProvider)
     {
         _bridgeAppService = bridgeAppService;
@@ -43,6 +45,7 @@ public class AuthoringSessionAppService : TestModuleAppService, IAuthoringSessio
         _createValidator = createValidator;
         _answerValidator = answerValidator;
         _stepValidator = stepValidator;
+        _databaseStepValidator = databaseStepValidator;
         _cancellationTokenProvider = cancellationTokenProvider;
     }
 
@@ -95,6 +98,19 @@ public class AuthoringSessionAppService : TestModuleAppService, IAuthoringSessio
         var session = _manager.EnsureAvailable(
             await _sessionStore.GetAsync(id, token), CurrentTenant.Id);
         var updated = _manager.AddStep(session, CurrentTenant.Id, Mapper.Map(input));
+        await _sessionStore.SetAsync(updated, token);
+        return Mapper.Map(updated);
+    }
+
+    // Tipli veritabani adimini dogrular, session'a ekler ve cache'e yazar.
+    public async Task<AuthoringSessionDto> AddDatabaseStepAsync(Guid id, AddDatabaseAuthoringStepDto input)
+    {
+        await CheckPolicyAsync(TestModulePermissions.Scenarios.Update);
+        var token = _cancellationTokenProvider.Token;
+        await _databaseStepValidator.ValidateAndThrowAsync(input, token);
+        var session = _manager.EnsureAvailable(
+            await _sessionStore.GetAsync(id, token), CurrentTenant.Id);
+        var updated = _manager.AddDatabaseStep(session, CurrentTenant.Id, Mapper.Map(input));
         await _sessionStore.SetAsync(updated, token);
         return Mapper.Map(updated);
     }

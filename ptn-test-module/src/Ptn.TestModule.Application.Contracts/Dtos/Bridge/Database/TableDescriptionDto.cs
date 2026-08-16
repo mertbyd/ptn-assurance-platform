@@ -32,4 +32,20 @@ public sealed class TableDescriptionDto
     /// Assertion yazarligini etkileyen kararli sema lint uyarilarini tasir.
     /// </summary>
     public List<SchemaLintWarningDto> LintWarnings { get; set; } = [];
+    /// <summary>
+    /// Ajanin oturum icinde isaret edecegi kapali tablo kimligini tasir.
+    /// </summary>
+    public Guid TableReferenceId { get; set; }
+    /// <summary>
+    /// Ajanin assertion yazabilecegi kolonlari kapali kume olarak listeler.
+    /// </summary>
+    public List<string> AssertableFields { get; set; } = [];
+    /// <summary>
+    /// Ajanin secebilecegi kapali matcher kodlarini listeler.
+    /// </summary>
+    public List<string> AllowedMatchers { get; set; } = [];
+    /// <summary>
+    /// Ajanin anahtar olarak kullanabilecegi kolon gruplarini listeler.
+    /// </summary>
+    public List<string> KeyCandidates { get; set; } = [];
 }
