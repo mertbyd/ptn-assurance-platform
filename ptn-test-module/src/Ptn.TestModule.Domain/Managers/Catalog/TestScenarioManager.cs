@@ -91,11 +91,7 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
         ArgumentNullException.ThrowIfNull(seal);
         ArgumentException.ThrowIfNullOrWhiteSpace(fingerprint);
 
-        var normalized = fingerprint.Trim();
-        if (normalized.StartsWith(PtnBridgeSettingNames.FingerprintPrefix, StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = normalized[PtnBridgeSettingNames.FingerprintPrefix.Length..];
-        }
+        var normalized = StripFingerprintPrefix(fingerprint.Trim());
         seal.DbSchemaFingerprint = NormalizeRequiredHash(normalized, nameof(seal.DbSchemaFingerprint));
     }
 
@@ -401,7 +397,18 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
     // Opsiyonel SHA-256 metnini null veya kucuk harfli kanonik bicime getirir.
     private static string? NormalizeOptionalHash(string? value, string field)
     {
-        return string.IsNullOrWhiteSpace(value) ? null : NormalizeRequiredHash(value, field);
+        return string.IsNullOrWhiteSpace(value) ? null : NormalizeRequiredHash(StripFingerprintPrefix(value.Trim()), field);
+    }
+
+    // Tel biciminden gelen olasi prefiksi kaldirir, hash gecerliligini sorgulamaz.
+    public static string StripFingerprintPrefix(string fingerprint)
+    {
+        if (fingerprint.StartsWith(PtnBridgeSettingNames.FingerprintPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return fingerprint[PtnBridgeSettingNames.FingerprintPrefix.Length..];
+        }
+
+        return fingerprint;
     }
 
     // Gecis hatasini mevcut durum kimligiyle kodlu olarak olusturur.

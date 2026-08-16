@@ -14,6 +14,7 @@ public static class TestScenarioConsts
 
     public const string ScenarioKeyPattern = "^[a-z0-9][a-z0-9._-]{0,127}$";
     public const string HashPattern = "^[a-fA-F0-9]{64}$";
+    public const string FingerprintHashPattern = "^(sha256:)?[a-fA-F0-9]{64}$";
 
     public const string VersionIndexName = "ux_scenarios_version";
     public const string ContentIndexName = "ux_scenarios_content";

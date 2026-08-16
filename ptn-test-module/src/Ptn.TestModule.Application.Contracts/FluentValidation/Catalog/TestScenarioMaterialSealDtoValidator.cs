@@ -13,19 +13,19 @@ public sealed class TestScenarioMaterialSealDtoValidator : AbstractValidator<Tes
     public TestScenarioMaterialSealDtoValidator()
     {
         RuleFor(input => input.RulesFingerprint)
-            .Matches(TestScenarioConsts.HashPattern)
+            .Matches(TestScenarioConsts.FingerprintHashPattern)
             .When(input => !string.IsNullOrWhiteSpace(input.RulesFingerprint))
             .WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashInvalid);
         RuleFor(input => input.SpecFingerprint)
-            .Matches(TestScenarioConsts.HashPattern)
+            .Matches(TestScenarioConsts.FingerprintHashPattern)
             .When(input => !string.IsNullOrWhiteSpace(input.SpecFingerprint))
             .WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashInvalid);
         RuleFor(input => input.DbSchemaFingerprint)
-            .Matches(TestScenarioConsts.HashPattern)
+            .Matches(TestScenarioConsts.FingerprintHashPattern)
             .When(input => !string.IsNullOrWhiteSpace(input.DbSchemaFingerprint))
             .WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashInvalid);
         RuleFor(input => input.ProfileFingerprint)
-            .Matches(TestScenarioConsts.HashPattern)
+            .Matches(TestScenarioConsts.FingerprintHashPattern)
             .When(input => !string.IsNullOrWhiteSpace(input.ProfileFingerprint))
             .WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashInvalid);
         RuleFor(input => input.SpecSnapshotId)
