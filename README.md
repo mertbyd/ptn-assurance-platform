@@ -7,10 +7,14 @@
 | Klasör | Ne |
 |---|---|
 | `ptn-test-module/` | Test Module — ABP modül katmanları ve composition host |
-| `vault/` | `CheckNexus.Vault` — iki checker'ın ortak HashiCorp Vault adapteri |
 
-İki checker modülü (`api-contract`, `database-comparison`) **ayrı Git depolarıdır** ve burada
-track edilmez.
+Bu depo yalnızca çalışan kaynak kodu track eder. Aşağıdakiler burada **track edilmez**:
+
+| Ne | Nerede |
+|---|---|
+| `api-contract`, `database-comparison` checker'ları | Ayrı Git depoları |
+| `CheckNexus.Vault` — ortak HashiCorp Vault adapteri | NuGet paketi olarak tüketilir |
+| Mimari wiki, ADR'ler ve task metinleri | Bu deponun GitHub Wiki sekmesi |
 
 ## Derleme
 
