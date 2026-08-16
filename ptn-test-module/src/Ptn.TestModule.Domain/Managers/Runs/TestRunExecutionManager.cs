@@ -37,6 +37,9 @@ public class TestRunExecutionManager : TestModuleDomainService
     /// <summary>Kosum belgesini olgulara cozen dis runner siniridir.</summary>
     private readonly IWorkflowRunnerPort _workflowRunnerPort;
 
+    /// <summary>Mantiksal API secret referansini kimlik basligina cozen siniridir.</summary>
+    private readonly IRunCredentialPort _runCredentialPort;
+
     /// <summary>TestRun aggregate kalicilik siniridir.</summary>
     private readonly ITestRunRepository _testRunRepository;
 
@@ -61,6 +64,7 @@ public class TestRunExecutionManager : TestModuleDomainService
         RunEnvironmentBindingManager environmentBindingManager,
         RunMaterialDriftManager materialDriftManager,
         IWorkflowRunnerPort workflowRunnerPort,
+        IRunCredentialPort runCredentialPort,
         ITestRunRepository testRunRepository,
         ITestRunResultRepository testRunResultRepository,
         ITestScenarioRepository testScenarioRepository,
@@ -74,6 +78,7 @@ public class TestRunExecutionManager : TestModuleDomainService
         _environmentBindingManager = environmentBindingManager;
         _materialDriftManager = materialDriftManager;
         _workflowRunnerPort = workflowRunnerPort;
+        _runCredentialPort = runCredentialPort;
         _testRunRepository = testRunRepository;
         _testRunResultRepository = testRunResultRepository;
         _testScenarioRepository = testScenarioRepository;
@@ -112,7 +117,7 @@ public class TestRunExecutionManager : TestModuleDomainService
             TestRunId = entity.Id,
             CompiledDocument = document,
             DocumentFacts = _workflowRunnerPort.ReadDocumentFacts(document),
-            Inputs = BuildInputs(binding, entity.TraceId),
+            Inputs = await BuildInputsAsync(binding, entity.TraceId, cancellationToken),
             EnvironmentBinding = binding,
             MaterialDrift = EvaluateDrift(scenario, entity),
             TraceId = entity.TraceId ?? string.Empty,
@@ -214,13 +219,14 @@ public class TestRunExecutionManager : TestModuleDomainService
             scenario.ProfileFingerprint ?? string.Empty);
     }
 
-    // Ortam baglamasini secret degeri tasimayan runtime girdi sozlugune cevirir.
+    // Ortam baglamasini runtime girdi sozlugune cevirir ve korumali hedef icin kimlik basligini ekler.
     /// <summary>Runner'a gecirilecek girdi sozlugunu ortam baglamasindan kurar.</summary>
-    private static IReadOnlyDictionary<string, string> BuildInputs(
+    private async Task<IReadOnlyDictionary<string, string>> BuildInputsAsync(
         TestRunEnvironmentBinding binding,
-        string? traceId)
+        string? traceId,
+        CancellationToken cancellationToken)
     {
-        return new Dictionary<string, string>(StringComparer.Ordinal)
+        var inputs = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             [WorkflowRunnerConsts.Inputs.BaseUrl] = binding.BaseUrl,
             [WorkflowRunnerConsts.Inputs.EnvironmentKey] = binding.EnvironmentKey,
@@ -228,5 +234,15 @@ public class TestRunExecutionManager : TestModuleDomainService
             [WorkflowRunnerConsts.Inputs.DbConnectionId] = binding.DbConnectionId.ToString("D", CultureInfo.InvariantCulture),
             [WorkflowRunnerConsts.Inputs.TraceId] = traceId ?? string.Empty
         };
+
+        // Deger yalniz bu sozluge girer; runner'a tek ortam degiskeniyle gecer, hicbir kalici yuzeye yazilmaz.
+        var credential = await _runCredentialPort.ResolveAsync(binding.ApiSecretRef, cancellationToken);
+        if (credential is not null)
+        {
+            inputs[WorkflowRunnerConsts.Inputs.AuthHeaderName] = credential.HeaderName;
+            inputs[WorkflowRunnerConsts.Inputs.AuthHeaderValue] = credential.HeaderValue;
+        }
+
+        return inputs;
     }
 }

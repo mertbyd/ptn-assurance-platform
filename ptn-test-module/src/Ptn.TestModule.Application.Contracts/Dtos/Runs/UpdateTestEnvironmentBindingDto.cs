@@ -18,4 +18,7 @@ public sealed class UpdateTestEnvironmentBindingDto
 
     /// <summary>Veritabani sirri yerine tasinan mantiksal secret referansidir.</summary>
     public string SecretRef { get; set; } = string.Empty;
+
+    /// <summary>Korumali API ucu icin opsiyonel mantiksal secret referansidir; bos birakilirsa kosum kimliksiz gider.</summary>
+    public string ApiSecretRef { get; set; } = string.Empty;
 }

@@ -24,5 +24,7 @@ public sealed class UpdateTestEnvironmentBindingDtoValidator : AbstractValidator
         RuleFor(input => input.SecretRef)
             .NotEmpty().WithErrorCode(TestModuleRunErrorCodes.Validation.SecretRefRequired)
             .MaximumLength(TestModuleRunSettingNames.MaxSecretRefLength).WithErrorCode(TestModuleRunErrorCodes.Validation.SecretRefTooLong);
+        RuleFor(input => input.ApiSecretRef)
+            .MaximumLength(TestModuleRunSettingNames.MaxSecretRefLength).WithErrorCode(TestModuleRunErrorCodes.Validation.SecretRefTooLong);
     }
 }

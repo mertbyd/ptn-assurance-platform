@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace Ptn.TestModule.Constants.Runs;
 
 // islevi: HAR artefaktinin BLOB container adini, blob adi bicimini ve boyut butcelerini tanimlar.
@@ -22,6 +25,22 @@ public static class HarArtifactConsts
     /// <summary>Kanitin satir icinde tutulabilecegi azami bayt sayisidir; ustu bloba gider.</summary>
     public const int MaxInlineEvidenceBytes = 4_096;
 
+    /// <summary>Maskelenen basliklarin yerine artefakta yazilan sabit degerdir.</summary>
+    public const string RedactedValue = "[redacted]";
+
+    /// <summary>Degeri kalici artefakta hicbir zaman yazilmayan kimlik basliklaridir.</summary>
+    public static IReadOnlyCollection<string> SensitiveHeaderNames { get; } =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Authorization",
+            "Proxy-Authorization",
+            "Cookie",
+            "Set-Cookie",
+            "X-Api-Key",
+            "Api-Key",
+            "X-Auth-Token"
+        };
+
     // islevi: Okuyucunun HAR 1.2 govdesinde adresledigi alan adlarini merkezilestirir.
     /// <summary>HAR 1.2 belgesinin kararli JSON alan adlarini tasir.</summary>
     public static class Fields
@@ -36,6 +55,7 @@ public static class HarArtifactConsts
         public const string Request = "request";
         public const string Response = "response";
         public const string Headers = "headers";
+        public const string Cookies = "cookies";
         public const string Method = "method";
         public const string Url = "url";
         public const string Value = "value";

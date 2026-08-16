@@ -27,7 +27,7 @@ public class HarArtifactServiceTests
         var factory = Substitute.For<IBlobContainerFactory>();
         factory.Create(Arg.Any<string>()).Returns(container);
 
-        _ = new HarArtifactService(factory, CreatePlanner());
+        _ = new HarArtifactService(factory, CreatePlanner(), new HarInterpreter());
 
         factory.Received(1).Create(HarArtifactConsts.ContainerName);
     }
@@ -47,13 +47,31 @@ public class HarArtifactServiceTests
         (await service.ReadAsync(BlobName)).ShouldBeNull();
     }
 
+    // Kimlik basligi kalici depoya asla ham gitmemelidir (KBP-112 kosum kimligi kanali).
+    [Fact]
+    public async Task Should_not_store_credential_headers_in_the_har_artifact()
+    {
+        var service = CreateService();
+
+        await service.SaveAsync(BlobName, CredentialHarContent);
+        var stored = await service.ReadAsync(BlobName);
+
+        stored.ShouldNotBeNull();
+        stored.ShouldNotContain("Bearer secret-token");
+        stored.ShouldNotContain("session=abc123");
+        stored.ShouldNotContain("key-12345");
+        stored.ShouldContain(HarArtifactConsts.RedactedValue);
+        stored.ShouldContain(WorkflowRunnerConsts.StepKeyHeaderName);
+        stored.ShouldContain("step-one");
+    }
+
     // Artefakt sinirini bellekte tutulan adlandirilmis container'a baglar.
     private static HarArtifactService CreateService()
     {
         var container = CreateContainer([]);
         var factory = Substitute.For<IBlobContainerFactory>();
         factory.Create(HarArtifactConsts.ContainerName).Returns(container);
-        return new HarArtifactService(factory, CreatePlanner());
+        return new HarArtifactService(factory, CreatePlanner(), new HarInterpreter());
     }
 
     // Artefakt guard'larini gercek Manager uzerinden calistiran varsayilan planner'i kurar.
@@ -88,6 +106,36 @@ public class HarArtifactServiceTests
             "version": "1.2",
             "creator": { "name": "respect", "version": "2.14.0" },
             "entries": []
+          }
+        }
+        """;
+
+    private const string CredentialHarContent = """
+        {
+          "log": {
+            "version": "1.2",
+            "creator": { "name": "respect", "version": "2.14.0" },
+            "entries": [
+              {
+                "startedDateTime": "2026-08-16T10:00:00.000Z",
+                "time": 12,
+                "request": {
+                  "method": "GET",
+                  "url": "https://sut.example.test/orders",
+                  "headers": [
+                    { "name": "Authorization", "value": "Bearer secret-token" },
+                    { "name": "X-Api-Key", "value": "key-12345" },
+                    { "name": "X-CheckNexus-Step-Key", "value": "step-one" }
+                  ],
+                  "cookies": [ { "name": "session", "value": "session=abc123" } ]
+                },
+                "response": {
+                  "status": 200,
+                  "headers": [ { "name": "Set-Cookie", "value": "session=abc123; Path=/" } ],
+                  "content": { "mimeType": "application/json", "text": "{}" }
+                }
+              }
+            ]
           }
         }
         """;

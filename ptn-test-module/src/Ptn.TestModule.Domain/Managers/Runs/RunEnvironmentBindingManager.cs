@@ -146,6 +146,7 @@ public class RunEnvironmentBindingManager : TestModuleDomainService
         binding.EnvironmentKey = NormalizeKey(environmentKey);
         binding.BaseUrl = EnsureAbsoluteBaseUrl(binding.BaseUrl);
         binding.SecretRef = binding.SecretRef?.Trim() ?? string.Empty;
+        binding.ApiSecretRef = binding.ApiSecretRef?.Trim() ?? string.Empty;
         EnsureTargetsAreIdentified(binding);
     }
 
@@ -153,14 +154,20 @@ public class RunEnvironmentBindingManager : TestModuleDomainService
     /// <summary>Tek ortam satirini kararli JSON nesnesi olarak kurar.</summary>
     private static JsonNode CreateEntry(TestRunEnvironmentBinding binding)
     {
+        var api = new JsonObject
+        {
+            [TestModuleRunSettingNames.EnvironmentKey] = binding.EnvironmentKey,
+            [TestModuleRunSettingNames.BaseUrl] = binding.BaseUrl,
+            [TestModuleRunSettingNames.SpecSnapshotId] = binding.SpecSnapshotId.ToString()
+        };
+        if (binding.ApiSecretRef.Length > 0)
+        {
+            api[TestModuleRunSettingNames.SecretRef] = binding.ApiSecretRef;
+        }
+
         return new JsonObject
         {
-            [TestModuleRunSettingNames.ApiSection] = new JsonObject
-            {
-                [TestModuleRunSettingNames.EnvironmentKey] = binding.EnvironmentKey,
-                [TestModuleRunSettingNames.BaseUrl] = binding.BaseUrl,
-                [TestModuleRunSettingNames.SpecSnapshotId] = binding.SpecSnapshotId.ToString()
-            },
+            [TestModuleRunSettingNames.ApiSection] = api,
             [TestModuleRunSettingNames.DatabaseSection] = new JsonObject
             {
                 [TestModuleRunSettingNames.EnvironmentKey] = binding.EnvironmentKey,
@@ -273,7 +280,8 @@ public class RunEnvironmentBindingManager : TestModuleDomainService
             BaseUrl = GetRequiredString(api, TestModuleRunSettingNames.BaseUrl),
             SpecSnapshotId = GetRequiredGuid(api, TestModuleRunSettingNames.SpecSnapshotId),
             DbConnectionId = GetRequiredGuid(database, TestModuleRunSettingNames.DbConnectionId),
-            SecretRef = GetRequiredString(database, TestModuleRunSettingNames.SecretRef)
+            SecretRef = GetRequiredString(database, TestModuleRunSettingNames.SecretRef),
+            ApiSecretRef = GetOptionalString(api, TestModuleRunSettingNames.SecretRef)
         };
     }
 
@@ -317,6 +325,18 @@ public class RunEnvironmentBindingManager : TestModuleDomainService
         return !string.IsNullOrWhiteSpace(text)
             ? text.Trim()
             : throw new BusinessException(TestModuleRunErrorCodes.EnvironmentNotBound);
+    }
+
+    // Korumasiz ucler icin secret referansi opsiyoneldir; yoklugu kosumu engellemez.
+    /// <summary>Verilen alan adindaki opsiyonel JSON metnini getirir.</summary>
+    private static string GetOptionalString(JsonElement source, string propertyName)
+    {
+        if (!source.TryGetProperty(propertyName, out var value) || value.ValueKind != JsonValueKind.String)
+        {
+            return string.Empty;
+        }
+
+        return value.GetString()?.Trim() ?? string.Empty;
     }
 
     // Zorunlu JSON Guid alanini bos olmayan kimlige cevirir.

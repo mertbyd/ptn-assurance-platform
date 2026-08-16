@@ -35,6 +35,12 @@ public static class TestModuleSettings
     /// <summary>Tek HTTP cagrisinin runner tarafindaki azami sure ayar adidir.</summary>
     public const string RunnerMaxFetchTimeoutSeconds = TestModuleRunSettingNames.RunnerMaxFetchTimeoutSeconds;
 
+    /// <summary>Runner konteynerinin baglanacagi docker ag modu ayar adidir.</summary>
+    public const string RunnerNetworkMode = TestModuleRunSettingNames.RunnerNetworkMode;
+
+    /// <summary>Runner konteynerine eklenecek ek host kayitlari ayar adidir.</summary>
+    public const string RunnerExtraHosts = TestModuleRunSettingNames.RunnerExtraHosts;
+
     /// <summary>HAR artefaktlarinin gun cinsinden saklama suresi ayar adidir.</summary>
     public const string HarRetentionDays = TestModuleRunSettingNames.HarRetentionDays;
 
