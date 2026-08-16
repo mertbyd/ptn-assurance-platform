@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.DatabaseChecker</RootNamespace>
+    <PackageId>CheckNexus.DatabaseComparison.HttpApi.Client</PackageId>
+    <Description>ABP HTTP client proxies for the CheckNexus Database Checker module.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Http.Client" Version="10.3.0" />
+    <ProjectReference Include="..\Ptn.DatabaseChecker.Application.Contracts\Ptn.DatabaseChecker.Application.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="**\*generate-proxy.json" />
+    <Content Remove="**\*generate-proxy.json" />
+  </ItemGroup>
+
+</Project>

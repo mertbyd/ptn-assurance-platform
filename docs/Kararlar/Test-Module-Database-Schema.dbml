@@ -1,0 +1,801 @@
+// =====================================================================
+//  TEST MODULE — VERITABANI SEMASI
+//
+//  Surum   : 1.0
+//  Tarih   : 2026-08-13
+//  Format  : DBML (dbdiagram.io)
+//  Hedef   : PostgreSQL 16+ / SQL Server 2022+
+//  Cati    : ABP Framework 10, EF Core 10, .NET 10
+//
+//  9 ana tablo + 14 lookup tablosu, 3 sema.
+//
+//  TASARIM ILKESI
+//  Bir kavram ayri tablo olur ANCAK su ucunden en az biri dogruysa:
+//    1) Baska bir tablodan yabanci anahtar ile gosteriliyor
+//    2) Parent kaydindan bagimsiz sorgulaniyor (WHERE / JOIN girisi)
+//    3) Parent kaydindan bagimsiz tekillestiriliyor
+//  Aksi halde parent satirinda owned JSON kolonu olarak tasinir.
+//
+//  Bu ilke ilk taslaktaki 28 tabloyu 9 a indirmis, ~20 gereksiz
+//  TenantId kolonunu ve 20 ayri migration yuzeyini ortadan kaldirmistir.
+//
+//  NOT: ABP denetim alanlari (creator_id, last_modification_time,
+//  last_modifier_id) okunabilirlik icin diyagramda gosterilmemistir.
+// =====================================================================
+
+Project test_module {
+  database_type: 'PostgreSQL'
+  Note: '''
+  Test Module — is senaryosu testi platformunun kalici veri modeli.
+
+  SEMA SAHIPLIGI
+    test_lookup   sabit deger listeleri (seed ile gelir, cok kucuk)
+    test_catalog  senaryo, ortam, plan, is bilgisi, ajan oturumu (uzun omurlu)
+    test_run      kosu ve kosum kayitlari (buyuk hacim, 90 gun saklama)
+
+  Ayni veritabaninda calisan diger moduller `lookup`, `connection`,
+  `definition`, `run`, `comparison` ve `checker` semalarini sahiplenmistir;
+  cakisma yoktur. Her modul yalnizca kendi tablolarinin migration sahibidir.
+
+  DIS MODUL REFERANSLARI
+  Diger modullerin tablolarina yabanci anahtar VERILMEZ. Dis kimlikler
+  (db_connection_id, spec_source_id) yalnizca kimlik olarak saklanir ve
+  calisma aninda ilgili modulun uygulama servisi uzerinden dogrulanir.
+  Gerekce: modul sinirini korumak, migration sirasi bagimliligini onlemek.
+
+  COK KIRACILILIK
+  ABP tenant filtresi entity tipi bazinda uygulanir ve MIRAS ALINMAZ.
+  Kendi IMultiTenant arayuzunu uygulamayan bir entity dogrudan
+  sorgulandiginda tum kiracilarin satirlarini dondurur.
+
+    tenant_id VAR      -> tablo dogrudan sorgu hedefiyse (9 ana tablo)
+    tenant_id YOK      -> lookup tablolari (global referans verisi)
+    tenant_id GEREKMEZ -> owned JSON icerigi (tenant li satirin icinde)
+
+  Kiraci kapsami veritabani katmanindadir, uygulama katmaninda degil.
+  '''
+}
+
+
+// =====================================================================
+//  SEMA: test_lookup
+//  Sabit deger listeleri. Enum kullanilmaz; her liste bir tablodur.
+//  Ortak yapi: code (kararli kod) + name + description + display_order.
+//  code uzerinde tekil indeks.
+//  Tenant tasimazlar: bu degerler tum kiracilarda aynidir.
+// =====================================================================
+
+Table test_lookup.run_statuses {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  display_order int [not null, default: 0]
+  Note: '''
+  Bir kosunun yasam dongusu:
+    Pending    kuyruga girdi, henuz baslamadi
+    Running    adimlar kosuyor
+    Completed  kosu duzgun bitti (icinde basarisiz senaryo olabilir)
+    Failed     kosu motorunun KENDISI coktu, sonuclar guvenilmez
+    Cancelled  kullanici durdurdu
+  '''
+}
+
+Table test_lookup.execution_statuses {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  breaks_build boolean [not null, default: false]
+  display_order int [not null, default: 0]
+  Note: '''
+  Bir senaryonun tek kosumunun sonucu. ALTI deger:
+
+    Passed        ana yol kostu, tum beklentiler tuttu
+    Failed        hakem HAYIR dedi -> gercek bulgu (build kirar)
+    Broken        adim hic kosamadi -> ortam/altyapi sorunu
+    Skipped       bilincli atlandi
+    Quarantined   kararsiz; kosar fakat sonucu build i baglamaz
+    Inconclusive  ONKOSUL SAGLANMADI, ana yol kosmadi
+
+  Failed / Broken ayrimi teshis motoruna hangi sinyalin gonderilecegini
+  belirler. Tek statu kullanilirsa gercek hata ile ortam sorunu karisir.
+
+  Inconclusive ayri bir statudur cunku "yesil donen fakat hicbir sey
+  dogrulamayan" kosum, yanlis pozitiften daha tehlikeli bir guven
+  yanilsamasi uretir.
+  '''
+}
+
+Table test_lookup.step_kinds {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  display_order int [not null, default: 0]
+  Note: 'HttpCall | DbAssert | Branch | Precondition | Invariant | EventReceive | Delay | Setup | Teardown'
+}
+
+Table test_lookup.oracle_layers {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  display_order int [not null, default: 0]
+  Note: '''
+  Karari hangi katman verdi:
+    Transport    HTTP durum kodu, header  (kosum motoru)
+    Contract     yanit sozlesmeye uyuyor mu  (API sozlesme dogrulayici)
+    Domain       senaryodaki basari olcutu  (kosum motoru)
+    Persistence  beklenen satir olustu mu  (veritabani dogrulayici)
+    Business     is degismezi tuttu mu  (kosum motoru)
+    Async        olay geldi mi, korelasyon tuttu mu
+    Security     yetki siniri korundu mu
+
+  Bu kolon sayesinde "bu ay kirilanlarin %60 i Persistence katmaninda"
+  gibi bir teshis mumkun olur.
+  '''
+}
+
+Table test_lookup.trigger_kinds {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  display_order int [not null, default: 0]
+  Note: '''
+  Manual | Scheduled | ContractChange | Webhook | ShuffleAudit
+  ContractChange: sozlesme degisti, yalnizca etkilenen senaryolar kosuyor.
+  ShuffleAudit  : karisik sirali denetim kosusu (sira bagimliligi avi).
+  '''
+}
+
+Table test_lookup.scenario_states {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  display_order int [not null, default: 0]
+  Note: 'Draft -> PendingApproval -> Published -> Deprecated. Yalniz Published olan kosar.'
+}
+
+Table test_lookup.scenario_kinds {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  display_order int [not null, default: 0]
+  Note: '''
+  TechnicalCheck   sema/kalicilik dogrulamasi
+  BusinessScenario kosullu akis iceren is senaryosu
+
+  Iki turun kararlilik profili farklidir; birlikte olculurse ikisi de
+  yanlis okunur.
+  '''
+}
+
+Table test_lookup.health_states {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  display_order int [not null, default: 0]
+  Note: '''
+  Healthy | Flaky | OrderDependent | Quarantined | Disabled | Broken
+
+  Flaky ile OrderDependent ayri tutulur: birincisi genelde asenkron
+  bekleme sorunu, ikincisi veri izolasyonu sorunudur; tedavileri farklidir.
+  '''
+}
+
+Table test_lookup.heal_statuses {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  display_order int [not null, default: 0]
+  Note: 'Pending | Approved | Rejected | Superseded. Rejected + parmak izi = "bu bulgu goruldu, senaryo degismeyecek".'
+}
+
+Table test_lookup.precondition_strategies {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  display_order int [not null, default: 0]
+  Note: '''
+  Arrange   onkosul verisini biz yaratiriz (deterministik).
+            Saglanamazsa kosum Broken.
+  Discover  canli veriden arayip buluruz (gercekci, non-deterministik).
+            Bulunamazsa kosum Inconclusive.
+  '''
+}
+
+Table test_lookup.isolation_modes {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  display_order int [not null, default: 0]
+  Note: 'Reset | EphemeralDatabase | SharedNoReset. Sira bagimliligi teshisinin girdisi.'
+}
+
+Table test_lookup.knowledge_kinds {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  display_order int [not null, default: 0]
+  Note: 'Glossary | Rule | Journey | OperationLink | EffectFootprint | Dataset'
+}
+
+Table test_lookup.agent_profiles {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  max_turns int [not null]
+  max_tokens int [not null]
+  display_order int [not null, default: 0]
+  Note: '''
+  Chat (10 tur) | Authoring (8) | Diagnosis (4) | Maintenance (5)
+
+  Bir ajan profili = talimat metni + izinli arac alt kumesi + butce.
+  Tur siniri serttir: adim basina %85 guvenilir bir ajan on adimda
+  uctan uca yaklasik %20 basari verir. Sinir asildiginda islem
+  BASARISIZ sayilir, sessizce devam edilmez.
+  '''
+}
+
+Table test_lookup.agent_session_statuses {
+  id uuid [pk]
+  code varchar(64) [not null, unique]
+  name varchar(128) [not null]
+  description varchar(512)
+  display_order int [not null, default: 0]
+  Note: 'Active | Completed | Failed | Cancelled | LimitReached'
+}
+
+
+// =====================================================================
+//  SEMA: test_catalog — tanim dunyasi (uzun omurlu)
+// =====================================================================
+
+Table test_catalog.content_blobs {
+  id uuid [pk]
+  tenant_id uuid [note: 'Zorunlu: tekillestirme sorgusu dogrudan calisir. Iki kiracinin ayni dosyasi tek satirda birlestirilemez.']
+  raw_hash varchar(64) [not null, note: 'Ham baytlarin SHA-256 hex kimligi — tekillestirme anahtari']
+  canonical_hash varchar(64) [not null, note: 'Normalize edilmis halin SHA-256 kimligi — anlamsal esitlik anahtari']
+  content text [not null, note: 'Dosyanin tamami: senaryo dokumani, is bilgisi metni veya insan-okur plan']
+  byte_size int [not null]
+  media_type varchar(128) [not null]
+  creation_time timestamptz [not null]
+
+  indexes {
+    (tenant_id, raw_hash) [unique, name: 'ux_content_blobs_raw_hash']
+    (tenant_id, canonical_hash) [name: 'ix_content_blobs_canonical_hash']
+  }
+
+  Note: '''
+  Icerik-adresli, DEGISMEZ metin deposu.
+
+  Iki hash tutulur:
+    raw_hash        bayt duzeyinde esitlik
+    canonical_hash  anlamsal esitlik (bosluk/sira normalize edilmis)
+
+  Ikinci hash sayesinde yalnizca bicimsel degisiklik yeni surum uretmez.
+  Ayni icerik ikinci kez yazilmaz: bir senaryo kirk kez kaydedilip uc kez
+  gercekten degistirildiyse uc satir olusur.
+  '''
+}
+
+Table test_catalog.scenarios {
+  id uuid [pk]
+  tenant_id uuid [note: 'Zorunlu: aggregate root, dogrudan listeleniyor']
+  scenario_key varchar(128) [not null, note: 'Kalici kimlik. Asla degismez. Baslik degisse bile gecmis kopmaz.']
+  title varchar(256) [not null]
+  description varchar(1024)
+  scenario_kind_id uuid [not null]
+  state_id uuid [not null]
+  current_version_no int [note: 'YAYINDA olan surum numarasi (en son surum degil)']
+  owner_user_id uuid
+  versions jsonb [note: 'Owned: surum gecmisi']
+  health jsonb [note: 'Owned: ortam basina saglik metrikleri']
+  heal_proposals jsonb [note: 'Owned: onarim onerileri ve onay kayitlari']
+  tags jsonb [note: 'Owned: plan seciminde kullanilan etiketler']
+  is_active boolean [not null, default: true]
+  creation_time timestamptz [not null]
+
+  indexes {
+    (tenant_id, scenario_key) [unique, name: 'ux_scenarios_key']
+    (tenant_id, scenario_kind_id) [name: 'ix_scenarios_kind']
+  }
+
+  Note: '''
+  Senaryonun kimligi, tum surum gecmisi, saglik metrikleri ve bekleyen
+  onarim onerileri.
+
+  scenario_key ELLE verilir, isimden hesaplanmaz. Kimlik ad/parametre
+  hash inden turetilirse yeniden adlandirmada kimlik degisir, sistem yeni
+  bir test oldugunu varsayar ve tum trend verisi kopar.
+
+  versions jsonb icerigi:
+    no                    surum numarasi
+    contentBlobId         hangi icerik
+    state                 Draft | PendingApproval | Published | Deprecated
+    approvedBy, approvedAt
+    healedFromNo          hangi surumden onarilarak dogdu
+    healProposalId        hangi oneriyle onarildi
+    planBlobId            insan-okur plan dokumaninin kimligi
+    authoringTokenCost    yazim maliyeti (olcum yukumlulugu)
+    dryRunConflict        kuru kosum celiskisinin nasil cozuldugu
+    notes
+
+  health jsonb icerigi (ortam basina bir eleman):
+    envKey, windowDays, runs
+    passRate, flakyRate, falseAlarmRate, inconclusiveRate, quarantineRatio
+    avgMs, p95Ms, stepP95
+    state, quarantinedUntil, meanTimeToDiagnoseMs
+
+  stepP95 adim bazinda gecikme dagilimini tutar; senaryodaki bekleme
+  butcesine yaklasildiginda test kararsiz hale GELMEDEN uyari uretir.
+
+  heal_proposals jsonb icerigi:
+    id, baseVersionNo
+    findingFingerprint    ZORUNLU — gerekcesiz yama kabul edilmez
+    sourceCapability, severityCode
+    patchOverlay          yama dokumani
+    rationale             insan-okur gerekce
+    status
+    weakensAssertion      yama dogrulamayi zayiflatiyor mu
+    weakenedChecks        kaybolan kontroller
+    approval:
+      approvedBy, approvedAt
+      boundToPatchHash    ONAY ICERIGE BAGLIDIR; yama degisirse dusrer
+      policyVersion, expiresAt, idempotencyKey
+    rejectedReason
+
+  Surumler, saglik ve oneriler ayri tablo DEGILDIR: kucuk metadatadir,
+  daima senaryoyla birlikte okunur ve disaridan yabanci anahtar almaz
+  (kosum kaydi surum NUMARASINI kopyalar).
+  '''
+}
+
+Table test_catalog.scenario_step_bindings {
+  id uuid [pk]
+  tenant_id uuid [note: 'Zorunlu: cocuk tablo olmasina ragmen dogrudan sorgulaniyor; filtre miras alinmaz']
+  scenario_id uuid [not null]
+  scenario_version_no int [not null]
+  step_id varchar(128) [not null]
+  ordinal int [not null]
+  step_kind_id uuid [not null]
+
+  http_method varchar(8) [note: 'API adimi: buyuk harf']
+  path_template varchar(512) [note: 'API adimi: yol sablonu, query string icermez']
+  path_template_norm varchar(512) [note: 'Kucuk harf kopya — indeks bunun uzerindedir']
+  response_status varchar(8)
+  media_type varchar(128) [note: 'Kucuk harf']
+  api_schema_name varchar(256)
+
+  db_schema_name varchar(128)
+  db_object_name varchar(256)
+  db_child_name varchar(256)
+  db_schema_name_norm varchar(128) [note: 'Kucuk harf kopya — indeks']
+  db_object_name_norm varchar(256) [note: 'Kucuk harf kopya — indeks']
+  db_child_name_norm varchar(256) [note: 'Kucuk harf kopya — indeks']
+
+  invariant_pattern_code varchar(16) [note: 'Uygulanan is degismezi kalibi']
+  rule_ref varchar(64) [note: 'Test edilen is kuralinin referansi']
+  assertion_count int [not null, default: 0, note: 'Sifir olan adim yayinlanamaz']
+  creation_time timestamptz [not null]
+
+  indexes {
+    (scenario_id, scenario_version_no, step_id) [unique, name: 'ux_step_bindings_step']
+    (db_schema_name_norm, db_object_name_norm) [name: 'ix_step_bindings_db_address']
+    (path_template_norm, http_method) [name: 'ix_step_bindings_api_address']
+    (rule_ref) [name: 'ix_step_bindings_rule']
+  }
+
+  Note: '''
+  TURETILMIS adres indeksi. Modeldeki tek cocuk tablodur ve yalnizca
+  sorgu performansi icin vardir; yayimlanmis senaryo dokumanindan
+  yeniden uretilebilir, kanonik bilgi tasimaz.
+
+  Var olma sebebi uc sorgudur:
+
+  1) ETKI ANALIZI — her sozlesme degisikliginde calisir
+     WHERE db_schema_name_norm = ? AND db_object_name_norm = ?
+     Bu tablo olmasaydi tum senaryo dokumanlari JSON icinde taranirdi.
+
+  2) KURAL KAPSAMI
+     SELECT rule_ref, COUNT(DISTINCT scenario_id) GROUP BY rule_ref
+     "Su is kurali icin sifir senaryo var" raporunu uretir.
+
+  3) DEGISMEZ KAPSAMI
+     Hangi is degismezi kaliplarinin hic kullanilmadigini gosterir.
+
+  Kucuk harf kopya kolonlari: PostgreSQL tanimlayicilari kucuk harfe
+  dusurur, SQL Server dusurmez. Sorguda LOWER() kullanmak indeksi devre
+  disi birakir; bu nedenle normalize kopya ayri kolonda tutulur.
+
+  Tek CASCADE silme davranisi bu tablodadir; turetilmis oldugu icin
+  kaybi zararsizdir.
+  '''
+}
+
+Table test_catalog.test_environments {
+  id uuid [pk]
+  tenant_id uuid [note: 'Zorunlu: aggregate root']
+  environment_key varchar(128) [not null]
+  name varchar(256) [not null]
+  bindings jsonb [note: 'Owned: mantiksal ad -> gercek adres eslemeleri']
+  is_active boolean [not null, default: true]
+  creation_time timestamptz [not null]
+
+  indexes {
+    (tenant_id, environment_key) [unique, name: 'ux_environments_key']
+  }
+
+  Note: '''
+  Senaryo dokumani gercek adres icermez; yalnizca mantiksal ad kullanir.
+  Bu tablo o adi ortam basina gercek adrese cevirir. Ayni senaryo
+  boylece birden cok ortamda degistirilmeden kosar.
+
+  bindings jsonb icerigi:
+    logicalRef      senaryoda gecen mantiksal ad
+    kind            Http | Database | Event
+    baseUrl         HTTP baglamalari icin
+    specSourceId    API sozlesme kaynaginin dis kimligi
+    dbConnectionId  veritabani baglantisinin dis kimligi
+    vaultPath       parolanin kasadaki ADRESI (parola degil)
+    snapshot        goruntuleme icin kopyalanan ad/motor/host bilgisi
+
+  Iki farkli veritabani baglamasi bulunur ve kasitli olarak ayridir:
+  dogrulama baglantisi SALT-OKUNUR, test verisi baglantisi YAZMA
+  yetkilidir. Dogrulayici modul yazma yetkili baglantiyi hic gormez.
+
+  snapshot yalnizca ekranda gostermek icindir; karar aninda ilgili
+  modulun uygulama servisi cagrilir.
+  '''
+}
+
+Table test_catalog.test_plans {
+  id uuid [pk]
+  tenant_id uuid [note: 'Zorunlu: zamanlayici plan listesini dogrudan tarar']
+  plan_key varchar(128) [not null]
+  name varchar(256) [not null]
+  environment_id uuid [not null]
+  schedule_cron varchar(64)
+  max_parallelism int [not null, default: 1]
+  selection jsonb [note: 'Owned: senaryo secim kurali ve tetikleyiciler']
+  is_active boolean [not null, default: true]
+  creation_time timestamptz [not null]
+
+  indexes {
+    (tenant_id, plan_key) [unique, name: 'ux_plans_key']
+  }
+
+  Note: '''
+  selection jsonb icerigi:
+    mode          tags | list
+    tags          dahil edilecek etiketler
+    excludeTags   haric tutulacak etiketler
+    pinned        surumu sabitlenmis senaryolar
+    triggers      onContractChange, onWebhook
+
+  max_parallelism ayni ortamda es zamanli kosan senaryo sayisini sinirlar;
+  paralel kosumlar birbirinin test verisini bozabilir.
+  '''
+}
+
+Table test_catalog.business_knowledge {
+  id uuid [pk]
+  tenant_id uuid [note: 'Zorunlu: is kurallari kiraciya ozeldir ve dogrudan sorgulanir']
+  knowledge_kind_id uuid [not null]
+  reference varchar(128) [not null, note: 'Insan-okur kimlik']
+  title varchar(256) [not null]
+  content_blob_id uuid [note: 'Kaynak dokumanin icerik kimligi']
+  extract jsonb [note: 'Ayristirilmis yapi; icerigi turune gore degisir']
+  is_active boolean [not null, default: true]
+  creation_time timestamptz [not null]
+
+  indexes {
+    (tenant_id, knowledge_kind_id, reference) [unique, name: 'ux_knowledge_ref']
+    (knowledge_kind_id) [name: 'ix_knowledge_kind']
+  }
+
+  Note: '''
+  Senaryo uretiminde kullanilan is bilgisinin tek tablosu. Alti tur ayni
+  sekli paylasir: kimlik + tur + kaynak metin + ayristirilmis ozet.
+
+  Glossary         terim -> operasyonlar, tablolar, durumlar, beklenen
+                   degismezler
+  Rule             karar tablosu, sinir degerler, hata kodu, sayac kaynagi,
+                   reddedildiginde dogrulanacaklar
+  Journey          durumlar, izinli gecisler, YASAK gecisler
+  OperationLink    operasyonlar arasi bagimlilik; her kenarda kesif
+                   yontemi ve guven derecesi
+  EffectFootprint  bir operasyonun gozlenmis yan etkileri (hangi tablo
+                   nasil degisti); denetim kolonlari elenir
+  Dataset          onkosul veri kumesi tanimi
+
+  Kaynak dokumanlar surum kontrolunde tutulur; bu tablo turevdir.
+  Ayristirilmis ozet sayesinde uretici surec tum dokumani baglamina
+  almak yerine tek kaydi sorgular.
+  '''
+}
+
+Table test_catalog.agent_sessions {
+  id uuid [pk, note: 'Telemetri konvansiyonundaki konusma kimligi ile ayni deger']
+  tenant_id uuid [note: 'Zorunlu: kiraci basina token muhasebesi ve oturum listesi']
+  user_id uuid [not null, note: 'Uretici surec kimin adina calisti; yetkiler bu kullaniciya gore uygulanir']
+  agent_profile_id uuid [not null]
+  status_id uuid [not null]
+  autonomy_level_code varchar(32) [not null, note: 'Observe | Assist | Act — kiraci ayari']
+  started_at timestamptz [not null]
+  ended_at timestamptz
+  turn_count int [not null, default: 0]
+  turn_limit_hit boolean [not null, default: false]
+  input_tokens int [not null, default: 0]
+  output_tokens int [not null, default: 0]
+  model_ref varchar(64) [note: 'Kullanilan model; an bazinda maliyet/kalite karsilastirmasi bunun uzerinden yapilir']
+  trace_id varchar(64) [note: 'Gorev basinda atanir ve tum alt adimlara tasinir']
+  related_scenario_id uuid
+  related_run_id uuid
+  messages jsonb [note: 'Owned: konusma dokumu; 32 KB tavani, asilirsa nesne deposuna tasinir']
+  tool_calls jsonb [note: 'Owned: arac cagrilari; ham girdi/cikti saklanmaz, hash tutulur']
+  creation_time timestamptz [not null]
+
+  indexes {
+    (tenant_id, started_at) [name: 'ix_agent_sessions_recent']
+    (user_id, started_at) [name: 'ix_agent_sessions_user']
+    (related_scenario_id) [name: 'ix_agent_sessions_scenario']
+    (agent_profile_id) [name: 'ix_agent_sessions_profile']
+  }
+
+  Note: '''
+  Uretici surec oturumu. Urun ici sohbet paneli ve senaryo yazimi,
+  teshis, bakim akislari ayni tabloya yazar; tek altyapi, cok is akisi.
+
+  Uc gerekce:
+    1) Denetim  — "bu kosuyu kim tetikledi" sorusu cevaplanabilmeli
+    2) Maliyet  — kiraci basina token muhasebesi
+    3) Surdurme — oturum kapanip acildiginda devam edebilme
+
+  DENETIM SINIRI (bilincli, orantili karar)
+  Sonuclu eylemlerin denetim izi zaten alan modelinde kalicidir:
+  kosuyu kimin tetikledigi, surumu kimin onayladigi, yamayi kimin
+  kabul ettigi ilgili tablolarda degismez kayittir. Sohbet dokumu
+  baglamdir, kayit degildir.
+
+  Hash zincirli, ekle-only denetim gunlugu bu surumde kurulmaz;
+  duzenlenmis sektor musterisi talep ederse ayri bir karar olarak acilir.
+
+  Kalici bilgi bu tabloda TUTULMAZ; ogrenilen her sey is bilgisi
+  tablosuna yazilir. Sohbet dokumu kisa vadeli baglamdir.
+  '''
+}
+
+
+// =====================================================================
+//  SEMA: test_run — kosum dunyasi (buyuk hacim, kisa omurlu)
+// =====================================================================
+
+Table test_run.test_runs {
+  id uuid [pk]
+  tenant_id uuid [note: 'Zorunlu: kosu listesi dogrudan sorgulanir']
+  plan_id uuid [note: 'Bos ise plansiz (ad-hoc) kosum']
+  environment_id uuid [not null]
+  status_id uuid [not null]
+  trigger_kind_id uuid [not null]
+  trigger_ref varchar(256) [note: 'Tetikleyicinin kimligi: bulgu parmak izi, kullanici veya webhook']
+  correlation_id uuid [note: 'Dis is numarasi ve surekli entegrasyon kosusuyla eslesme']
+  started_at timestamptz
+  completed_at timestamptz
+  duration_ms int
+  cancellation_requested boolean [not null, default: false]
+  cancelled_at timestamptz
+  error_message varchar(2048) [note: 'Kosunun kendisi coktuyse sebebi']
+  spec_fingerprint varchar(64) [note: 'O an kullanilan API sozlesmesinin parmak izi']
+  db_schema_fingerprint varchar(64) [note: 'O an hedef veritabani semasinin parmak izi']
+  counters jsonb [note: 'Owned: denormalize sonuc sayaclari']
+  artifacts jsonb [note: 'Owned: uretilen rapor dosyalarinin referanslari']
+  creation_time timestamptz [not null]
+
+  indexes {
+    (tenant_id, creation_time) [name: 'ix_runs_recent']
+    (correlation_id) [name: 'ix_runs_correlation']
+    (status_id) [name: 'ix_runs_status']
+  }
+
+  Note: '''
+  Bir kosunun basligi.
+
+  counters jsonb: total, passed, failed, broken, skipped, quarantined,
+  inconclusive, healed. Sayaclar bilincli denormalizasyondur ve kosu
+  tamamlanirken TEK BIR YERDE yazilir; liste ekraninin satir basina
+  toplama sorgusu atmasini onler.
+
+  artifacts jsonb: uretilen disa aktarim dosyalari (tur, ad, boyut,
+  icerik hash i, son kullanma tarihi). Dosyalarin kendisi nesne
+  deposundadir.
+
+  IKI PARMAK IZI
+  Kosu basinda API sozlesmesinin ve hedef veritabani semasinin parmak
+  izi kaydedilir. "Dun gecti, bugun kaldi, kod degismedi" durumunda iki
+  kosu karsilastirilarak degisimin ORTAMDA mi senaryoda mi oldugu
+  kesin olarak belirlenir.
+
+  started_at ile creation_time arasindaki fark kuyrukta bekleme suresidir.
+  '''
+}
+
+Table test_run.scenario_executions {
+  id uuid [pk]
+  tenant_id uuid [note: 'Zorunlu: trend ve saglik hesabi bu tabloyu dogrudan sorgular']
+  run_id uuid [not null]
+  scenario_id uuid [not null]
+  scenario_version_no int [not null, note: 'Anlik kopya; yabanci anahtar DEGIL']
+  attempt int [not null, default: 1]
+  history_id varchar(64) [not null, note: 'Trend gruplama anahtari']
+  status_id uuid [not null]
+  started_at timestamptz
+  completed_at timestamptz
+  duration_ms int
+  failed_step_id varchar(128)
+  last_completed_ordinal int [note: 'Cokme sonrasi nereye kadar gelindigi']
+
+  precondition_strategy_id uuid
+  precondition_satisfied boolean
+  isolation_mode_id uuid
+  dataset_ref varchar(128)
+  dataset_version varchar(64)
+
+  execution_ordinal int [note: 'Kosu icindeki sira — sira bagimliligi teshisi']
+  taken_branch_path varchar(256) [note: 'Karar noktalarinda secilen yol']
+  top_hypothesis_code varchar(64) [note: 'Teshis motorunun en yuksek guvenli hipotezi']
+  diagnosis_confidence_code varchar(32)
+
+  was_healed boolean [not null, default: false]
+  was_quarantined boolean [not null, default: false]
+  is_dry_run boolean [not null, default: false, note: 'Yazim anindaki deneme; saglik hesabina girmez']
+
+  steps jsonb [note: 'Owned: adim adim sonuclar ve kanit']
+  resolved_inputs jsonb [note: 'Owned: cozulmus goreli zamanlar ve girdiler']
+  creation_time timestamptz [not null]
+
+  indexes {
+    (run_id, scenario_id, attempt) [unique, name: 'ux_executions_attempt']
+    (scenario_id, creation_time) [name: 'ix_executions_scenario_history']
+    (history_id, creation_time) [name: 'ix_executions_trend']
+  }
+
+  Note: '''
+  Bir senaryonun tek kosumu. Adimlar bu satirin icinde owned JSON olarak
+  tasinir.
+
+  steps jsonb icerigi (adim basina):
+    stepId, ordinal, kind, oracleLayer
+    outcome           kararli sonuc kodu
+    matcherKind       kullanilan karsilastirici
+    httpStatus
+    observedAtMs      beklenen durum kac ms sonra gerceklesti
+    waitBudgetMs      senaryoda yazan bekleme siniri
+    durationMs, retryCount
+    outputs           sonraki adimlara tasinan degerler
+    redactionMode     maskeleme modu (kosum basina kaydedilir)
+    evidence          4 KB a kadar satir ici kanit
+    evidenceBlobId    asildiginda nesne deposu referansi
+
+  outputs alani is degismezlerinin on sartidir: bir adimda olculen
+  sayisal deger sonraki adimda fark hesabinda kullanilir.
+
+  scenario_version_no bir KOPYADIR, yabanci anahtar degildir. Senaryo
+  daha sonra degistirilse bile bu kayit hangi surumun kostugunu dogru
+  bildirmeye devam eder.
+
+  ADIMLARIN AYRI TABLO OLMAMASININ SONUCU
+  Satir sayisi bir kat kucultur ve bolumleme (partition) ihtiyacini
+  ortadan kaldirir. Karsiligi, cokme kurtarmanin ADIM degil SENARYO
+  seviyesinde olmasidir. Bu zaten dogru olan davranistir: yarim kalmis
+  bir is isleminin ortasindan devam etmek dogru degildir. Kosum Broken
+  isaretlenir, test verisi sifirlanir, senaryo bastan kosar.
+  '''
+}
+
+
+// =====================================================================
+//  ILISKILER
+// =====================================================================
+
+Ref: test_catalog.scenarios.scenario_kind_id > test_lookup.scenario_kinds.id
+Ref: test_catalog.scenarios.state_id > test_lookup.scenario_states.id
+
+Ref: test_catalog.scenario_step_bindings.scenario_id > test_catalog.scenarios.id [delete: cascade]
+Ref: test_catalog.scenario_step_bindings.step_kind_id > test_lookup.step_kinds.id
+
+Ref: test_catalog.test_plans.environment_id > test_catalog.test_environments.id
+
+Ref: test_catalog.business_knowledge.knowledge_kind_id > test_lookup.knowledge_kinds.id
+Ref: test_catalog.business_knowledge.content_blob_id > test_catalog.content_blobs.id
+
+Ref: test_catalog.agent_sessions.agent_profile_id > test_lookup.agent_profiles.id
+Ref: test_catalog.agent_sessions.status_id > test_lookup.agent_session_statuses.id
+Ref: test_catalog.agent_sessions.related_scenario_id > test_catalog.scenarios.id
+Ref: test_catalog.agent_sessions.related_run_id > test_run.test_runs.id
+
+Ref: test_run.test_runs.plan_id > test_catalog.test_plans.id
+Ref: test_run.test_runs.environment_id > test_catalog.test_environments.id
+Ref: test_run.test_runs.status_id > test_lookup.run_statuses.id
+Ref: test_run.test_runs.trigger_kind_id > test_lookup.trigger_kinds.id
+
+Ref: test_run.scenario_executions.run_id > test_run.test_runs.id [delete: cascade]
+Ref: test_run.scenario_executions.scenario_id > test_catalog.scenarios.id
+Ref: test_run.scenario_executions.status_id > test_lookup.execution_statuses.id
+Ref: test_run.scenario_executions.precondition_strategy_id > test_lookup.precondition_strategies.id
+Ref: test_run.scenario_executions.isolation_mode_id > test_lookup.isolation_modes.id
+
+
+// =====================================================================
+//  DIYAGRAMDA GORUNMEYEN, KOD SEVIYESINDE VAR OLAN BAGLAR
+//  (yabanci anahtar degildir; kimlikle referans)
+//
+//  test_environments.bindings[].dbConnectionId  -> veritabani dogrulayici modulu
+//  test_environments.bindings[].specSourceId    -> API sozlesme dogrulayici modulu
+//  scenarios.versions[].contentBlobId           -> content_blobs
+//  scenarios.versions[].planBlobId              -> content_blobs
+//  scenarios.heal_proposals[].findingFingerprint-> dogrulayici modul bulgusu
+//  scenario_executions.steps[].evidenceBlobId   -> nesne deposu
+//  scenario_step_bindings.rule_ref              -> business_knowledge.reference
+// =====================================================================
+
+
+// =====================================================================
+//  ENTITY SINIF ESLEMESI (ABP)
+//
+//  Entity ler veri kabugudur: alan/property, kisitli setter, EF ctor ve
+//  atama yapan ctor. Dogrulama, normalizasyon ve durum gecisi Manager
+//  katmanina aittir.
+//
+//  Tablo                     Taban sinif                     Arayuzler
+//  ------------------------- ------------------------------- --------------------------
+//  14 lookup tablosu         LookupEntity : Entity<Guid>     -
+//  content_blobs             CreationAuditedEntity<Guid>     IMultiTenant
+//  scenarios                 AuditedAggregateRoot<Guid>      IPassivable, IMultiTenant
+//  scenario_step_bindings    CreationAuditedEntity<Guid>     IMultiTenant
+//  test_environments         AuditedAggregateRoot<Guid>      IPassivable, IMultiTenant
+//  test_plans                AuditedAggregateRoot<Guid>      IPassivable, IMultiTenant
+//  business_knowledge        AuditedAggregateRoot<Guid>      IPassivable, IMultiTenant
+//  agent_sessions            AuditedAggregateRoot<Guid>      IMultiTenant
+//  test_runs                 AuditedAggregateRoot<Guid>      IMultiTenant
+//  scenario_executions       AuditedAggregateRoot<Guid>      IMultiTenant
+//
+//  Denetim tabani secimi:
+//    yazilip bir daha degismeyen kayit -> CreationAudited*
+//    durumu degisen kayit              -> Audited*
+//
+//  Owned tipler (ayri entity degildir, JSON kolon icinde tasinir):
+//    ScenarioVersion, ScenarioHealth, HealProposal, EnvironmentBinding,
+//    PlanSelection, RunCounters, RunArtifact, ExecutionStep,
+//    KnowledgeExtract, AgentMessage, AgentToolCall, ResolvedInputs
+// =====================================================================
+
+
+// =====================================================================
+//  SAKLAMA POLITIKASI
+//
+//  scenario_executions   90 gun (varsayilan; ayarlanabilir)
+//                        Zamanlanmis parcali silme, 10.000 satirlik
+//                        partiler, her parti ayri islem.
+//  test_runs             Sureli degil; sayaclar kalici tarih kaydidir.
+//  content_blobs         Referansi kalmayinca temizlenir.
+//  agent_sessions        180 gun.
+//  Nesne deposu          Dosya basina son kullanma tarihi.
+//
+//  BOLUMLEME (PARTITION) BU SURUMDE YOKTUR.
+//  PostgreSQL de bolumlenmis tablonun birincil anahtari bolumleme
+//  kolonunu icermek zorundadir; bu, tek kolonlu Guid anahtar sozlesmesini
+//  kirar. Gecis esigi: 50 milyon satir veya gunluk silme penceresinin
+//  10 dakikayi asmasi.
+// =====================================================================
+</content>

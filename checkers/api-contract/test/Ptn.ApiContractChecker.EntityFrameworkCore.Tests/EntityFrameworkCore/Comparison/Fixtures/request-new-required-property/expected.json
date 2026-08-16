@@ -1,0 +1,3 @@
+[
+  "new-required-request-property | breaking | request | schema=OrderCreateRequest;property=currency | - -\u003E required"
+]

@@ -1,0 +1,3 @@
+[
+  "response-media-type-removed | breaking | response | method=GET;path=/orders/{};operation=getOrder;status=200;media=application/xml | application/xml -\u003E -"
+]

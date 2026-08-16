@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.ApiContractChecker</RootNamespace>
+    <PackageId>CheckNexus.ApiContracts.HttpApi.Client</PackageId>
+    <Description>ABP HTTP client proxies for the CheckNexus API Contract Checker module.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Http.Client" Version="10.3.0" />
+    <ProjectReference Include="..\Ptn.ApiContractChecker.Application.Contracts\Ptn.ApiContractChecker.Application.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="**\*generate-proxy.json" />
+    <Content Remove="**\*generate-proxy.json" />
+  </ItemGroup>
+
+</Project>

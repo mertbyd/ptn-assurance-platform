@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CheckNexus.DatabaseComparison</RootNamespace>
+    <AssemblyName>CheckNexus.DatabaseComparison</AssemblyName>
+    <PackageId>CheckNexus.DatabaseComparison</PackageId>
+    <Description>Composition package for the CheckNexus Database Checker ABP module, including application services, controllers, repositories, provider adapters, and EF Core migrations.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ptn.DatabaseChecker.Application\Ptn.DatabaseChecker.Application.csproj" />
+    <ProjectReference Include="..\Ptn.DatabaseChecker.EntityFrameworkCore\Ptn.DatabaseChecker.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Ptn.DatabaseChecker.HttpApi\Ptn.DatabaseChecker.HttpApi.csproj" />
+  </ItemGroup>
+
+</Project>

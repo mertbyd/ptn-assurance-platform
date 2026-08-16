@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CheckNexus.ApiContracts</RootNamespace>
+    <AssemblyName>CheckNexus.ApiContracts</AssemblyName>
+    <PackageId>CheckNexus.ApiContracts</PackageId>
+    <Description>Composition package for the CheckNexus API Contract Checker ABP module, including application services, controllers, repositories, and EF Core migrations.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ptn.ApiContractChecker.Application\Ptn.ApiContractChecker.Application.csproj" />
+    <ProjectReference Include="..\Ptn.ApiContractChecker.EntityFrameworkCore\Ptn.ApiContractChecker.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Ptn.ApiContractChecker.HttpApi\Ptn.ApiContractChecker.HttpApi.csproj" />
+  </ItemGroup>
+
+</Project>

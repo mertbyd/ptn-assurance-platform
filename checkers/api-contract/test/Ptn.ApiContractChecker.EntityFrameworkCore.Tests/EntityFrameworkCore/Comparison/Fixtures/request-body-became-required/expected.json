@@ -1,0 +1,3 @@
+[
+  "request-body-became-required | breaking | request | method=POST;path=/orders;operation=createOrder;schema=OrderCreateRequest;media=application/json | optional -\u003E required"
+]

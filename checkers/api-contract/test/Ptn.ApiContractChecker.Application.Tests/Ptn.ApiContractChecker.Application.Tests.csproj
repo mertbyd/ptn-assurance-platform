@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.ApiContractChecker</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Ptn.ApiContractChecker.Application\Ptn.ApiContractChecker.Application.csproj" />
+    <ProjectReference Include="..\..\src\Ptn.ApiContractChecker.HttpApi\Ptn.ApiContractChecker.HttpApi.csproj" />
+    <ProjectReference Include="..\Ptn.ApiContractChecker.Domain.Tests\Ptn.ApiContractChecker.Domain.Tests.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+  </ItemGroup>
+
+</Project>

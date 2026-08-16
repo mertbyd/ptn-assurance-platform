@@ -1,0 +1,3 @@
+[
+  "request-property-type-changed | breaking | request | schema=OrderCreateRequest;property=quantity | integer -\u003E string"
+]

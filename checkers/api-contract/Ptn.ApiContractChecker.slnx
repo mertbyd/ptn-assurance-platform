@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CheckNexus.ApiContracts/CheckNexus.ApiContracts.csproj" />
+    <Project Path="src/Ptn.ApiContractChecker.Application.Contracts/Ptn.ApiContractChecker.Application.Contracts.csproj" />
+    <Project Path="src/Ptn.ApiContractChecker.Application/Ptn.ApiContractChecker.Application.csproj" />
+    
+    <Project Path="src/Ptn.ApiContractChecker.Domain.Shared/Ptn.ApiContractChecker.Domain.Shared.csproj" />
+    <Project Path="src/Ptn.ApiContractChecker.Domain/Ptn.ApiContractChecker.Domain.csproj" />
+    <Project Path="src/Ptn.ApiContractChecker.EntityFrameworkCore/Ptn.ApiContractChecker.EntityFrameworkCore.csproj" />
+    <Project Path="src/Ptn.ApiContractChecker.HttpApi.Client/Ptn.ApiContractChecker.HttpApi.Client.csproj" />
+    <Project Path="src/Ptn.ApiContractChecker.HttpApi/Ptn.ApiContractChecker.HttpApi.csproj" />
+  </Folder>
+  <Folder Name="/host/">
+    <Project Path="host/Ptn.ApiContractChecker.HttpApi.Host/Ptn.ApiContractChecker.HttpApi.Host.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Ptn.ApiContractChecker.Application.Tests/Ptn.ApiContractChecker.Application.Tests.csproj" />
+    <Project Path="test/Ptn.ApiContractChecker.Domain.Tests/Ptn.ApiContractChecker.Domain.Tests.csproj" />
+    <Project Path="test/Ptn.ApiContractChecker.EntityFrameworkCore.Tests/Ptn.ApiContractChecker.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="test/Ptn.ApiContractChecker.TestBase/Ptn.ApiContractChecker.TestBase.csproj" />
+  </Folder>
+</Solution>

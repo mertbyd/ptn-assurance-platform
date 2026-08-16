@@ -1,0 +1,6 @@
+[
+  "request-property-became-required | breaking | request | schema=Ptn.ApiContractChecker.Dtos.Recipients.CreateCheckRecipientDto;property=displayName | optional -\u003E required",
+  "request-property-became-required | breaking | request | schema=Ptn.ApiContractChecker.Dtos.Recipients.UpdateCheckRecipientDto;property=displayName | optional -\u003E required",
+  "api-schema-removed | breaking | response | schema=SystemStandards.Results.ResultOfSystem.NullableOfSystem.Guid | SystemStandards.Results.ResultOfSystem.NullableOfSystem.Guid -\u003E -",
+  "endpoint-removed | breaking | endpoint | method=GET;path=/api/auth/me | GET /api/auth/me -\u003E -"
+]

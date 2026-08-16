@@ -1,0 +1,84 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "Sample generation and links", "version": "1.0.0" },
+  "paths": {
+    "/orders": {
+      "post": {
+        "operationId": "createOrder",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "amount", "state"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 2, "maxLength": 10 },
+                  "amount": { "type": "number", "minimum": 2, "maximum": 10 },
+                  "state": { "type": "string", "enum": ["open", "closed"], "pattern": "^[a-z]+$" },
+                  "contact": { "type": "string", "format": "email" },
+                  "note": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "created",
+            "headers": {
+              "Location": {
+                "schema": { "type": "string", "format": "uri-reference" },
+                "example": "/created-orders/42"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "orderId": { "type": "string" },
+                    "customerId": { "type": "string" }
+                  }
+                }
+              }
+            },
+            "links": {
+              "GetOrder": {
+                "operationId": "getOrder",
+                "parameters": { "orderId": "$response.body#/orderId" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{orderId}": {
+      "get": {
+        "operationId": "getOrder",
+        "parameters": [
+          { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "ok" } }
+      }
+    },
+    "/customers/{customerId}": {
+      "get": {
+        "operationId": "getCustomer",
+        "parameters": [
+          { "name": "customerId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "ok" } }
+      }
+    },
+    "/created-orders/{id}": {
+      "get": {
+        "operationId": "getCreatedOrder",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "ok" } }
+      }
+    }
+  }
+}

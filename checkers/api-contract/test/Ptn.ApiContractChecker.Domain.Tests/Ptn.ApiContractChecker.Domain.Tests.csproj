@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.ApiContractChecker</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <!-- Yalniz PasswordResetTemplateName_Tests icin: parola sifirlama maili ABP'nin Account modulunden gider,
+         bu yuzden ABP'nin sablon adi/degiskeni ile bizim seed'imiz arasindaki esitlik ancak burada pinlenebilir. -->
+    <PackageReference Include="Volo.Abp.Account.Application" Version="10.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Ptn.ApiContractChecker.Domain\Ptn.ApiContractChecker.Domain.csproj" />
+    <ProjectReference Include="..\Ptn.ApiContractChecker.TestBase\Ptn.ApiContractChecker.TestBase.csproj" />
+  </ItemGroup>
+
+
+</Project>

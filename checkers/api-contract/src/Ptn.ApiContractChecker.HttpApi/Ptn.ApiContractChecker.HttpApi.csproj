@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.ApiContractChecker</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>CheckNexus.ApiContracts.HttpApi</PackageId>
+    <Description>HTTP API controllers for the CheckNexus API Contract Checker module.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SystemStandards.Core" Version="2.0.0" />
+    <PackageReference Include="SystemStandards.Abp" Version="2.0.2" />
+    <PackageReference Include="Volo.Abp.AspNetCore.Mvc" Version="10.3.0" />
+    <ProjectReference Include="..\Ptn.ApiContractChecker.Application.Contracts\Ptn.ApiContractChecker.Application.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\Search\" />
+  </ItemGroup>
+
+</Project>

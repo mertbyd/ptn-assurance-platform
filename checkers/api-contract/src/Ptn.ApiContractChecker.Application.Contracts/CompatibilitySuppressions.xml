@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- https://learn.microsoft.com/dotnet/fundamentals/package-validation/diagnostic-ids -->
+<Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Suppression>
+    <DiagnosticId>CP0006</DiagnosticId>
+    <Target>M:Ptn.ApiContractChecker.Services.Conformance.IResponseConformanceAppService.BuildSampleSetAsync(Ptn.ApiContractChecker.Dtos.Conformance.SampleSetRequestDto)</Target>
+    <Left>lib/net10.0/Ptn.ApiContractChecker.Application.Contracts.dll</Left>
+    <Right>lib/net10.0/Ptn.ApiContractChecker.Application.Contracts.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0006</DiagnosticId>
+    <Target>M:Ptn.ApiContractChecker.Services.Conformance.IResponseConformanceAppService.SuggestOperationLinksAsync(Ptn.ApiContractChecker.Dtos.Conformance.OperationLinkRequestDto)</Target>
+    <Left>lib/net10.0/Ptn.ApiContractChecker.Application.Contracts.dll</Left>
+    <Right>lib/net10.0/Ptn.ApiContractChecker.Application.Contracts.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0006</DiagnosticId>
+    <Target>M:Ptn.ApiContractChecker.Services.Snapshots.ISpecSnapshotAppService.ListOperationsAsync(System.Guid,Ptn.ApiContractChecker.Dtos.Snapshots.ListSnapshotOperationsInput)</Target>
+    <Left>lib/net10.0/Ptn.ApiContractChecker.Application.Contracts.dll</Left>
+    <Right>lib/net10.0/Ptn.ApiContractChecker.Application.Contracts.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+</Suppressions>

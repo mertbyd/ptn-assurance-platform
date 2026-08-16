@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.ApiContractChecker</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="10.0.2" />
+    <!-- Security floor for the native SQLite runtime pulled by the ABP SQLite test provider. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.12" />
+    <ProjectReference Include="..\..\src\CheckNexus.ApiContracts\CheckNexus.ApiContracts.csproj" />
+    <ProjectReference Include="..\..\src\Ptn.ApiContractChecker.EntityFrameworkCore\Ptn.ApiContractChecker.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\Ptn.ApiContractChecker.Application.Tests\Ptn.ApiContractChecker.Application.Tests.csproj" />
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore.Sqlite" Version="10.3.0" />
+
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="EntityFrameworkCore\Comparison\Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="EntityFrameworkCore\Snapshots\Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CheckNexus.DatabaseComparison/CheckNexus.DatabaseComparison.csproj" />
+    <Project Path="src/Ptn.DatabaseChecker.Application.Contracts/Ptn.DatabaseChecker.Application.Contracts.csproj" />
+    <Project Path="src/Ptn.DatabaseChecker.Application/Ptn.DatabaseChecker.Application.csproj" />
+    
+    <Project Path="src/Ptn.DatabaseChecker.Domain.Shared/Ptn.DatabaseChecker.Domain.Shared.csproj" />
+    <Project Path="src/Ptn.DatabaseChecker.Domain/Ptn.DatabaseChecker.Domain.csproj" />
+    <Project Path="src/Ptn.DatabaseChecker.EntityFrameworkCore/Ptn.DatabaseChecker.EntityFrameworkCore.csproj" />
+    <Project Path="src/Ptn.DatabaseChecker.HttpApi.Client/Ptn.DatabaseChecker.HttpApi.Client.csproj" />
+    <Project Path="src/Ptn.DatabaseChecker.HttpApi/Ptn.DatabaseChecker.HttpApi.csproj" />
+  </Folder>
+  <Folder Name="/host/">
+    <Project Path="host/Ptn.DatabaseChecker.HttpApi.Host/Ptn.DatabaseChecker.HttpApi.Host.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Ptn.DatabaseChecker.Application.Tests/Ptn.DatabaseChecker.Application.Tests.csproj" />
+    <Project Path="test/Ptn.DatabaseChecker.Domain.Tests/Ptn.DatabaseChecker.Domain.Tests.csproj" />
+    <Project Path="test/Ptn.DatabaseChecker.EntityFrameworkCore.Tests/Ptn.DatabaseChecker.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="test/Ptn.DatabaseChecker.TestBase/Ptn.DatabaseChecker.TestBase.csproj" />
+  </Folder>
+</Solution>

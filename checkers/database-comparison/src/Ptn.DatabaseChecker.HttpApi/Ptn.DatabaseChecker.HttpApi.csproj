@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Ptn.DatabaseChecker</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>CheckNexus.DatabaseComparison.HttpApi</PackageId>
+    <Description>HTTP API controllers for the CheckNexus Database Checker module.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SystemStandards.Core" Version="2.0.0" />
+    <PackageReference Include="SystemStandards.Abp" Version="2.0.2" />
+    <PackageReference Include="Volo.Abp.AspNetCore.Mvc" Version="10.3.0" />
+    <ProjectReference Include="..\Ptn.DatabaseChecker.Application.Contracts\Ptn.DatabaseChecker.Application.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\Lookups\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\Search\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="Controllers\Search\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Controllers\Search\**" />
+  </ItemGroup>
+
+</Project>

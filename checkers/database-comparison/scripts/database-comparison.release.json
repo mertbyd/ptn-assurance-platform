@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "feed": "../artifacts/release",
+  "families": [
+    {
+      "name": "DatabaseComparison",
+      "displayName": "CheckNexus Database Comparison",
+      "root": "..",
+      "solution": "Ptn.DatabaseChecker.slnx",
+      "version": "0.2.0-alpha.8",
+      "immutableVersions": [
+        "0.2.0-alpha.2",
+        "0.2.0-alpha.6",
+        "0.2.0-alpha.7",
+        "0.2.0-alpha.8"
+      ],
+      "keyName": "checknexus-database-comparison-push",
+      "packageGlob": "CheckNexus.DatabaseComparison*",
+      "owner": "CheckNexus.DatabaseComparison package owner",
+      "hasSymbols": true,
+      "packages": [
+        {
+          "id": "CheckNexus.DatabaseComparison.Domain.Shared",
+          "project": "src/Ptn.DatabaseChecker.Domain.Shared/Ptn.DatabaseChecker.Domain.Shared.csproj",
+          "requiredDependencies": []
+        },
+        {
+          "id": "CheckNexus.DatabaseComparison.Domain",
+          "project": "src/Ptn.DatabaseChecker.Domain/Ptn.DatabaseChecker.Domain.csproj",
+          "requiredDependencies": [
+            {
+              "id": "CheckNexus.DatabaseComparison.Domain.Shared",
+              "versionContains": "0.2.0-alpha.8"
+            }
+          ]
+        },
+        {
+          "id": "CheckNexus.DatabaseComparison.Application.Contracts",
+          "project": "src/Ptn.DatabaseChecker.Application.Contracts/Ptn.DatabaseChecker.Application.Contracts.csproj",
+          "requiredDependencies": [
+            {
+              "id": "CheckNexus.DatabaseComparison.Domain.Shared",
+              "versionContains": "0.2.0-alpha.8"
+            }
+          ]
+        },
+        {
+          "id": "CheckNexus.DatabaseComparison.Application",
+          "project": "src/Ptn.DatabaseChecker.Application/Ptn.DatabaseChecker.Application.csproj",
+          "requiredDependencies": [
+            {
+              "id": "CheckNexus.DatabaseComparison.Application.Contracts",
+              "versionContains": "0.2.0-alpha.8"
+            },
+            {
+              "id": "CheckNexus.DatabaseComparison.Domain",
+              "versionContains": "0.2.0-alpha.8"
+            }
+          ]
+        },
+        {
+          "id": "CheckNexus.DatabaseComparison.EntityFrameworkCore",
+          "project": "src/Ptn.DatabaseChecker.EntityFrameworkCore/Ptn.DatabaseChecker.EntityFrameworkCore.csproj",
+          "requiredDependencies": [
+            {
+              "id": "CheckNexus.DatabaseComparison.Domain",
+              "versionContains": "0.2.0-alpha.8"
+            }
+          ]
+        },
+        {
+          "id": "CheckNexus.DatabaseComparison.HttpApi",
+          "project": "src/Ptn.DatabaseChecker.HttpApi/Ptn.DatabaseChecker.HttpApi.csproj",
+          "requiredDependencies": [
+            {
+              "id": "CheckNexus.DatabaseComparison.Application.Contracts",
+              "versionContains": "0.2.0-alpha.8"
+            }
+          ]
+        },
+        {
+          "id": "CheckNexus.DatabaseComparison.HttpApi.Client",
+          "project": "src/Ptn.DatabaseChecker.HttpApi.Client/Ptn.DatabaseChecker.HttpApi.Client.csproj",
+          "requiredDependencies": [
+            {
+              "id": "CheckNexus.DatabaseComparison.Application.Contracts",
+              "versionContains": "0.2.0-alpha.8"
+            }
+          ]
+        },
+        {
+          "id": "CheckNexus.DatabaseComparison",
+          "project": "src/CheckNexus.DatabaseComparison/CheckNexus.DatabaseComparison.csproj",
+          "requiredDependencies": [
+            {
+              "id": "CheckNexus.DatabaseComparison.Application",
+              "versionContains": "0.2.0-alpha.8"
+            },
+            {
+              "id": "CheckNexus.DatabaseComparison.EntityFrameworkCore",
+              "versionContains": "0.2.0-alpha.8"
+            },
+            {
+              "id": "CheckNexus.DatabaseComparison.HttpApi",
+              "versionContains": "0.2.0-alpha.8"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

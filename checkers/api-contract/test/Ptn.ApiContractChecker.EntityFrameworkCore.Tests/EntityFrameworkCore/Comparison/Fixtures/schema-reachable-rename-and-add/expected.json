@@ -1,0 +1,4 @@
+[
+  "schema-renamed | breaking | response | schema=CustomerRef | CustomerRef -\u003E CustomerReference",
+  "schema-added | non-breaking | response | schema=OrderAuditEntry | - -\u003E OrderAuditEntry"
+]

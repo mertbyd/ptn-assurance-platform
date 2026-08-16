@@ -1,0 +1,57 @@
+{
+  "updated": "2026-08-04",
+  "task": "KBP-617",
+  "notes": [
+    "Every entry is a kind-level disagreement between our engine and oasdiff that survived",
+    "folding oasdiff's catalog down to our 16 DifferenceKind codes. Cardinality differences",
+    "are invisible here on purpose: oasdiff addresses a finding per operation x status x media",
+    "type, we address it once per schema + property, so counts never match and comparing them",
+    "would produce permanent noise. See CURRENT-0002 for the full rationale of each row.",
+    "status=deliberate means the difference is intended. status=known-gap means the engine",
+    "disagrees with our own rule and the fix is still open."
+  ],
+  "deviations": [
+    {
+      "case": "documentation-only",
+      "kind": "description-changed",
+      "status": "deliberate",
+      "reason": "oasdiff has 0 description checks; DocsOnly drift reporting is ours by design (RULE-0007)"
+    },
+    {
+      "case": "live-host-swagger",
+      "kind": "api-schema-removed",
+      "status": "deliberate",
+      "reason": "oasdiff calls components/schemas removal info; we only report reachable schemas, so it is consumer-visible (RULE-0007)"
+    },
+    {
+      "case": "schema-added-removed-renamed",
+      "kind": "api-schema-removed",
+      "status": "deliberate",
+      "reason": "oasdiff calls components/schemas removal info; we only report reachable schemas, so it is consumer-visible (RULE-0007)"
+    },
+    {
+      "case": "schema-reachable-rename-and-add",
+      "kind": "api-schema-removed",
+      "status": "deliberate",
+      "reason": "oasdiff has no rename detection and reports the old name as removed; we report schema-renamed instead (RULE-0007)"
+    },
+    {
+      "case": "schema-reachable-rename-and-add",
+      "kind": "schema-renamed",
+      "status": "deliberate",
+      "reason": "project-specific code; renaming a reachable schema changes the generated client DTO identity (RULE-0007)"
+    },
+    {
+      "case": "schema-reachable-rename-and-add",
+      "kind": "schema-added",
+      "status": "deliberate",
+      "reason": "oasdiff has no schema-added check; we report reachable additions as NonBreaking (RULE-0007)"
+    },
+    {
+      "case": "endpoint-removed-after-sunset",
+      "kind": "endpoint-removed",
+      "status": "known-gap",
+      "reason": "RULE-0007 says deprecated+sunset removal is a warning; oasdiff suppresses it entirely. Our snapshot model carries no deprecated/sunset and DifferenceSeverityCodes has no warning code, so every removal stays Breaking. Deferred in KBP-613, still open."
+    }
+  ]
+}

@@ -1,0 +1,478 @@
+// =====================================================================
+//  PTN Assurance — Test Platform veritabani semasi
+//  dbdiagram.io icin DBML
+//  Surum: 2026-08-15
+//
+//  4 ana tablo + 5 lookup, 3 sema.   (resmi karar: ADR-0016)
+//
+//  NOT: ABP taban siniflarinin verdigi alanlar (id, creation_time,
+//  creator_id, last_modification_time, last_modifier_id, tenant_id,
+//  concurrency_stamp, extra_properties) diyagramda GOSTERILMEZ.
+//  Hangi tabanin hangi alani verdigi her tablonun Note'unda yazar.
+//
+//  Tasarim ilkesi: ayri tablo YALNIZ su ucunden biri varsa
+//    1) baska yerden FK ile gosteriliyor
+//    2) parent'indan bagimsiz sorgulaniyor (WHERE/JOIN hedefi)
+//    3) parent'tan bagimsiz tekillestiriliyor
+//  Aksi halde -> parent satirinda owned jsonb veya hic yok.
+// =====================================================================
+
+Project ptn_test_platform {
+  database_type: 'PostgreSQL'
+  Note: '''
+  Test Platform — is senaryosu testi platformunun kalici veri modeli.
+
+  ALTI AN (ARCH-0004):
+    1 GIRIS   senaryo.md + kurallar.md
+    2 ZEMIN   ajan checker'lara sorar
+    3 YAZIM   Arazzo 1.0.1 dokumani            <- 1.1 DEGIL (AUDIT-0002 BULGU-07)
+    4 KAPI    turetilebilirlik + insan onayi     <- ajan burada durur
+    5 KOSUM   Redocly Respect icra eder          <- ajan yok
+    6 YARGI   checker hakem ve teshis            <- ajan yok
+
+  Sema sahipligi:
+    test_lookup   : sabit deger listeleri (seed, global)
+    test_catalog  : senaryo surumleri (uzun omurlu)
+    test_run      : kosu kayitlari (buyuk, 90 gun)
+
+  Database Checker `lookup/connection/definition/run/comparison`,
+  API Checker `checker` semasini sahiplenmistir. Cakisma yoktur.
+
+  Checker tablolarina FK YOKTUR. Modul disi kimlikler (db_connection_id,
+  spec_snapshot_id) kimlikle referans olarak tutulur.
+
+  ORTAM BAGLAMASI TABLO DEGILDIR: ABP tenant-scoped Setting olarak tutulur,
+  kosum aninda cozulur ve test_runs satirina snapshot olarak duser (ADR-0016 G).
+
+  ---------------------------------------------------------------------
+  COK KIRACILILIK KURALI
+  ---------------------------------------------------------------------
+  ABP tenant filtresi ENTITY TIPI bazinda uygulanir ve MIRAS ALINMAZ.
+  Cocuk entity olsa bile dogrudan sorgulanan her tip IMultiTenant tasir.
+
+    4 ana tablo   -> IMultiTenant ZORUNLU (test_result_findings dahil)
+    5 lookup      -> IMultiTenant YOK (global referans verisi)
+
+  Ev precedent'i: SpecDocument ve SpecContent cocuk entity olduklari
+  halde IMultiTenant tasir. Kiraci kapsami VERITABANI KATMANINDADIR.
+
+  ---------------------------------------------------------------------
+  LOOKUP MU VARCHAR MI
+  ---------------------------------------------------------------------
+  Enum KULLANILMAZ. Ama her kod da lookup degildir:
+
+    kume kapali VE sozlugun sahibi biz       -> lookup tablosu
+    acik uclu VEYA sahibi baska modul        -> varchar + Domain.Shared sabiti
+
+  Bu yuzden error_code, comparison_kind_code, source_checker_code ve
+  diagnosis_* kodlari lookup DEGILDIR. SARIF de ruleId'yi bilincli olarak
+  serbest string tutar.
+  '''
+}
+
+
+// =====================================================================
+//  SEMA: test_lookup — sabit deger listeleri
+//  Hepsi LookupEntity : Entity<Guid>
+//  Ortak kolonlar tabandan: id, code, name, description
+//  tenant_id YOK, denetim alani YOK.
+//
+//  !!! BU BOLUM KURULAN SEMAYLA BILEREK AYRISIR — kodu DBML'e uydurma.
+//  Kurulan sema (KBP-90) iki noktada farklidir ve fark BILINCLIDIR;
+//  gerekcesi CURRENT-0001 "Lookup semasi ile DBML arasindaki bilincli
+//  sapma" tablosundadir:
+//
+//    1) Kolon uzunluklari  DBML 64/128/512  ->  KURULAN 128/256/1024
+//       Foundation ConfigureLookup + LookupManager bu sinirlari sabit
+//       tasir; DBML uygulansaydi DB 64'te keser, validator 128'e izin
+//       verirdi ve fark calisma aninda INSERT hatasi olurdu.
+//
+//    2) is_active          DBML var         ->  KURULAN YOK
+//       Foundation LookupEntity<TKey> IPassivable TASIMAZ. Kullanici
+//       2026-08-14'te Foundation tabaninin oldugu gibi kullanilmasina
+//       karar verdi. ADR-0016 §E'nin "LookupEntity : Entity<Guid> +
+//       IPassivable" satiri bu modul icin GECERLI DEGILDIR.
+//
+//  Asagidaki is_active kolonlari bu yuzden DBML'de kalir ama semada
+//  YOKTUR. DBML'i semaya hizalamak AYRI bir karardir ve ALINMAMISTIR.
+// =====================================================================
+
+Table test_lookup.test_run_statuses {
+  id uuid [pk]
+  code varchar(64) [not null, unique, note: 'Pending | Running | Completed | Cancelled | Aborted | TimedOut']
+  name varchar(128) [not null]
+  description varchar(512)
+  is_active boolean [not null, default: true]
+  Note: '''
+  MOTORUN durumu — hukum degil.
+  OpenTelemetry test.suite.run.status sozlugu ile hizali
+  (in_progress | success | failure | skipped | aborted | timed_out).
+
+  Completed = motor duzgun bitti; ICINDE basarisiz test OLABILIR.
+  Aborted   = motorun kendisi coktu.
+  '''
+}
+
+Table test_lookup.test_outcome_statuses {
+  id uuid [pk]
+  code varchar(64) [not null, unique, note: 'Passed | Failed | Broken | Skipped | Inconclusive']
+  name varchar(128) [not null]
+  description varchar(512)
+  breaks_build boolean [not null, default: false]
+  is_active boolean [not null, default: true]
+  Note: '''
+  HUKUM. Allure sozlugu ile birebir; JUnit'in <failure>/<error>/<skipped>
+  ayrimini karsilar.
+
+    Passed        ana yol kostu, her sey tuttu       (cocuksuz <testcase>)
+    Failed        hakem HAYIR dedi -> GERCEK BULGU   (JUnit <failure>)
+    Broken        beklenmeyen sorun, test kosamadi   (JUnit <error>)
+    Skipped       bilincli atlandi                   (JUnit <skipped>)
+    Inconclusive  ONKOSUL SAGLANMADI, ana yol kosmadi -> hicbir sey dogrulanmadi
+                  (SARIF result.kind = notApplicable)
+
+  breaks_build NEDEN KOLON: "hangi sonuc CI'i kirar" bir POLITIKA kararidir.
+  Koda if (code == "Failed") yazilirsa Broken eklendiginde her yer bozulur.
+  '''
+}
+
+Table test_lookup.test_failure_categories {
+  id uuid [pk]
+  code varchar(64) [not null, unique, note: 'Contract | Persistence | Business | Transport | Technical']
+  name varchar(128) [not null]
+  description varchar(512)
+  is_active boolean [not null, default: true]
+  Note: '''
+  HANGI HAKEM HAYIR DEDI.
+    Contract     -> API Contract Checker
+    Persistence  -> Database Checker
+    Business     -> is degismezi
+    Transport    -> ag / HTTP seviyesi
+    Technical    -> beklenmeyen exception'in guvenli karsiligi
+  '''
+}
+
+Table test_lookup.test_trigger_kinds {
+  id uuid [pk]
+  code varchar(64) [not null, unique, note: 'Manual | Scheduled | Api | Webhook | ContractChange']
+  name varchar(128) [not null]
+  description varchar(512)
+  is_active boolean [not null, default: true]
+  Note: '''
+  NASIL BASLATILDI. "Kim baslatti" sorusunun cevabi CreatorId'dir (taban sinif);
+  ama zamanlanmis kosumda oturum acmis kullanici YOKTUR ve CreatorId null kalir.
+  Bu yuzden "nasil" ayri bir lookup'tir.
+
+  ContractChange = sozlesme degisti, etkilenen senaryolar kosuyor.
+  '''
+}
+
+Table test_lookup.test_scenario_states {
+  id uuid [pk]
+  code varchar(64) [not null, unique, note: 'Draft | PendingApproval | Published | Deprecated']
+  name varchar(128) [not null]
+  description varchar(512)
+  is_active boolean [not null, default: true]
+  Note: 'Senaryo surumunun yayin durumu. Yalniz Published kosar. Published a yazan tool AJANIN KATALOGUNDA YOKTUR (RULE-0005).'
+}
+
+
+// =====================================================================
+//  SEMA: test_catalog — tanim dunyasi
+// =====================================================================
+
+Table test_catalog.test_scenarios {
+  scenario_key varchar(128) [not null, note: 'KALICI KIMLIK — asla degismez']
+  version_no int [not null]
+  title varchar(256) [not null, note: 'Ekranda gorunen ad; serbestce degisir']
+  description varchar(1024) [note: 'senaryo.md ozeti']
+  state_id uuid [not null]
+
+  source_document text [not null, note: 'AJANIN YAZDIGI Arazzo 1.0.1 belgesi — x-checknexus-db uzantili, INSANIN INCELEDIGI']
+  source_hash varchar(64) [not null, note: 'SHA-256 — ONAYIN BAGLANDIGI hash']
+  compiled_document text [not null, note: 'RUNNER IN KOSTUGU belge — DB adimlari gercek HTTP adimina derlenmis']
+  compiled_hash varchar(64) [not null]
+
+  // ---- MALZEME MUHRU (ADR-0020): dort girdinin KIMLIK + ICERIK baglamasi ----
+  rules_fingerprint varchar(64) [note: 'kurallar.md canonical hash — HANGI KURALLARA KARSI yazildi']
+  spec_snapshot_id uuid [note: 'API Checker SpecSnapshot kimligi — FK DEGIL, moduller arasi anahtar yasagi']
+  spec_fingerprint varchar(64) [note: 'API snapshot ICERIK muhru — kimlik ayni kalip icerik degisebilir']
+  db_connection_id uuid [note: 'DB Checker baglanti kimligi — FK DEGIL']
+  db_schema_fingerprint varchar(64) [note: 'DB semasi ICERIK muhru — kanonik, denetim/istatistik alani haric']
+  profile_fingerprint varchar(64) [note: 'Profil paketi ICERIK muhru (ADR-0019 B) — x-checknexus-db somut adrese DERLENDIGI icin malzemedir']
+
+  assertion_count int [not null, default: 0, note: 'RULE-0006 KAPISI: 0 ise yayinlanamaz']
+  derivability_code varchar(64) [note: 'ValidateScenarioAssertionsAsync ozeti']
+
+  authored_by_agent boolean [not null, default: false]
+  agent_model_ref varchar(64) [note: 'Hangi model yazdi — MODEL BASINA KABUL ORANI olcumu (ADR-0014 F)']
+
+  approved_by uuid
+  approved_at timestamptz
+  approval_bound_to_hash varchar(64) [note: 'Onay ICERIGE bagli; belge degisirse hash tutmaz, uygulama REDDEDILIR']
+  notes varchar(1024)
+
+  indexes {
+    (scenario_key, version_no) [unique, name: 'ux_scenarios_version']
+    (scenario_key, source_hash) [unique, name: 'ux_scenarios_content']
+    (state_id) [name: 'ix_scenarios_state']
+  }
+
+  Note: '''
+  HER SATIR BIR SURUMDUR. Ayri bir "senaryo basligi" tablosu YOKTUR cunku:
+    - hicbir yerden FK almiyor (kosu SURUME baglaniyor, senaryoya degil)
+    - tuttugu her alan turetilebilir (published_version_no = WHERE state=Published)
+  Uc kriterin ucu de dusuyor.
+
+  ABP TABANI: AuditedAggregateRoot<Guid>, IMultiTenant
+  Tabandan gelen: id, creation_time, creator_id, last_modification_time,
+                  last_modifier_id, tenant_id, concurrency_stamp, extra_properties
+
+  IKI BELGE NEDEN: onay KAYNAK belgeye verilir (insan onu okudu), runner
+  DERLENMIS belgeyi kosar. Ikisi de saklanir cunku derleyici yarin degisirse
+  eski kosu YENIDEN URETILEBILIR kalmalidir.
+  '''
+}
+
+
+// =====================================================================
+//  SEMA: test_run — kosum dunyasi (buyuk, 90 gun)
+// =====================================================================
+
+Table test_run.test_runs {
+  scenario_id uuid [note: 'null = ad-hoc / dryRun. RESTRICT — senaryo surumu asla silinmez']
+  test_key varchar(128) [not null, note: 'SNAPSHOT — trend indeksi buna vuruyor']
+  history_id varchar(64) [note: 'Trend kovasi: SHA-256(test_key | environment_key | kanonik girdiler)']
+
+  environment_key varchar(128) [not null, note: 'ABP Setting den cozulup snapshot lanir']
+  spec_snapshot_id uuid [note: 'Cozulmus API Checker kimligi — FK DEGIL']
+  db_connection_id uuid [note: 'Cozulmus DB Checker kimligi — FK DEGIL']
+
+  run_status_id uuid [not null]
+  trigger_kind_id uuid [not null]
+  trigger_ref varchar(256) [note: 'Cron adi | webhook kimligi | bulgu parmak izi']
+
+  trace_id varchar(32) [note: 'W3C trace-id: 32 KUCUK HARF HEX (16 bayt). Guid degil']
+  spec_fingerprint varchar(64) [note: 'ORTAM KAYMASI TESPITI']
+  db_schema_fingerprint varchar(64) [note: 'ORTAM KAYMASI TESPITI']
+
+  runner_ref varchar(64) [note: 'redocly-respect@2.14.0 — motor yukseltmesi davranis degistirirse hangi kosular etkilendi']
+  is_dry_run boolean [not null, default: false, note: 'An 4 kuru kosumu; SAGLIK HESABINA GIRMEZ']
+  har_blob_name varchar(256) [note: 'HAR 1.2 artefakti — ABP BLOB Storing de']
+
+  started_at timestamptz [note: 'Fiili baslangic; creation_time ile farki KUYRUK SURESIDIR']
+  completed_at timestamptz
+
+  indexes {
+    (test_key) [name: 'ix_runs_test']
+    (history_id) [name: 'ix_runs_trend']
+    (run_status_id, started_at) [name: 'ix_runs_stale']
+    (trace_id) [name: 'ix_runs_trace']
+  }
+
+  Note: '''
+  NE ISTENDI — hukum degil. Dugmeye basildigi an yazilir.
+
+  ABP TABANI: AuditedAggregateRoot<Guid>, IMultiTenant
+  Tabandan gelen: id, creation_time (KUYRUGA GIRIS), creator_id (KIM BASLATTI),
+                  last_modification_time, last_modifier_id, tenant_id,
+                  concurrency_stamp, extra_properties
+
+  duration_ms YOK: completed_at - started_at. ComparisonRun da tutmuyor.
+  test_name / version_no YOK: FK Restrict, join her zaman calisir.
+
+  IKI PARMAK IZI sayesinde su soru cevaplanir:
+    "Dun gecti bugun kaldi, kod degismedi" ->
+    dunku spec a1b2 / db c3d4, bugunku spec a1b2 / db 9f8e
+    -> ORTAM DEGISTI, senaryo degismedi.
+  Google olcumu: CI pass->fail gecislerinin %84'u flaky, gercek hata degil.
+
+  ix_runs_stale: asili kalmis Running kosulari icin supurucu
+  (RecoverStaleRunningAsync precedent'i).
+
+  NOT: gercek indeksler tenant_id ile baslar
+  (tenant_id, creation_time DESC), (tenant_id, test_key, creation_time DESC),
+  (tenant_id, history_id, creation_time DESC).
+  '''
+}
+
+Table test_run.test_run_results {
+  test_run_id uuid [not null]
+  attempt int [not null, default: 1, note: 'CTRF retries / JUnit rerunFailure']
+
+  outcome_status_id uuid [not null, note: 'HUKUM']
+  duration_ms int [not null, note: 'Bu DENEMENIN suresi — CTRF zorunlu alani; attempt varken kosudan turetilemez']
+
+  failure_category_id uuid [note: 'HANGI HAKEM hayir dedi']
+  error_code varchar(128) [note: 'Kararli makine kimligi — SARIF ruleId. LOOKUP DEGIL']
+  detail varchar(4000) [note: 'RFC 9457 detail — BU OLUSUMA OZEL aciklama']
+
+  failed_step_ordinal int
+  failed_step_name varchar(256)
+  failed_step_path varchar(1000) [note: 'RFC 9457 instance']
+  taken_branch_path varchar(256) [note: 'HANGI DALDAN geldi — SARIF codeFlows/threadFlows']
+  last_completed_ordinal int [note: 'NEREYE KADAR saglamdi']
+
+  diagnosis_report jsonb [note: 'OWNED: tam DiagnosisReportDto — identity, location, hypotheses[], nextChecks[]. Checker sozlesmesi geregi <= 4 KB']
+
+  indexes {
+    (test_run_id, attempt) [unique, name: 'ux_results_attempt']
+    (error_code) [name: 'ix_results_error']
+  }
+
+  Note: '''
+  NE OLDU — hukum ve teshis. Her SONLANAN kosu icin HER ZAMAN bir satir yazilir.
+  Gectiyse sorun kolonlari null, kaldiysa dolu.
+
+  ABP TABANI: CreationAuditedAggregateRoot<Guid>, IMultiTenant
+  Tabandan gelen: id, creation_time (TERMINAL YAZIMIN ANI), creator_id,
+                  tenant_id, concurrency_stamp, extra_properties
+  last_modification_time YOK — bu satir GUNCELLENMEZ.
+
+  KOSU BASLIGINDAN AYRI TABLO OLMASININ UC SEBEBI:
+    1. Degismezlik farki: kosu Pending->Running->Completed diye guncellenir,
+       hukum satiri bir kez yazilir (Audited vs CreationAudited)
+    2. Deneme (attempt): bir kosuda N deneme olabilir
+    3. 8 sorun kolonu her BASARILI kosuda null olurdu
+
+  DEGISMEZ KURAL (Manager uygular):
+    outcome = Passed iken failure_category_id, error_code, detail,
+    failed_step_*, taken_branch_path, last_completed_ordinal HEPSI null.
+
+  title YOK: error_code + yerellestirmeden uretilir. Saklanan Turkce baslik
+  Ingilizce gosterilemez.
+
+  diagnosis_hypothesis_code / confidence_code KOLONU YOK: jsonb icinde zaten var.
+  Projeksiyon OLCULDUGUNDE eklenir, onceden degil.
+
+  HAM STACK TRACE YAZILMAZ: error_code + test_runs.trace_id yazilir,
+  iz operasyonel logdadir (OWASP Logging Cheat Sheet).
+
+  NOT: gercek indeks (tenant_id, outcome_status_id, creation_time DESC) de vardir.
+  '''
+}
+
+Table test_run.test_result_findings {
+  test_run_result_id uuid [not null]
+  ordinal int [not null, note: 'Raporun DETERMINISTIK sirasi']
+
+  source_checker_code varchar(64) [not null, note: 'ApiContract | DatabaseComparison | Runner — HANGI HAKEMDEN geldi']
+  comparison_kind_code varchar(64) [not null, note: 'Equals | Range | Exists | SchemaMatch... DB Checker in matcherCode sozlugu -> LOOKUP DEGIL']
+  rule_ref varchar(64) [note: 'NE DOGRULANIYORDU — BR-014. SARIF taxa. Ters okundugunda KAPSAM RAPORU verir']
+
+  location varchar(1000) [not null, note: 'Makine-okur adres: orders.total_amount | #/data/items/0/price. SARIF logicalLocation / RFC 9457 pointer']
+  target_display_name varchar(256)
+  message varchar(1000) [not null, note: 'SARIF message.text']
+
+  expected_value varchar(2000)
+  observed_value varchar(2000)
+  evidence_summary varchar(2000) [note: 'Kanit ozeti; buyuk govde BLOB Storing e']
+
+  observed_at_ms int [note: 'RowAssertionResultDto.ObservedAtMs — ASYNC teshisi']
+  attempt_count int [note: 'RowAssertionResultDto.AttemptCount — polling denemesi']
+
+  indexes {
+    (test_run_result_id, ordinal) [unique, name: 'ux_findings_order']
+    (location) [name: 'ix_findings_loc']
+    (rule_ref) [name: 'ix_findings_rule']
+    (source_checker_code) [name: 'ix_findings_src']
+  }
+
+  Note: '''
+  FARKIN TAM KONUMU. SARIF result.locations[] ve RFC 9457 errors[]+pointer karsiligi.
+
+  ABP TABANI: CreationAuditedEntity<Guid>, IMultiTenant
+  Tabandan gelen: id, creation_time, creator_id, tenant_id
+  concurrency_stamp / extra_properties YOK — Entity, AggregateRoot degil.
+
+  TENANT_ID COCUK TABLODA DA ZORUNLU: ABP tenant filtresi entity tipi bazinda
+  uygulanir ve MIRAS ALINMAZ. Bu tabloya dogrudan vuran her rapor sorgusu,
+  IMultiTenant yoksa TUM KIRACILARIN satirini dondurur.
+
+  AYRI TABLO OLMASININ TEK VE YETERLI GEREKCESI ix_findings_loc:
+    "en cok hangi konum patliyor" — parent'tan bagimsiz sorgu hedefi.
+
+  source_checker_code NEDEN ZORUNLU: artik UC hakem var (runner'in kendi
+  kontrolleri, api-contract, database-comparison). Hangi bulgunun kimden
+  geldigi bilinmezse celiski cozulemez (ADR-0015 E).
+
+  NOT: gercek indeksler tenant_id ile baslar.
+  '''
+}
+
+
+// =====================================================================
+//  ILISKILER
+// =====================================================================
+
+// --- senaryo surumleri
+Ref: test_catalog.test_scenarios.state_id > test_lookup.test_scenario_states.id
+
+// --- kosular
+Ref: test_run.test_runs.scenario_id > test_catalog.test_scenarios.id      // RESTRICT
+Ref: test_run.test_runs.run_status_id > test_lookup.test_run_statuses.id
+Ref: test_run.test_runs.trigger_kind_id > test_lookup.test_trigger_kinds.id
+
+// --- hukum
+Ref: test_run.test_run_results.test_run_id > test_run.test_runs.id [delete: cascade]
+Ref: test_run.test_run_results.outcome_status_id > test_lookup.test_outcome_statuses.id
+Ref: test_run.test_run_results.failure_category_id > test_lookup.test_failure_categories.id
+
+// --- bulgular
+Ref: test_run.test_result_findings.test_run_result_id > test_run.test_run_results.id [delete: cascade]
+
+
+// =====================================================================
+//  DIYAGRAMDA GORUNMEYEN AMA VAR OLAN BAGLAR
+//  (FK degil, kimlikle referans — moduller arasi anahtar yasagi)
+//
+//  test_scenarios.spec_snapshot_id
+//      -> API Checker: checker.spec_snapshots.id
+//  test_runs.spec_snapshot_id
+//      -> API Checker: checker.spec_snapshots.id
+//  test_runs.db_connection_id
+//      -> Database Checker: connection.database_connections.id
+//  test_scenarios.rules_fingerprint
+//      -> Git'teki kurallar.md canonical hash'i (MCP Resource)
+//  test_runs.har_blob_name
+//      -> ABP BLOB Storing (nesne deposu, veritabani degil)
+//  test_result_findings.rule_ref
+//      -> kurallar.md icindeki is kurali kimligi (BR-xxx)
+//  test_runs.trace_id
+//      -> operasyonel trace (W3C Trace Context)
+// =====================================================================
+
+
+// =====================================================================
+//  DDD AGGREGATE SINIRLARI
+//
+//  Aggregate 1        Aggregate 2       Aggregate 3
+//  TestScenario       TestRun           TestRunResult
+//                                       └── TestResultFinding (cocuk entity)
+//
+//  Aggregate'ler arasi bag KIMLIKLE kurulur — navigation property YOKTUR,
+//  yalniz Guid ve DB tarafinda FK. Ev precedent'i:
+//  ContractCheckRun.BaseSnapshotId + HasOne<SpecSnapshot>().WithMany()
+//
+//  TestResultFinding KOK DEGILDIR: kendi basina yaratilmaz, hep kokle
+//  birlikte yazilir. Dogrudan sorgulanmasi aggregate ihlali degil,
+//  READ MODEL SORGUSUDUR ve repository'nin isidir.
+// =====================================================================
+
+TableGroup lookup_tables [note: 'Sabit deger listeleri — GLOBAL, tenant_id ve denetim alani TASIMAZ. Passed/Failed her musteride ayni.'] {
+  test_lookup.test_run_statuses
+  test_lookup.test_outcome_statuses
+  test_lookup.test_failure_categories
+  test_lookup.test_trigger_kinds
+  test_lookup.test_scenario_states
+}
+
+TableGroup catalog_tables [note: 'Tanim dunyasi — uzun omurlu, ASLA SILINMEZ (Restrict)'] {
+  test_catalog.test_scenarios
+}
+
+TableGroup run_tables [note: 'Kosum dunyasi — buyuk, 90 gun. Partition YOK; parcali silme (ADR-0016 H)'] {
+  test_run.test_runs
+  test_run.test_run_results
+  test_run.test_result_findings
+}

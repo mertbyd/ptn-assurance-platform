@@ -1,0 +1,3 @@
+[
+  "response-property-became-nullable | breaking | response | schema=OrderResponse;property=trackingId | non-nullable -\u003E nullable"
+]

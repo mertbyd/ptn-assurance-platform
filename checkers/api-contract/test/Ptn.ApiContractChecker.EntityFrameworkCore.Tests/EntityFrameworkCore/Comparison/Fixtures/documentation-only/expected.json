@@ -1,0 +1,6 @@
+[
+  "description-changed | docs-only | documentation | method=GET;path=/orders | Lists orders. -\u003E Returns a page of orders.",
+  "description-changed | docs-only | documentation | method=GET;path=/orders/{};status=200;media=application/json | The order. -\u003E The requested order.",
+  "description-changed | docs-only | documentation | method=GET;path=/orders/{};status=200;media=application/xml | The order. -\u003E The requested order.",
+  "description-changed | docs-only | documentation | method=POST;path=/orders | Creates an order. -\u003E Places a new order."
+]

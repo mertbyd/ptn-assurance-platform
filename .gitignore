@@ -1,49 +1,36 @@
-# Build output
+# Bu depo, devir sonrasi TEK kaynaktir. Checker modulleri, Vault modulu, wiki
+# (docs/), yayin scriptleri ve ajan sozlesmeleri (AGENTS.md, CLAUDE.md) artik
+# burada izlenir. Daha once bunlar bilerek disarida birakiliyordu; o kararlar
+# 2026-08-16'da geri alindi cunku checker'larin tek upstream'i bu makinedeki
+# yerel worktree yollariydi ve wiki deposunun hic remote'u yoktu.
+#
+# Asagida kalan tek kategori URETILEBILIR CIKTIDIR: kaynaktan yeniden uretilir,
+# surumlenmesi anlamsizdir ve depoyu yuzlerce MB sisirir.
+
+# Derleme ciktisi
 [Bb]in/
 [Oo]bj/
 [Dd]ebug/
 [Rr]elease/
 .vs/
 
-# Packaging output, local NuGet feed and consumer-smoke NuGet caches.
-# These are reproducible from source and include vendored third-party packages.
+# Paketleme ciktisi ve yerel NuGet feed'i (~600 MB). Icinde vendor edilmis
+# ucuncu parti paketler var; hepsi scripts/publish-checkers.ps1 ile yeniden
+# uretilir.
 artifacts/
 
-# IDE state
+# Node bagimliliklari (ptn-test-agent). pnpm-lock.yaml izlenir, modul agaci izlenmez.
+node_modules/
+
+# IDE durumu
 .idea/
 *.user
 *.suo
 
-# Local scratch output (generated PDFs, temporary exports). Reproducible, never shared.
+# Yerel gecici cikti (uretilen PDF'ler, wiki yedekleri, disa aktarmalar).
 output/
 tmp/
 
-# This repository tracks SOURCE CODE only. The wiki vault, the release/publish
-# scripts and the agent instruction documents stay local: they are not part of
-# the shipped product and they are not reviewed as code. Root README.md is the
-# only prose kept under version control. The wiki lives in the GitHub wiki.
-docs/
-scripts/
-AGENTS.md
-CLAUDE.md
-
-# Obsidian per-user pane/layout state. The shared vault config
-# (app.json, appearance.json, core-plugins.json, graph.json) stays tracked.
+# Obsidian'in kullaniciya ozel panel/duzen durumu. Paylasilan vault ayarlari
+# (app.json, appearance.json, core-plugins.json, graph.json) izlenmeye devam eder.
 **/.obsidian/workspace.json
-
-# The two checker modules are INDEPENDENT Git repositories with their own
-# imported upstream history, their own branches and their own release tags:
-#
-#   checkers/api-contract          -> ptn-contract-checker-api  (KBP-6xx)
-#   checkers/database-comparison   -> ptn-database-checker-api  (KBP-7xx)
-#
-# They are deliberately not tracked here and deliberately not submodules:
-# their only upstreams are local worktree paths, so a submodule reference
-# would not resolve on any other machine. Each module documents its own
-# provenance in its PROVENANCE.md.
-checkers/
-
-# The shared Vault module ships as the CheckNexus.Vault NuGet package and is
-# consumed here through a PackageReference, never a ProjectReference. Its
-# source is not part of this repository's build.
-vault/

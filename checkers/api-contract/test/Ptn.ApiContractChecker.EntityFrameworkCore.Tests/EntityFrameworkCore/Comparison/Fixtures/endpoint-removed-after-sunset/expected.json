@@ -1,0 +1,3 @@
+[
+  "endpoint-removed | breaking | endpoint | method=GET;path=/customers/{}/orders;operation=listCustomerOrders | GET /customers/{}/orders -\u003E -"
+]

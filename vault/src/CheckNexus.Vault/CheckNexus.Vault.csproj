@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>CheckNexus.Vault</RootNamespace>
+    <AssemblyName>CheckNexus.Vault</AssemblyName>
+    <PackageId>CheckNexus.Vault</PackageId>
+    <Version>0.1.0-alpha.5</Version>
+    <Authors>CheckNexus</Authors>
+    <Company>CheckNexus</Company>
+    <Description>HashiCorp Vault KV v2 composition adapter for CheckNexus checker modules.</Description>
+    <PackageProjectUrl>https://piton.com.tr/</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>checknexus abp vault secrets kv-v2</PackageTags>
+    <Copyright>Copyright © 2026 CheckNexus</Copyright>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\..\PACKAGE-README.md"
+          Pack="true"
+          PackagePath="README.md"
+          Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.2" />
+    <PackageReference Include="Volo.Abp.Core" Version="10.3.0" />
+    <ProjectReference Include="..\..\..\checkers\api-contract\src\Ptn.ApiContractChecker.Domain\Ptn.ApiContractChecker.Domain.csproj" />
+    <ProjectReference Include="..\..\..\checkers\database-comparison\src\Ptn.DatabaseChecker.Domain\Ptn.DatabaseChecker.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

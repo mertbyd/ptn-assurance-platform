@@ -1,0 +1,3 @@
+[
+  "required-response-header-removed | breaking | response | method=GET;path=/orders;operation=listOrders;status=200;media=application/json | X-Request-Id -\u003E -"
+]

@@ -1,0 +1,4 @@
+[
+  "endpoint-added | non-breaking | endpoint | method=POST;path=/orders/{}/cancel;operation=cancelOrderExplicitly | - -\u003E POST /orders/{}/cancel",
+  "endpoint-removed | breaking | endpoint | method=GET;path=/customers/{}/orders;operation=listCustomerOrders | GET /customers/{}/orders -\u003E -"
+]
