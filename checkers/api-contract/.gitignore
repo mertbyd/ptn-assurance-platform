@@ -266,7 +266,14 @@ appsettings.secrets.json
 # setup.ps1 buraya CANLI Vault app token'ini ve SMTP parolasini duz metin yazar
 # (secrets/vault_token, secrets/piton_smtp_password). Docker compose bunlari dosya
 # olarak okur. Ignore edilmezse `git add -A` canli token'i commit'ler.
-secrets/
+#
+# Modul KOKUNE sabitlenmistir. Sabitlenmemis "secrets/" kalibi, Windows'ta
+# buyuk/kucuk harf duyarsiz esleserek src/**/Secrets/ altindaki C# kaynak
+# klasorlerini de yakaliyordu; dosyalar bu depoda zaten izlendigi icin kural
+# isirmiyordu, fakat temiz bir "git add" onlari sessizce disarida birakip
+# derlemeyi kiriyordu (ISecretProvider, ApiCredentialModel, SecretPathBuilder,
+# SecretExceptionCodes).
+/secrets/
 
 # Compose interpolation source. Nothing in this repo puts secrets here any more
 # (production has no unseal key at all — see vault/README.md), but a stray local
