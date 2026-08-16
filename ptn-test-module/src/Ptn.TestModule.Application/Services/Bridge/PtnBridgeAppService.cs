@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Ptn.TestModule.Permissions;
 using FluentValidation;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Dtos.Bridge;
@@ -107,6 +108,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     // Tek ground istegini dogrulayip birlesik grounding sonucuna cevirir; oturum verildiyse ayni Manager yoluyla surdurur.
     public async Task<GroundResultDto> GroundAsync(GroundRequestDto input)
     {
+        await CheckPolicyAsync(TestModulePermissions.Bridge.Ground);
         var cancellationToken = _cancellationTokenProvider.Token;
         await _groundValidator.ValidateAndThrowAsync(input, cancellationToken);
         var request = Mapper.Map(input);
@@ -146,6 +148,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     // Tek explain istegini dogrulayip yurutme-izi aciklama sonucuna cevirir.
     public async Task<ExplainResultDto> ExplainAsync(ExplainRequestDto input)
     {
+        await CheckPolicyAsync(TestModulePermissions.Bridge.Explain);
         var cancellationToken = _cancellationTokenProvider.Token;
         await _explainValidator.ValidateAndThrowAsync(input, cancellationToken);
         var pack = await _profilePackFileManager.LoadAsync(input.ProfileKey, cancellationToken);
@@ -156,6 +159,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     // Tek validate istegini dogrulayip kapali yayin kapisi sonucuna cevirir.
     public async Task<ValidateResultDto> ValidateAsync(ValidateRequestDto input)
     {
+        await CheckPolicyAsync(TestModulePermissions.Bridge.Validate);
         var cancellationToken = _cancellationTokenProvider.Token;
         await _validateValidator.ValidateAndThrowAsync(input, cancellationToken);
         var request = Mapper.Map(input);
@@ -175,6 +179,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     // Profil bilgi istegini dogrulayip kapsam raporuna cevirir.
     public async Task<KnowledgeResultDto> GetKnowledgeAsync(KnowledgeRequestDto input)
     {
+        await CheckPolicyAsync(TestModulePermissions.Bridge.Knowledge);
         var cancellationToken = _cancellationTokenProvider.Token;
         await _knowledgeValidator.ValidateAndThrowAsync(input, cancellationToken);
         var pack = await _profilePackFileManager.LoadAsync(input.ProfileKey, cancellationToken);
@@ -183,16 +188,18 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     }
 
     // Aktif ve discoverable tool kodlarini varsayilan concise bicimde dondurur.
-    public Task<ToolCatalogDto> GetToolCatalogAsync()
+    public async Task<ToolCatalogDto> GetToolCatalogAsync()
     {
+        await CheckPolicyAsync(TestModulePermissions.Bridge.Knowledge);
         var cancellationToken = _cancellationTokenProvider.Token;
-        return Task.FromResult(Mapper.Map(
-            _toolCatalogManager.GetCatalog(PtnResponseFormatCodes.Concise, cancellationToken)));
+        return Mapper.Map(
+            _toolCatalogManager.GetCatalog(PtnResponseFormatCodes.Concise, cancellationToken));
     }
 
     // Tenant-scoped ajan profilini ABP Setting zincirinden cozer.
     public async Task<AgentProfileDto> ResolveAgentProfileAsync(AgentProfileRequestDto input)
     {
+        await CheckPolicyAsync(TestModulePermissions.Bridge.Profile);
         var cancellationToken = _cancellationTokenProvider.Token;
         await _agentProfileValidator.ValidateAndThrowAsync(input, cancellationToken);
         return Mapper.Map(await _agentProfileManager.ResolveAsync(input.MomentCode, cancellationToken));
@@ -201,6 +208,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     // Tek tool cagrisini aktif moment profilinin iki sayac tavanina karsi denetler.
     public async Task<ToolBudgetDecisionDto> CheckToolBudgetAsync(ToolBudgetRequestDto input)
     {
+        await CheckPolicyAsync(TestModulePermissions.Bridge.Profile);
         var cancellationToken = _cancellationTokenProvider.Token;
         await _toolBudgetValidator.ValidateAndThrowAsync(input, cancellationToken);
         var profile = await _agentProfileManager.ResolveAsync(input.MomentCode, cancellationToken);
@@ -211,6 +219,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     // Ic kosum ve onay durumunu MCP Task wire sozlugune cevirir.
     public async Task<McpTaskStatusDto> MapTaskStatusAsync(McpTaskStatusRequestDto input)
     {
+        await CheckPolicyAsync(TestModulePermissions.Bridge.Task);
         await _mcpTaskStatusValidator.ValidateAndThrowAsync(input, _cancellationTokenProvider.Token);
         return Mapper.Map(_mcpTaskStatusManager.Map(
             input.TaskId, input.InternalStatus, input.ApprovalRequired,
@@ -220,6 +229,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     // Bulguyla bagli Overlay belgesini uygulamadan uretir.
     public async Task<OverlayPatchSuggestionDto> SuggestOverlayPatchAsync(OverlayPatchRequestDto input)
     {
+        await CheckPolicyAsync(TestModulePermissions.Bridge.PatchSuggest);
         await _overlayPatchValidator.ValidateAndThrowAsync(input, _cancellationTokenProvider.Token);
         return Mapper.Map(_overlayPatchManager.Suggest(
             input.FindingFingerprint, input.Target, input.Description, input.UpdateJson));
