@@ -109,6 +109,34 @@ public class AuthoringSessionManager : TestModuleDomainService
         return session;
     }
 
+    // Zemin cagrisinda verilen oturumu dogrular ve onerilen adim varsa ayni AddStep yolundan gecirir.
+    public AuthoringSession Continue(
+        AuthoringSession? session,
+        Guid? tenantId,
+        AuthoringStepModel? model)
+    {
+        var current = EnsureAvailable(session, tenantId);
+        return model is null ? current : AddStep(current, tenantId, model);
+    }
+
+    // Zemin sonucuna oturum kimligini, adim sayisini ve bekleyen kapali sorulari ekler.
+    public GroundingResult Attach(GroundingResult grounding, AuthoringSession? session)
+    {
+        ArgumentNullException.ThrowIfNull(grounding);
+        if (session is null)
+        {
+            return grounding;
+        }
+        grounding.SessionId = session.Id;
+        grounding.StepCount = session.Steps.Count;
+        grounding.PendingQuestionCodes = session.Questions
+            .Where(question => !session.Answers.ContainsKey(question.QuestionCode))
+            .Select(question => question.QuestionCode)
+            .OrderBy(code => code, StringComparer.Ordinal)
+            .ToList();
+        return grounding;
+    }
+
     // Tum deterministik sorular cevaplanmadan model adimi kabul etmez.
     private static void EnsureQuestionsAnswered(AuthoringSession session)
     {

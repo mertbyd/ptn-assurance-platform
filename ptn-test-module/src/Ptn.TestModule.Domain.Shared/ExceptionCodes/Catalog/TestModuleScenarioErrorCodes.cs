@@ -65,5 +65,6 @@ public static class TestModuleScenarioErrorCodes
         public const string AuthoringOperationReferenceRequired = $"{Prefix}:Validation:AuthoringOperationReferenceRequired";
         public const string AuthoringAssertionPathInvalid = $"{Prefix}:Validation:AuthoringAssertionPathInvalid";
         public const string AuthoringRequestBodyInvalid = $"{Prefix}:Validation:AuthoringRequestBodyInvalid";
+        public const string AuthoringSessionRequired = $"{Prefix}:Validation:AuthoringSessionRequired";
     }
 }

@@ -2,10 +2,13 @@ using System.Threading.Tasks;
 using FluentValidation;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Dtos.Bridge;
+using Ptn.TestModule.Interface.Authoring;
 using Ptn.TestModule.Interface.Compilation;
+using Ptn.TestModule.Managers.Authoring;
 using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Managers.Bridge.Profiles;
 using Ptn.TestModule.Managers.Catalog;
+using Ptn.TestModule.Mappers.Authoring;
 using Ptn.TestModule.Mappers.Bridge;
 using Volo.Abp;
 using Volo.Abp.Threading;
@@ -20,6 +23,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     private static readonly PtnBridgeMapper Mapper = new();
     private static readonly PtnExplanationMapper ExplanationMapper = new();
     private static readonly ApiOracleMapper ApiMapper = new();
+    private static readonly AuthoringSessionMapper AuthoringMapper = new();
     private readonly GroundingManager _groundingManager;
     private readonly EvidenceChainManager _evidenceChainManager;
     private readonly ProfilePackManager _profilePackManager;
@@ -34,6 +38,8 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     private readonly IApiOracleAppService _apiOracleAppService;
     private readonly IScenarioCompilationPort _compilationPort;
     private readonly ScenarioPublicationGateManager _publicationGateManager;
+    private readonly AuthoringSessionManager _authoringSessionManager;
+    private readonly IAuthoringSessionStore _authoringSessionStore;
     private readonly IValidator<GroundRequestDto> _groundValidator;
     private readonly IValidator<ExplainRequestDto> _explainValidator;
     private readonly IValidator<ValidateRequestDto> _validateValidator;
@@ -59,6 +65,8 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         IApiOracleAppService apiOracleAppService,
         IScenarioCompilationPort compilationPort,
         ScenarioPublicationGateManager publicationGateManager,
+        AuthoringSessionManager authoringSessionManager,
+        IAuthoringSessionStore authoringSessionStore,
         IValidator<GroundRequestDto> groundValidator,
         IValidator<ExplainRequestDto> explainValidator,
         IValidator<ValidateRequestDto> validateValidator,
@@ -83,6 +91,8 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         _apiOracleAppService = apiOracleAppService;
         _compilationPort = compilationPort;
         _publicationGateManager = publicationGateManager;
+        _authoringSessionManager = authoringSessionManager;
+        _authoringSessionStore = authoringSessionStore;
         _groundValidator = groundValidator;
         _explainValidator = explainValidator;
         _validateValidator = validateValidator;
@@ -94,7 +104,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         _cancellationTokenProvider = cancellationTokenProvider;
     }
 
-    // Tek ground istegini dogrulayip birlesik grounding sonucuna cevirir.
+    // Tek ground istegini dogrulayip birlesik grounding sonucuna cevirir; oturum verildiyse ayni Manager yoluyla surdurur.
     public async Task<GroundResultDto> GroundAsync(GroundRequestDto input)
     {
         var cancellationToken = _cancellationTokenProvider.Token;
@@ -116,9 +126,21 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         var tableDescription = tableBinding is null ? null : Mapper.Map(
             await _schemaKnowledgeAppService.DescribeTableAsync(
                 Mapper.Map(_groundingManager.CreateTableQuery(request, tableBinding)), cancellationToken));
-        return Mapper.Map(_groundingManager.Ground(
+        var grounding = _groundingManager.Ground(
             request, pack, fingerprint, Mapper.Map(capability), inventory,
-            operation, requestExample, tableBinding, tableDescription));
+            operation, requestExample, tableBinding, tableDescription);
+        var session = input.SessionId is null
+            ? null
+            : _authoringSessionManager.Continue(
+                await _authoringSessionStore.GetAsync(input.SessionId.Value, cancellationToken),
+                CurrentTenant.Id,
+                input.ProposedStep is null ? null : AuthoringMapper.Map(input.ProposedStep));
+        if (session is not null)
+        {
+            await _authoringSessionStore.SetAsync(session, cancellationToken);
+        }
+
+        return Mapper.Map(_authoringSessionManager.Attach(grounding, session));
     }
 
     // Tek explain istegini dogrulayip yurutme-izi aciklama sonucuna cevirir.

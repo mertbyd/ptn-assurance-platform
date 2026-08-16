@@ -87,6 +87,79 @@ public class AuthoringSessionManagerTests
         crossTenant.Code.ShouldBe(TestModuleScenarioErrorCodes.AuthoringSessionTenantMismatch);
     }
 
+    // Oturum verilmeyen zemin cagrisi bugunku cevap seklini birebir korumalidir.
+    [Fact]
+    public void Should_leave_the_grounding_result_untouched_without_a_session()
+    {
+        var grounding = new GroundingResult { DecisionCode = "Grounded" };
+
+        var attached = CreateManager().Attach(grounding, session: null);
+
+        attached.SessionId.ShouldBeNull();
+        attached.StepCount.ShouldBe(0);
+        attached.PendingQuestionCodes.ShouldBeEmpty();
+        attached.DecisionCode.ShouldBe("Grounded");
+    }
+
+    // Oturum verildiginde zemin cevabi oturum kimligini ve bekleyen kapali sorulari tasimalidir.
+    [Fact]
+    public void Should_report_the_session_identity_and_the_pending_questions()
+    {
+        var manager = CreateManager();
+        var session = CreateSession(manager);
+
+        var attached = manager.Attach(new GroundingResult(), manager.Continue(session, TenantId, model: null));
+
+        attached.SessionId.ShouldBe(session.Id);
+        attached.StepCount.ShouldBe(0);
+        attached.PendingQuestionCodes.ShouldBe([PtnOpenQuestionCodes.OperationReferenceRequired]);
+    }
+
+    // Zemin cagrisindaki tek-adim onerisi ayni AddStep yolundan gecip belgeye islenmelidir.
+    [Fact]
+    public void Should_merge_the_proposed_step_through_the_same_add_step_path()
+    {
+        var manager = CreateManager();
+        var session = CreateSession(manager);
+        manager.Answer(session, TenantId, new AuthoringAnswerModel
+        {
+            QuestionCode = PtnOpenQuestionCodes.OperationReferenceRequired,
+            SelectedOption = OperationReferenceId.ToString(PtnBridgeConsts.ReferenceIdFormat)
+        });
+
+        var continued = manager.Continue(session, TenantId, new AuthoringStepModel
+        {
+            StepId = "create-ticket",
+            OperationReferenceId = OperationReferenceId,
+            AssertionPaths = ["/id"]
+        });
+        var attached = manager.Attach(new GroundingResult(), continued);
+
+        continued.Steps.Count.ShouldBe(1);
+        continued.SourceDocument.ShouldContain("stepId: create-ticket");
+        attached.StepCount.ShouldBe(1);
+        attached.PendingQuestionCodes.ShouldBeEmpty();
+    }
+
+    // Zemin yolundaki oneri de cevaplanmamis kapali soruda fail-closed reddedilmelidir.
+    [Fact]
+    public void Should_reject_a_proposed_step_before_the_closed_questions_are_answered()
+    {
+        var manager = CreateManager();
+
+        var exception = Should.Throw<BusinessException>(() => manager.Continue(
+            CreateSession(manager),
+            TenantId,
+            new AuthoringStepModel
+            {
+                StepId = "create-ticket",
+                OperationReferenceId = OperationReferenceId,
+                AssertionPaths = ["/id"]
+            }));
+
+        exception.Code.ShouldBe(TestModuleScenarioErrorCodes.AuthoringQuestionsUnanswered);
+    }
+
     // Gercek grounding sorusu ve operasyon adayindan en kucuk cache session'ini kurar.
     private static AuthoringSession CreateSession(AuthoringSessionManager manager)
     {
