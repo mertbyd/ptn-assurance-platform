@@ -69,7 +69,7 @@ public class TestScenario : AuditedAggregateRoot<Guid>, IMultiTenant
         Description = model.Description;
         StateId = stateId;
         SourceDocument = model.SourceDocument;
-        SourceHash = model.SourceHash;
+        SourceHash = model.SourceHash!;
         RulesFingerprint = model.MaterialSeal.RulesFingerprint;
         SpecSnapshotId = model.MaterialSeal.SpecSnapshotId;
         SpecFingerprint = model.MaterialSeal.SpecFingerprint;

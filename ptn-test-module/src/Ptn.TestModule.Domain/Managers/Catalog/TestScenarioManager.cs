@@ -1,4 +1,6 @@
 using System;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,7 +53,7 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
         var versionNo = await _repository.GetNextVersionNoAsync(normalized.ScenarioKey, cancellationToken);
 
         await EnsureVersionAvailableAsync(normalized.ScenarioKey, versionNo, cancellationToken);
-        await EnsureContentAvailableAsync(normalized.ScenarioKey, normalized.SourceHash, null, cancellationToken);
+        await EnsureContentAvailableAsync(normalized.ScenarioKey, normalized.SourceHash!, null, cancellationToken);
         var draftStateId = await GetStateIdAsync(TestScenarioStateCodes.Draft, cancellationToken);
 
         return new TestScenario(
@@ -73,7 +75,7 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
         await EnsureEditableStateAsync(entity, cancellationToken);
 
         var normalized = Normalize(model);
-        await EnsureContentAvailableAsync(entity.ScenarioKey, normalized.SourceHash, entity.Id, cancellationToken);
+        await EnsureContentAvailableAsync(entity.ScenarioKey, normalized.SourceHash!, entity.Id, cancellationToken);
         var sourceChanged = !string.Equals(entity.SourceHash, normalized.SourceHash, StringComparison.Ordinal);
 
         Apply(entity, normalized);
@@ -288,16 +290,29 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
     // Create girdisinin kararli ve hash alanlarini kanoniklestirir.
     private static TestScenarioCreateModel Normalize(TestScenarioCreateModel model)
     {
+        var document = EnsureDocument(
+            model.SourceDocument,
+            nameof(model.SourceDocument),
+            TestModuleScenarioErrorCodes.Validation.SourceDocumentRequired);
+
+        var computedHash = ComputeSourceHash(document);
+        var sourceHash = string.IsNullOrWhiteSpace(model.SourceHash)
+            ? computedHash
+            : NormalizeRequiredHash(model.SourceHash, nameof(model.SourceHash));
+
+        if (!string.Equals(sourceHash, computedHash, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new BusinessException(TestModuleScenarioErrorCodes.Validation.HashInvalid)
+                .WithData("field", nameof(model.SourceHash));
+        }
+
         return new TestScenarioCreateModel
         {
             ScenarioKey = NormalizeScenarioKey(model.ScenarioKey),
             Title = NormalizeRequiredText(model.Title, nameof(model.Title), TestScenarioConsts.MaxTitleLength),
             Description = NormalizeOptionalText(model.Description, nameof(model.Description), TestScenarioConsts.MaxDescriptionLength),
-            SourceDocument = EnsureDocument(
-                model.SourceDocument,
-                nameof(model.SourceDocument),
-                TestModuleScenarioErrorCodes.Validation.SourceDocumentRequired),
-            SourceHash = NormalizeRequiredHash(model.SourceHash, nameof(model.SourceHash)),
+            SourceDocument = document,
+            SourceHash = sourceHash,
             MaterialSeal = Normalize(model.MaterialSeal),
             DerivabilityCode = NormalizeOptionalText(model.DerivabilityCode, nameof(model.DerivabilityCode), TestScenarioConsts.MaxDerivabilityCodeLength),
             AuthoredByAgent = model.AuthoredByAgent,
@@ -309,15 +324,28 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
     // Update girdisinin metin ve hash alanlarini create ile ayni bicime getirir.
     private static TestScenarioUpdateModel Normalize(TestScenarioUpdateModel model)
     {
+        var document = EnsureDocument(
+            model.SourceDocument,
+            nameof(model.SourceDocument),
+            TestModuleScenarioErrorCodes.Validation.SourceDocumentRequired);
+
+        var computedHash = ComputeSourceHash(document);
+        var sourceHash = string.IsNullOrWhiteSpace(model.SourceHash)
+            ? computedHash
+            : NormalizeRequiredHash(model.SourceHash, nameof(model.SourceHash));
+
+        if (!string.Equals(sourceHash, computedHash, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new BusinessException(TestModuleScenarioErrorCodes.Validation.HashInvalid)
+                .WithData("field", nameof(model.SourceHash));
+        }
+
         return new TestScenarioUpdateModel
         {
             Title = NormalizeRequiredText(model.Title, nameof(model.Title), TestScenarioConsts.MaxTitleLength),
             Description = NormalizeOptionalText(model.Description, nameof(model.Description), TestScenarioConsts.MaxDescriptionLength),
-            SourceDocument = EnsureDocument(
-                model.SourceDocument,
-                nameof(model.SourceDocument),
-                TestModuleScenarioErrorCodes.Validation.SourceDocumentRequired),
-            SourceHash = NormalizeRequiredHash(model.SourceHash, nameof(model.SourceHash)),
+            SourceDocument = document,
+            SourceHash = sourceHash,
             MaterialSeal = Normalize(model.MaterialSeal),
             DerivabilityCode = NormalizeOptionalText(model.DerivabilityCode, nameof(model.DerivabilityCode), TestScenarioConsts.MaxDerivabilityCodeLength),
             AuthoredByAgent = model.AuthoredByAgent,
@@ -347,7 +375,7 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
         entity.Title = model.Title;
         entity.Description = model.Description;
         entity.SourceDocument = model.SourceDocument;
-        entity.SourceHash = model.SourceHash;
+        entity.SourceHash = model.SourceHash!;
         entity.RulesFingerprint = model.MaterialSeal.RulesFingerprint;
         entity.SpecSnapshotId = model.MaterialSeal.SpecSnapshotId;
         entity.SpecFingerprint = model.MaterialSeal.SpecFingerprint;
@@ -409,6 +437,27 @@ public class TestScenarioManager : FoundationManager<TestScenario, Guid>
         }
 
         return fingerprint;
+    }
+
+    // Kaynak belgeyi ptn-source-canonical-v1 kuralina gore (UTF-8, BOM yok, LF, trailsiz) SHA-256 ile hashler.
+    public static string ComputeSourceHash(string sourceDocument)
+    {
+        ArgumentNullException.ThrowIfNull(sourceDocument);
+        
+        var normalizedDocument = sourceDocument.Replace("\r\n", "\n").TrimEnd();
+        
+        var lines = normalizedDocument.Split('\n');
+        for (var i = 0; i < lines.Length; i++)
+        {
+            lines[i] = lines[i].TrimEnd();
+        }
+        
+        normalizedDocument = string.Join("\n", lines);
+        
+        var bytes = Encoding.UTF8.GetBytes(normalizedDocument);
+        var hashBytes = SHA256.HashData(bytes);
+        
+        return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 
     // Gecis hatasini mevcut durum kimligiyle kodlu olarak olusturur.

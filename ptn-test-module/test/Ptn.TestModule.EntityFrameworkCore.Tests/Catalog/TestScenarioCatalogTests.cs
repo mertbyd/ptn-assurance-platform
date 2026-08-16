@@ -143,12 +143,13 @@ public class TestScenarioCatalogTests : TestModuleEntityFrameworkCoreTestBase
     // Manager create kurallari icin gecerli ve fingerprint'leri dolu model kurar.
     private static TestScenarioCreateModel CreateModel(string scenarioKey, char hashSeed)
     {
+        var doc = $"source {hashSeed}";
         return new TestScenarioCreateModel
         {
             ScenarioKey = scenarioKey,
             Title = "Scenario",
-            SourceDocument = "source",
-            SourceHash = Hash(hashSeed),
+            SourceDocument = doc,
+            SourceHash = TestScenarioManager.ComputeSourceHash(doc),
             MaterialSeal = CreateMaterialSeal()
         };
     }
@@ -156,11 +157,12 @@ public class TestScenarioCatalogTests : TestModuleEntityFrameworkCoreTestBase
     // Manager update kurallari icin yeni kaynak hash'i tasiyan gecerli model kurar.
     private static TestScenarioUpdateModel UpdateModel(char hashSeed)
     {
+        var doc = $"source updated {hashSeed}";
         return new TestScenarioUpdateModel
         {
             Title = "Scenario updated",
-            SourceDocument = "source updated",
-            SourceHash = Hash(hashSeed),
+            SourceDocument = doc,
+            SourceHash = TestScenarioManager.ComputeSourceHash(doc),
             MaterialSeal = CreateMaterialSeal()
         };
     }

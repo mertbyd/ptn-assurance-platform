@@ -19,8 +19,8 @@ public sealed class UpdateTestScenarioDtoValidator : AbstractValidator<UpdateTes
         RuleFor(input => input.SourceDocument)
             .NotEmpty().WithErrorCode(TestModuleScenarioErrorCodes.Validation.SourceDocumentRequired);
         RuleFor(input => input.SourceHash)
-            .NotEmpty().WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashRequired)
-            .Matches(TestScenarioConsts.HashPattern).WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashInvalid);
+            .Matches(TestScenarioConsts.HashPattern).WithErrorCode(TestModuleScenarioErrorCodes.Validation.HashInvalid)
+            .When(input => !string.IsNullOrWhiteSpace(input.SourceHash));
         RuleFor(input => input.DerivabilityCode)
             .MaximumLength(TestScenarioConsts.MaxDerivabilityCodeLength).WithErrorCode(TestModuleScenarioErrorCodes.Validation.DerivabilityCodeTooLong);
         RuleFor(input => input.AgentModelRef)
