@@ -54,16 +54,30 @@ public class ProfilePackFileManager : TestModuleDomainService
             : Path.GetFullPath(Path.Combine(_hostEnvironment.ContentRootPath, configured));
         var filePath = Path.GetFullPath(Path.Combine(root, profileKey + PtnBridgeSettingNames.ProfilePackExtension));
         var rootedPrefix = root.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        EnsureSourceIsWithinRoot(rootedPrefix, filePath);
+        return filePath;
+    }
+
+    // Cozulen profil yolunun ayarli kokun disina cikmasini reddeder.
+    public void EnsureSourceIsWithinRoot(string rootedPrefix, string filePath)
+    {
         if (!filePath.StartsWith(rootedPrefix, StringComparison.OrdinalIgnoreCase))
         {
             throw new BusinessException(TestModuleBridgeErrorCodes.ProfilePackInvalid);
         }
+    }
 
-        return filePath;
+    // Profil belgesinin bos veya butce disi olmasini okuma ve yazma oncesinde reddeder.
+    public void EnsureWithinBudget(long byteCount)
+    {
+        if (byteCount <= 0 || byteCount > PtnBridgeConsts.MaxProfilePackBytes)
+        {
+            throw new BusinessException(TestModuleBridgeErrorCodes.ProfilePackInvalid);
+        }
     }
 
     // Dosyayi tek handle uzerinden okur ve okumadan once profil boyut butcesini uygular.
-    private static async Task<byte[]> ReadProfileBytesAsync(
+    private async Task<byte[]> ReadProfileBytesAsync(
         string filePath,
         CancellationToken cancellationToken)
     {
@@ -73,11 +87,7 @@ public class ProfilePackFileManager : TestModuleDomainService
         }
 
         await using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-        if (stream.Length <= 0 || stream.Length > PtnBridgeConsts.MaxProfilePackBytes)
-        {
-            throw new BusinessException(TestModuleBridgeErrorCodes.ProfilePackInvalid);
-        }
-
+        EnsureWithinBudget(stream.Length);
         var bytes = new byte[(int)stream.Length];
         await stream.ReadExactlyAsync(bytes, cancellationToken);
         return bytes;
@@ -117,7 +127,7 @@ public class ProfilePackFileManager : TestModuleDomainService
     }
 
     // Profil anahtarini yalniz dosya-adi guvenli kapali karakterlerle sinirlar.
-    private static void EnsureProfileKeyIsSafe(string profileKey)
+    public void EnsureProfileKeyIsSafe(string profileKey)
     {
         var safe = !string.IsNullOrWhiteSpace(profileKey) && profileKey.All(character =>
             char.IsLetterOrDigit(character) || character is '-' or '_' or '.');

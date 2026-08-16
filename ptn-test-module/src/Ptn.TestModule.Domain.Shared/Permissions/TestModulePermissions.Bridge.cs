@@ -17,5 +17,6 @@ public partial class TestModulePermissions
         public const string Task = Default + ".Task";
         public const string PatchSuggest = Default + ".PatchSuggest";
         public const string Invariant = Default + ".Invariant";
+        public const string ManageSources = Default + ".ManageSources";
     }
 }

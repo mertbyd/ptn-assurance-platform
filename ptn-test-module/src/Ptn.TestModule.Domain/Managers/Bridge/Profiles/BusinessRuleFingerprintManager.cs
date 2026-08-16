@@ -2,6 +2,7 @@ using System;
 using System.Security.Cryptography;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.ExceptionCodes.Bridge;
+using Ptn.TestModule.Models.Bridge;
 using Volo.Abp;
 
 namespace Ptn.TestModule.Managers.Bridge.Profiles;
@@ -13,14 +14,19 @@ public class BusinessRuleFingerprintManager : TestModuleDomainService
     // Kural kaynaginin ayarli kok icinde ve mevcut olmasini okuma oncesinde zorunlu kilar.
     public void EnsureSourceIsAddressable(string rootedPrefix, string filePath, bool exists)
     {
-        if (!filePath.StartsWith(rootedPrefix, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new BusinessException(TestModuleBridgeErrorCodes.BusinessRulesInvalid);
-        }
-
+        EnsureSourceIsWithinRoot(rootedPrefix, filePath);
         if (!exists)
         {
             throw new BusinessException(TestModuleBridgeErrorCodes.BusinessRulesNotFound);
+        }
+    }
+
+    // Yazma yolunun ayarli kokun disina cikmasini varlik sarti aramadan reddeder.
+    public void EnsureSourceIsWithinRoot(string rootedPrefix, string filePath)
+    {
+        if (!filePath.StartsWith(rootedPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new BusinessException(TestModuleBridgeErrorCodes.BusinessRulesInvalid);
         }
     }
 
@@ -31,6 +37,18 @@ public class BusinessRuleFingerprintManager : TestModuleDomainService
         {
             throw new BusinessException(TestModuleBridgeErrorCodes.BusinessRulesInvalid);
         }
+    }
+
+    // Yazilan kural belgesinin ad, boyut ve muhur sonucunu tek modelde toplar.
+    public AuthoringSourceSeal Seal(string fileName, byte[] content)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        return new AuthoringSourceSeal
+        {
+            FileName = fileName,
+            ByteCount = content.Length,
+            Fingerprint = ComputeFingerprint(content)
+        };
     }
 
     // Ham kural baytlarini profil paketiyle ayni lowercase sha256: sozlesmesine cevirir.

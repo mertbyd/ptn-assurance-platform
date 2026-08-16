@@ -27,9 +27,9 @@
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="$(ModelContextProtocolVersion)" />
   </ItemGroup>
 
+  <!-- Yazarlik malzemesi tek kaynaktir: assembly'ye gomulmez, content root altindan okunur ve uctan degistirilir. -->
   <ItemGroup>
-    <EmbeddedResource Include="Authoring\agent-policy.md" LogicalName="Ptn.TestModule.Authoring.agent-policy.md" />
-    <EmbeddedResource Include="Authoring\kurallar.md" LogicalName="Ptn.TestModule.Authoring.kurallar.md" />
+    <Content Include="Authoring\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

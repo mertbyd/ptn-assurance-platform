@@ -8,7 +8,7 @@ Bu dosyanın içeriği **yorumlanmaz, adreslenir**. İçeriğin SHA-256 mührü 
 üretir ve yayın anında `test_scenarios.rules_fingerprint` kolonuna mühürlenir; dosya
 değiştiğinde mühür tutmaz ve senaryo malzeme kaymasi olarak işaretlenir.
 
-Aşağıdaki kurallar `samples/profiles/acme-ticketing.yaml` profiliyle aynı örnek alanı anlatır.
+Aşağıdaki kurallar `Authoring/profiles/acme-ticketing.yaml` profiliyle aynı örnek alanı anlatır.
 Gerçek kurulumda bu dosya ürünün kendi kurallarıyla değiştirilir; ayar
 `TestModule.Bridge.BusinessRulesPath` kök yolu gösterir.
 
