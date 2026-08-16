@@ -11,6 +11,7 @@
     "Permission:Bridge.Profile": "Yazarlik ajani profillerini oku",
     "Permission:Bridge.Task": "MCP task durumunu oku",
     "Permission:Bridge.PatchSuggest": "Inceleme icin OpenAPI Overlay oner",
+    "Permission:Bridge.Invariant": "Is degismezlerini degerlendir",
     "Permission:Scenarios": "Test senaryolari",
     "Permission:Scenarios.Create": "Test senaryosu olustur",
     "Permission:Scenarios.Update": "Test senaryosu guncelle",

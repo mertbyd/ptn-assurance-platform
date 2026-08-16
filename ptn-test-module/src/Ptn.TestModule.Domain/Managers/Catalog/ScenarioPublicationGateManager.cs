@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Ptn.TestModule.Constants.Catalog.Lookups;
-using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Models.Catalog;
 using Ptn.TestModule.Models.Compilation;
 
@@ -14,18 +13,18 @@ public class ScenarioPublicationGateManager : TestModuleDomainService
 {
     // Sema, turetilebilirlik, assertion, malzeme ve sourceDescriptions kapilarini sirasiyla calistirir.
     public TestScenarioPublishDecision Evaluate(
-        TestScenario scenario,
+        ScenarioPublicationCandidate candidate,
         ScenarioCompilationEvidence evidence)
     {
-        ArgumentNullException.ThrowIfNull(scenario);
+        ArgumentNullException.ThrowIfNull(candidate);
         ArgumentNullException.ThrowIfNull(evidence);
 
         var failedGateCodes = new List<string>();
         AddFailureIf(!evidence.IsSchemaValid, ScenarioGateCodes.SchemaValidity, failedGateCodes);
         AddFailureIf(!evidence.AreAssertionsDerivable, ScenarioGateCodes.Derivability, failedGateCodes);
         AddFailureIf(evidence.AssertionCount <= 0, ScenarioGateCodes.AssertionCount, failedGateCodes);
-        AddFailureIf(!IsMaterialSealComplete(scenario), ScenarioGateCodes.MaterialIntegrity, failedGateCodes);
-        AddFailureIf(!SourceDescriptionsMatch(scenario, evidence), ScenarioGateCodes.SourceDescriptionConsistency, failedGateCodes);
+        AddFailureIf(!IsMaterialSealComplete(candidate), ScenarioGateCodes.MaterialIntegrity, failedGateCodes);
+        AddFailureIf(!SourceDescriptionsMatch(candidate, evidence), ScenarioGateCodes.SourceDescriptionConsistency, failedGateCodes);
 
         return new TestScenarioPublishDecision
         {
@@ -48,21 +47,23 @@ public class ScenarioPublicationGateManager : TestModuleDomainService
     }
 
     // Aggregate'in dort malzeme kimligi ile fingerprint baglarinin eksiksiz oldugunu dogrular.
-    private static bool IsMaterialSealComplete(TestScenario scenario)
+    private static bool IsMaterialSealComplete(ScenarioPublicationCandidate candidate)
     {
-        return !string.IsNullOrWhiteSpace(scenario.RulesFingerprint) &&
-               scenario.SpecSnapshotId.HasValue && scenario.SpecSnapshotId.Value != Guid.Empty &&
-               !string.IsNullOrWhiteSpace(scenario.SpecFingerprint) &&
-               scenario.DbConnectionId.HasValue && scenario.DbConnectionId.Value != Guid.Empty &&
-               !string.IsNullOrWhiteSpace(scenario.DbSchemaFingerprint) &&
-               !string.IsNullOrWhiteSpace(scenario.ProfileFingerprint);
+        return !string.IsNullOrWhiteSpace(candidate.RulesFingerprint) &&
+               candidate.SpecSnapshotId.HasValue && candidate.SpecSnapshotId.Value != Guid.Empty &&
+               !string.IsNullOrWhiteSpace(candidate.SpecFingerprint) &&
+               candidate.DbConnectionId.HasValue && candidate.DbConnectionId.Value != Guid.Empty &&
+               !string.IsNullOrWhiteSpace(candidate.DbSchemaFingerprint) &&
+               !string.IsNullOrWhiteSpace(candidate.ProfileFingerprint);
     }
 
     // Derlenmis belgeden cozulmus tum API kaynaklarinin satirdaki snapshot kimligine bagli oldugunu dogrular.
-    private static bool SourceDescriptionsMatch(TestScenario scenario, ScenarioCompilationEvidence evidence)
+    private static bool SourceDescriptionsMatch(
+        ScenarioPublicationCandidate candidate,
+        ScenarioCompilationEvidence evidence)
     {
-        return scenario.SpecSnapshotId.HasValue &&
+        return candidate.SpecSnapshotId.HasValue &&
                evidence.SourceDescriptionSpecSnapshotIds.Count > 0 &&
-               evidence.SourceDescriptionSpecSnapshotIds.All(id => id == scenario.SpecSnapshotId.Value);
+               evidence.SourceDescriptionSpecSnapshotIds.All(id => id == candidate.SpecSnapshotId.Value);
     }
 }

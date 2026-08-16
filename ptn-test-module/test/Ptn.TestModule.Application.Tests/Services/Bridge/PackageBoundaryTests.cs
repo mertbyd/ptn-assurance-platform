@@ -38,7 +38,7 @@ public class PackageBoundaryTests
     {
         var content = File.ReadAllText(Path.Combine(FindModuleRoot().FullName, "common.props"));
 
-        content.ShouldContain("<CheckNexusApiContractsVersion>0.2.0-alpha.5</CheckNexusApiContractsVersion>");
+        content.ShouldContain("<CheckNexusApiContractsVersion>0.2.0-alpha.7</CheckNexusApiContractsVersion>");
         content.ShouldContain("<CheckNexusDatabaseComparisonVersion>0.2.0-alpha.8</CheckNexusDatabaseComparisonVersion>");
         content.ShouldNotContain("<CheckNexusVersion>");
     }

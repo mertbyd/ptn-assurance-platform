@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Ptn.TestModule.Application\Ptn.TestModule.Application.csproj" />
     <ProjectReference Include="..\..\src\Ptn.TestModule.HttpApi\Ptn.TestModule.HttpApi.csproj" />
+    <ProjectReference Include="..\..\src\Ptn.TestModule.HttpApi.Client\Ptn.TestModule.HttpApi.Client.csproj" />
     <ProjectReference Include="..\Ptn.TestModule.Domain.Tests\Ptn.TestModule.Domain.Tests.csproj" />
     <PackageReference Include="CheckNexus.Vault" Version="$(CheckNexusVaultVersion)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />

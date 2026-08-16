@@ -14,6 +14,7 @@ namespace Ptn.TestModule.Application.Tests.Composition;
 // sistemdeki gorevi: Tuketici portu Bridge istisnasi disinda ulasilamaz AppService regresyonunu engeller.
 public class OutwardSurfaceTests
 {
+    private const int ExpectedControllerActionCount = 58;
     private const string ServiceNamespace = "Ptn.TestModule.Services";
     private const string BridgeNamespace = "Ptn.TestModule.Services.Bridge";
 
@@ -66,5 +67,19 @@ public class OutwardSurfaceTests
 
         withoutSwaggerGroup.ShouldBeEmpty();
         withoutHttpMethod.ShouldBeEmpty();
+    }
+
+    // KBP-111 authoring yuzeyindeki dort action'in sessizce kaybolmasini sayisal kontratla engeller.
+    [Fact]
+    public void Controller_action_count_should_match_the_authoring_contract()
+    {
+        var actionCount = typeof(TestRunController).Assembly.GetTypes()
+            .Where(type => type.IsClass && !type.IsAbstract && type.IsPublic)
+            .Where(type => typeof(ControllerBase).IsAssignableFrom(type))
+            .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            .Count(method => method.GetCustomAttributes().Any(attribute =>
+                attribute.GetType().IsSubclassOf(typeof(HttpMethodAttribute))));
+
+        actionCount.ShouldBe(ExpectedControllerActionCount);
     }
 }

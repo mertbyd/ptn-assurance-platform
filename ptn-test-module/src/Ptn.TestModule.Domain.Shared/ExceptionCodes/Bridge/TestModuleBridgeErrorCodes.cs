@@ -9,6 +9,8 @@ public static class TestModuleBridgeErrorCodes
     public const string ProfilePackNotFound = $"{Prefix}:ProfilePackNotFound";
     public const string ProfilePackInvalid = $"{Prefix}:ProfilePackInvalid";
     public const string ProfileFingerprintMismatch = $"{Prefix}:ProfileFingerprintMismatch";
+    public const string BusinessRulesNotFound = $"{Prefix}:BusinessRulesNotFound";
+    public const string BusinessRulesInvalid = $"{Prefix}:BusinessRulesInvalid";
     public const string ConceptNotBound = $"{Prefix}:ConceptNotBound";
     public const string EvidencePathNotFound = $"{Prefix}:EvidencePathNotFound";
     public const string HopBudgetExceeded = $"{Prefix}:HopBudgetExceeded";
@@ -38,7 +40,9 @@ public static class TestModuleBridgeErrorCodes
         public const string RequestRequired = $"{Prefix}:Validation:RequestRequired";
         public const string BatchRequired = $"{Prefix}:Validation:BatchRequired";
         public const string ProfileKeyRequired = $"{Prefix}:Validation:ProfileKeyRequired";
+        public const string InvariantPatternInvalid = $"{Prefix}:Validation:InvariantPatternInvalid";
         public const string OperationReferenceRequired = $"{Prefix}:Validation:OperationReferenceRequired";
+        public const string StepIntentRequired = $"{Prefix}:Validation:StepIntentRequired";
         public const string SourceOperationIdRequired = $"{Prefix}:Validation:SourceOperationIdRequired";
         public const string OperationLinkCandidateLimitInvalid = $"{Prefix}:Validation:OperationLinkCandidateLimitInvalid";
         public const string AssertionReferenceRequired = $"{Prefix}:Validation:AssertionReferenceRequired";

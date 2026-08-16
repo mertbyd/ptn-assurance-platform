@@ -1,10 +1,12 @@
 using Ptn.TestModule.Dtos.Bridge;
 using Ptn.TestModule.Dtos.Bridge.Api;
 using Ptn.TestModule.Dtos.Bridge.Database;
+using Ptn.TestModule.Dtos.Catalog;
 using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Agent;
 using Ptn.TestModule.Models.Bridge.Database;
 using Ptn.TestModule.Models.Bridge.Footprint;
+using Ptn.TestModule.Models.Catalog;
 using Riok.Mapperly.Abstractions;
 using CheckerCapabilityLevelDto = Ptn.DatabaseChecker.Dtos.Capabilities.CapabilityLevelDto;
 using CheckerCapabilityProbeRequestDto = Ptn.DatabaseChecker.Dtos.Capabilities.CapabilityProbeRequestDto;
@@ -22,6 +24,7 @@ public partial class PtnBridgeMapper
     public partial GroundRequest Map(GroundRequestDto input);
     public partial ExplainRequest Map(ExplainRequestDto input);
     public partial ValidateRequest Map(ValidateRequestDto input);
+    private partial TestScenarioMaterialSeal Map(TestScenarioMaterialSealDto input);
     public partial KnowledgeRequest Map(KnowledgeRequestDto input);
     public partial CapabilityLevel Map(CapabilityLevelDto input);
     public partial CheckerCapabilityLevel Map(CheckerCapabilityLevelDto input);
@@ -29,6 +32,7 @@ public partial class PtnBridgeMapper
     public partial CheckerWriteSetCaptureRequestDto Map(WriteSetCaptureRequest input);
     public partial FootprintResult Map(CheckerWriteSetResultDto input);
     public partial GroundResultDto Map(GroundingResult input);
+    public partial GroundingResult Map(GroundResultDto input);
     public partial ValidateResultDto Map(ValidationResult input);
     public partial KnowledgeResultDto Map(KnowledgeResult input);
     public partial ToolCatalogDto Map(ToolCatalog input);
@@ -47,6 +51,8 @@ public partial class PtnBridgeMapper
     public partial FieldBindingDto Map(FieldBinding input);
     public partial RequestExampleDto Map(RequestExample input);
     public partial TableDescriptionDto Map(TableDescription input);
+    public partial TableDescription Map(TableDescriptionDto input);
+    public partial TableQueryDto Map(TableQuery input);
     public partial TableColumnDto Map(TableColumn input);
     public partial TableKeyDto Map(TableKey input);
     public partial DerivabilityResultDto Map(DerivabilityResult input);

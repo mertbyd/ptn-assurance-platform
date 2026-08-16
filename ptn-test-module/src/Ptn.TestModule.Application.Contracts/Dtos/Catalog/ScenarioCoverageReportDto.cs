@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace Ptn.TestModule.Dtos.Catalog;
 
 // islevi: Yayinlanmis senaryolarin dokundugu operasyon ve kural kumelerini API cevabinda tasir.
-// sistemdeki gorevi: Kapsamin yalniz payini sunar; payda bilinmiyor olarak kodla isaretlenir (KBP-110 §2.2).
+// sistemdeki gorevi: Kapsamin payini ve checker envanterinden kanitli payda durumunu sunar.
 /// <summary>Senaryo kapsam raporunun public gorunumudur.</summary>
 public class ScenarioCoverageReportDto
 {
@@ -16,7 +16,7 @@ public class ScenarioCoverageReportDto
     /// <summary>Bulgu kayitlarindan okunan kural referansi kumeleridir.</summary>
     public List<ScenarioCoverageRuleDto> Rules { get; set; } = [];
 
-    /// <summary>Paydanin durumudur; su an daima bilinmiyordur.</summary>
+    /// <summary>Paydanin Known veya Unknown durumudur.</summary>
     public string DenominatorState { get; set; } = string.Empty;
 
     /// <summary>Paydanin neden bilinmedigini bildiren kararli gerekce kodudur.</summary>

@@ -96,7 +96,8 @@ public class TestModuleHttpApiHostModule : AbpModule
         context.Services.AddMcpServer()
             .WithHttpTransport()
             .WithTools<PtnMcpTools>()
-            .WithResources<AuthoringRulesResource>();
+            .WithResources<AgentPolicyResource>()
+            .WithResources<BusinessRulesResource>();
     }
 
     // Gelistirmede embedded localization dosyalari yerine kaynak dosyalari kullanilir.

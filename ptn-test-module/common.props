@@ -19,7 +19,7 @@
   <PropertyGroup>
     <AbpVersion>10.6.0</AbpVersion>
     <AuthenticatorVersion>2.0.0</AuthenticatorVersion>
-    <CheckNexusApiContractsVersion>0.2.0-alpha.5</CheckNexusApiContractsVersion>
+    <CheckNexusApiContractsVersion>0.2.0-alpha.7</CheckNexusApiContractsVersion>
     <CheckNexusDatabaseComparisonVersion>0.2.0-alpha.8</CheckNexusDatabaseComparisonVersion>
     <CheckNexusVaultVersion>0.2.0-alpha.2</CheckNexusVaultVersion>
     <NotificationsVersion>0.1.0-alpha.1</NotificationsVersion>

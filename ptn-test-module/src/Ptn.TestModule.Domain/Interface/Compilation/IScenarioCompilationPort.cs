@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Models.Compilation;
 
 namespace Ptn.TestModule.Interface.Compilation;
@@ -15,6 +14,7 @@ public interface IScenarioCompilationPort
     // Profili cozer, belgeyi derler ve iki checker yuzeyine turetilebilirligi sorar; karar vermez.
     /// <summary>Senaryonun muhurlu malzemesinden tam derleme kanitini getirir.</summary>
     Task<ScenarioCompilationEvidence> CompileAsync(
-        TestScenario scenario,
+        ScenarioPublicationCandidate candidate,
+        string? profileKey = null,
         CancellationToken cancellationToken = default);
 }

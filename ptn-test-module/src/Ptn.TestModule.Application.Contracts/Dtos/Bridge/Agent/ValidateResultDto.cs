@@ -24,6 +24,14 @@ public sealed class ValidateResultDto
     /// </summary>
     public string DecisionCode { get; set; } = string.Empty;
     /// <summary>
+    /// Redocly lint ile dogrulanan Arazzo sema sonucunu belirtir.
+    /// </summary>
+    public bool IsSchemaValid { get; set; }
+    /// <summary>
+    /// Derleyicinin kaynak belgeden saydigi assertion toplamidir.
+    /// </summary>
+    public int AssertionCount { get; set; }
+    /// <summary>
     /// Assertion turetilebilirlik kararini tasir.
     /// </summary>
     public DerivabilityResultDto? Derivability { get; set; }
@@ -31,6 +39,18 @@ public sealed class ValidateResultDto
     /// Assertion turetilebilirlik kararini tasir.
     /// </summary>
     public DatabaseDerivabilityResultDto? DatabaseDerivability { get; set; }
+    /// <summary>
+    /// Basarisiz mevcut yayin kapilarini kararli degerlendirme sirasinda listeler.
+    /// </summary>
+    public IReadOnlyList<string> FailedGateCodes { get; set; } = [];
+    /// <summary>
+    /// Yayin kararini dusurmeyen sema uyarilarini listeler.
+    /// </summary>
+    public IReadOnlyList<string> Warnings { get; set; } = [];
+    /// <summary>
+    /// Redocly lint ciktisinin aciklayici metnini tasir.
+    /// </summary>
+    public string LintDiagnostics { get; set; } = string.Empty;
     /// <summary>
     /// Sonuca ait aciklayici oge veya adaylari kararli sirada listeler.
     /// </summary>

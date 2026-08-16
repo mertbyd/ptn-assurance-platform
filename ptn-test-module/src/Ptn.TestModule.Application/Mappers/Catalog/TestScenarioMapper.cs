@@ -20,4 +20,5 @@ public partial class TestScenarioMapper
     public partial List<TestScenarioDto> Map(List<TestScenario> source);
     public partial TestScenarioPublishDecisionDto Map(TestScenarioPublishDecision source);
     public partial TestScenarioScheduleModel Map(UpdateScenarioScheduleDto source);
+    public partial ScenarioPublicationCandidate MapToPublicationCandidate(TestScenario source);
 }

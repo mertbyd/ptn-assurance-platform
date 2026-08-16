@@ -9,6 +9,9 @@ public static class PtnBridgeSettingNames
     public const string ProfilePackKey = "TestModule.Bridge.ProfilePackKey";
     public const string DefaultProfilePackKey = "acme-ticketing";
     public const string ProfilePackExtension = ".yaml";
+    public const string BusinessRulesPath = "TestModule.Bridge.BusinessRulesPath";
+    public const string DefaultBusinessRulesPath = "Authoring";
+    public const string BusinessRulesFileName = "kurallar.md";
     public const string FingerprintPrefix = "sha256:";
     public const string AgentProfilePrefix = "TestModule.Bridge.AgentProfile";
 

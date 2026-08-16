@@ -14,12 +14,12 @@ using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Constants.Compilation;
 using Ptn.TestModule.Constants.Runs;
-using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.ExceptionCodes.Compilation;
 using Ptn.TestModule.Interface.Compilation;
 using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Models.Bridge;
 using Ptn.TestModule.Models.Bridge.Database;
+using Ptn.TestModule.Models.Authoring;
 using Ptn.TestModule.Models.Compilation;
 using Volo.Abp;
 using YamlDotNet.Core;
@@ -57,6 +57,32 @@ public class ArazzoCompilerManager : TestModuleDomainService
         return result;
     }
 
+    // Cache oturumundaki tipli adimlardan tam Arazzo 1.0.1 kaynak belgesini mekanik olarak uretir.
+    public string BuildAuthoringDocument(AuthoringSession session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        var workflow = new YamlMappingNode
+        {
+            { ArazzoCompilationConsts.Fields.WorkflowId, session.WorkflowId },
+            { ArazzoCompilationConsts.Fields.Summary, session.WorkflowSummary },
+            { ArazzoCompilationConsts.Fields.Steps, new YamlSequenceNode(
+                session.Steps.Select(BuildAuthoringStep)) }
+        };
+        var root = new YamlMappingNode
+        {
+            { ArazzoCompilationConsts.Fields.Arazzo, ArazzoCompilationConsts.TargetVersion },
+            { ArazzoCompilationConsts.Fields.Info, new YamlMappingNode
+                {
+                    { ArazzoCompilationConsts.Fields.Title, session.WorkflowSummary },
+                    { ArazzoCompilationConsts.Fields.Version, ArazzoCompilationConsts.TargetVersion }
+                }
+            },
+            { ArazzoCompilationConsts.Fields.SourceDescriptions, BuildAuthoringSources(session) },
+            { ArazzoCompilationConsts.Fields.Workflows, new YamlSequenceNode(workflow) }
+        };
+        return Serialize(root);
+    }
+
     // Derleme ciktisini ve iki turetilebilirlik yuzeyinin cevabini tek yayin kanitina indirger.
     public ScenarioCompilationEvidence CreateEvidence(
         ArazzoCompilationResult compilation,
@@ -72,6 +98,8 @@ public class ArazzoCompilerManager : TestModuleDomainService
             AssertionCount = compilation.CompiledAssertionCount,
             IsSchemaValid = compilation.IsSchemaValid,
             AreAssertionsDerivable = IsFullyDerivable(compilation, apiDerivability, databaseDerivability),
+            ApiDerivability = apiDerivability,
+            DatabaseDerivability = databaseDerivability,
             SourceDescriptionSpecSnapshotIds = compilation.SourceDescriptionSpecSnapshotIds,
             LintDiagnostics = compilation.LintDiagnostics,
             SchemaLintWarnings = schemaLintWarnings?.ToList() ?? []
@@ -80,15 +108,15 @@ public class ArazzoCompilerManager : TestModuleDomainService
 
     // Derleme ciktisindan gercekten sorgulanacak checker isteklerini fail-closed planlar.
     public ScenarioDerivabilityPlan CreateDerivabilityPlan(
-        TestScenario scenario,
+        ScenarioPublicationCandidate candidate,
         ArazzoCompilationResult compilation)
     {
-        ArgumentNullException.ThrowIfNull(scenario);
+        ArgumentNullException.ThrowIfNull(candidate);
         ArgumentNullException.ThrowIfNull(compilation);
         return new ScenarioDerivabilityPlan
         {
             ApiRequests = compilation.ApiAssertions,
-            DatabaseRequests = CreateDatabaseRequests(scenario, compilation)
+            DatabaseRequests = CreateDatabaseRequests(candidate, compilation)
         };
     }
 
@@ -108,10 +136,10 @@ public class ArazzoCompilerManager : TestModuleDomainService
 
     // Bagli veritabani ve derlenmis assertion birlikte varsa tek checker istegi kurar.
     private static IReadOnlyList<DatabaseDerivabilityRequest> CreateDatabaseRequests(
-        TestScenario scenario,
+        ScenarioPublicationCandidate candidate,
         ArazzoCompilationResult compilation)
     {
-        if (compilation.DatabaseAssertions.Count == 0 || !scenario.DbConnectionId.HasValue)
+        if (compilation.DatabaseAssertions.Count == 0 || !candidate.DbConnectionId.HasValue)
         {
             return [];
         }
@@ -120,10 +148,80 @@ public class ArazzoCompilerManager : TestModuleDomainService
         [
             new DatabaseDerivabilityRequest
             {
-                ConnectionId = scenario.DbConnectionId.Value,
+                ConnectionId = candidate.DbConnectionId.Value,
                 Assertions = compilation.DatabaseAssertions
             }
         ];
+    }
+
+    // Oturumun API ve Database Checker sourceDescription kayitlarini sabit sirada kurar.
+    private static YamlSequenceNode BuildAuthoringSources(AuthoringSession session) => new(
+        new YamlMappingNode
+        {
+            { ArazzoCompilationConsts.Fields.Name, ArazzoCompilationConsts.ApiSourceDescriptionName },
+            { ArazzoCompilationConsts.Fields.Url, session.ApiSourceUrl },
+            { ArazzoCompilationConsts.Fields.Type, ArazzoCompilationConsts.OpenApiSourceType }
+        },
+        new YamlMappingNode
+        {
+            { ArazzoCompilationConsts.Fields.Name, ArazzoCompilationConsts.DatabaseSourceDescriptionName },
+            { ArazzoCompilationConsts.Fields.Url, session.DatabaseSourceUrl },
+            { ArazzoCompilationConsts.Fields.Type, ArazzoCompilationConsts.OpenApiSourceType }
+        });
+
+    // Grounding ile cozulmus tek adimi operationPath, body ve assertion kriterlerine cevirir.
+    private static YamlMappingNode BuildAuthoringStep(AuthoringStep step)
+    {
+        var result = new YamlMappingNode
+        {
+            { ArazzoCompilationConsts.Fields.StepId, step.StepId },
+            { ArazzoCompilationConsts.Fields.OperationPath, BuildApiOperationPath(step.Method, step.Path) },
+            { ArazzoCompilationConsts.Fields.SuccessCriteria, new YamlSequenceNode(
+                step.AssertionPaths.Select(BuildAuthoringCriterion)) }
+        };
+        if (!string.IsNullOrWhiteSpace(step.RequestBodyJson))
+        {
+            result.Add(ArazzoCompilationConsts.Fields.RequestBody, new YamlMappingNode
+            {
+                { ArazzoCompilationConsts.Fields.ContentType, ArazzoCompilationConsts.JsonContentType },
+                { ArazzoCompilationConsts.Fields.Payload, ParseAuthoringPayload(step.RequestBodyJson) }
+            });
+        }
+        return result;
+    }
+
+    // API yolunu Arazzo sourceDescription JSON Pointer operationPath adresine cevirir.
+    private static string BuildApiOperationPath(string method, string path)
+    {
+        var pointer = path.Replace("~", "~0", StringComparison.Ordinal)
+            .Replace("/", "~1", StringComparison.Ordinal);
+        return $"{{$sourceDescriptions.{ArazzoCompilationConsts.ApiSourceDescriptionName}.url}}#/paths/{pointer}/{method.ToLowerInvariant()}";
+    }
+
+    // Tek response JSON pointer'ini varlik kontrolu yapan basit Arazzo criterion'una cevirir.
+    private static YamlMappingNode BuildAuthoringCriterion(string path) => new()
+    {
+        { ArazzoCompilationConsts.Fields.Condition,
+            $"{ArazzoCompilationConsts.ResponseBodyPointerMarker}{path} != null" }
+    };
+
+    // Validator'dan gecmis JSON body'yi YAML payload dugumune kayipsiz aktarir.
+    private static YamlNode ParseAuthoringPayload(string payload)
+    {
+        try
+        {
+            var stream = new YamlStream();
+            stream.Load(new StringReader(payload));
+            return stream.Documents.Count == 1
+                ? stream.Documents[0].RootNode
+                : throw InvalidDocument(ArazzoCompilationConsts.Fields.Payload);
+        }
+        catch (YamlException exception)
+        {
+            throw new BusinessException(
+                TestModuleCompilationErrorCodes.InvalidDocument,
+                innerException: exception);
+        }
     }
 
     // API checker cevaplarini assertion sirasini ve truncation olgusunu koruyarak birlestirir.

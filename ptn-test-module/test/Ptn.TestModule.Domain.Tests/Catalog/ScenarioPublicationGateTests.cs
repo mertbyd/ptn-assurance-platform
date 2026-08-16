@@ -1,7 +1,6 @@
 using System;
 using Ptn.TestModule.Constants.Catalog.Lookups;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
-using Ptn.TestModule.Entities.Catalog;
 using Ptn.TestModule.Managers.Catalog;
 using Ptn.TestModule.Models.Catalog;
 using Ptn.TestModule.Models.Compilation;
@@ -110,7 +109,7 @@ public class ScenarioPublicationGateTests
 
     // Verilen aggregate ve derleyici kanitini gercek gate manager ile degerlendirir.
     private static TestScenarioPublishDecision Evaluate(
-        TestScenario scenario,
+        ScenarioPublicationCandidate candidate,
         bool isSchemaValid = true,
         bool areAssertionsDerivable = true,
         int assertionCount = 1,
@@ -118,7 +117,7 @@ public class ScenarioPublicationGateTests
         string? schemaLintWarningCode = null)
     {
         return new ScenarioPublicationGateManager().Evaluate(
-            scenario,
+            candidate,
             new ScenarioCompilationEvidence
             {
                 CompiledDocument = "compiled",
@@ -134,29 +133,18 @@ public class ScenarioPublicationGateTests
     }
 
     // Gate testlerine gereken en kucuk senaryo veri kabugunu kurar.
-    private static TestScenario CreateScenario(bool includeDbSchemaFingerprint = true)
+    private static ScenarioPublicationCandidate CreateScenario(bool includeDbSchemaFingerprint = true)
     {
-        return new TestScenario(
-            Guid.NewGuid(),
-            1,
-            Guid.NewGuid(),
-            null,
-            new TestScenarioCreateModel
-            {
-                ScenarioKey = "catalog.gate",
-                Title = "Gate scenario",
-                SourceDocument = "source",
-                SourceHash = Hash('a'),
-                MaterialSeal = new TestScenarioMaterialSeal
-                {
-                    RulesFingerprint = Hash('c'),
-                    SpecSnapshotId = SpecSnapshotId,
-                    SpecFingerprint = Hash('d'),
-                    DbConnectionId = Guid.NewGuid(),
-                    DbSchemaFingerprint = includeDbSchemaFingerprint ? Hash('e') : null,
-                    ProfileFingerprint = Hash('f')
-                }
-            });
+        return new ScenarioPublicationCandidate
+        {
+            SourceDocument = "source",
+            RulesFingerprint = Hash('c'),
+            SpecSnapshotId = SpecSnapshotId,
+            SpecFingerprint = Hash('d'),
+            DbConnectionId = Guid.NewGuid(),
+            DbSchemaFingerprint = includeDbSchemaFingerprint ? Hash('e') : null,
+            ProfileFingerprint = Hash('f')
+        };
     }
 
     // Test fingerprint'lerini DBML'nin 64 karakterlik digest biciminde uretir.

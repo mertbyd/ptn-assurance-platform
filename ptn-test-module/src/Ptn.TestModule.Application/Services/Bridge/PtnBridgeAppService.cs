@@ -2,9 +2,10 @@ using System.Threading.Tasks;
 using FluentValidation;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Dtos.Bridge;
-using Ptn.TestModule.Dtos.Bridge.Database;
+using Ptn.TestModule.Interface.Compilation;
 using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Managers.Bridge.Profiles;
+using Ptn.TestModule.Managers.Catalog;
 using Ptn.TestModule.Mappers.Bridge;
 using Volo.Abp;
 using Volo.Abp.Threading;
@@ -18,7 +19,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
 {
     private static readonly PtnBridgeMapper Mapper = new();
     private static readonly PtnExplanationMapper ExplanationMapper = new();
-    private static readonly DatabaseOracleMapper DatabaseMapper = new();
+    private static readonly ApiOracleMapper ApiMapper = new();
     private readonly GroundingManager _groundingManager;
     private readonly EvidenceChainManager _evidenceChainManager;
     private readonly ProfilePackManager _profilePackManager;
@@ -30,7 +31,9 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     private readonly OverlayPatchManager _overlayPatchManager;
     private readonly ISchemaKnowledgeAppService _schemaKnowledgeAppService;
     private readonly IWriteSetCapabilityAppService _writeSetCapabilityService;
-    private readonly IDatabaseOracleAppService _databaseOracleAppService;
+    private readonly IApiOracleAppService _apiOracleAppService;
+    private readonly IScenarioCompilationPort _compilationPort;
+    private readonly ScenarioPublicationGateManager _publicationGateManager;
     private readonly IValidator<GroundRequestDto> _groundValidator;
     private readonly IValidator<ExplainRequestDto> _explainValidator;
     private readonly IValidator<ValidateRequestDto> _validateValidator;
@@ -53,7 +56,9 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         OverlayPatchManager overlayPatchManager,
         ISchemaKnowledgeAppService schemaKnowledgeAppService,
         IWriteSetCapabilityAppService writeSetCapabilityService,
-        IDatabaseOracleAppService databaseOracleAppService,
+        IApiOracleAppService apiOracleAppService,
+        IScenarioCompilationPort compilationPort,
+        ScenarioPublicationGateManager publicationGateManager,
         IValidator<GroundRequestDto> groundValidator,
         IValidator<ExplainRequestDto> explainValidator,
         IValidator<ValidateRequestDto> validateValidator,
@@ -75,7 +80,9 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         _overlayPatchManager = overlayPatchManager;
         _schemaKnowledgeAppService = schemaKnowledgeAppService;
         _writeSetCapabilityService = writeSetCapabilityService;
-        _databaseOracleAppService = databaseOracleAppService;
+        _apiOracleAppService = apiOracleAppService;
+        _compilationPort = compilationPort;
+        _publicationGateManager = publicationGateManager;
         _groundValidator = groundValidator;
         _explainValidator = explainValidator;
         _validateValidator = validateValidator;
@@ -92,12 +99,26 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
     {
         var cancellationToken = _cancellationTokenProvider.Token;
         await _groundValidator.ValidateAndThrowAsync(input, cancellationToken);
+        var request = Mapper.Map(input);
         var pack = await _profilePackFileManager.LoadAsync(input.ProfileKey, cancellationToken);
         var fingerprint = await _schemaKnowledgeAppService.GetSchemaFingerprintAsync(input.ConnectionId, cancellationToken);
         var capability = await _writeSetCapabilityService.ProbeCapabilityAsync(
             input.ConnectionId, input.HasExclusiveSandbox, cancellationToken);
+        var inventory = ApiMapper.MapResult(await _apiOracleAppService.ListSnapshotOperationsAsync(
+            input.SpecSnapshotId, cancellationToken));
+        var operation = _groundingManager.ResolveOperation(request, inventory);
+        var requestExample = operation is null ? null : ApiMapper.MapResult(
+            await _apiOracleAppService.BuildRequestExampleAsync(
+                ApiMapper.Map(_groundingManager.CreateOperationQuery(request, operation)), cancellationToken));
+        var tableBinding = operation is null
+            ? null
+            : _groundingManager.ResolveTableBinding(request, pack, fingerprint);
+        var tableDescription = tableBinding is null ? null : Mapper.Map(
+            await _schemaKnowledgeAppService.DescribeTableAsync(
+                Mapper.Map(_groundingManager.CreateTableQuery(request, tableBinding)), cancellationToken));
         return Mapper.Map(_groundingManager.Ground(
-            Mapper.Map(input), pack, fingerprint, Mapper.Map(capability)));
+            request, pack, fingerprint, Mapper.Map(capability), inventory,
+            operation, requestExample, tableBinding, tableDescription));
     }
 
     // Tek explain istegini dogrulayip yurutme-izi aciklama sonucuna cevirir.
@@ -118,13 +139,15 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         var request = Mapper.Map(input);
         var pack = await _profilePackFileManager.LoadAsync(input.ProfileKey, cancellationToken);
         var fingerprint = await _schemaKnowledgeAppService.GetSchemaFingerprintAsync(input.ConnectionId, cancellationToken);
-        var databaseResult = request.DatabaseAssertions.Count == 0
+        var candidate = _groundingManager.CreatePublicationCandidate(request);
+        var evidence = candidate is null
             ? null
-            : DatabaseMapper.Map(await _databaseOracleAppService.ValidateDerivabilityAsync(
-                DatabaseMapper.MapToDto(_groundingManager.CreateDatabaseDerivabilityRequest(request)),
-                cancellationToken));
-        return Mapper.Map(_groundingManager.Validate(
-            request, pack, fingerprint, databaseResult));
+            : await _compilationPort.CompileAsync(
+                candidate, input.ProfileKey, cancellationToken);
+        var decision = candidate is null || evidence is null
+            ? null
+            : _publicationGateManager.Evaluate(candidate, evidence);
+        return Mapper.Map(_groundingManager.Validate(request, pack, fingerprint, evidence, decision));
     }
 
     // Profil bilgi istegini dogrulayip kapsam raporuna cevirir.

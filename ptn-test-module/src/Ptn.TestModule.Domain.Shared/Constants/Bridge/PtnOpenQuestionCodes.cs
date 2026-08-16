@@ -7,6 +7,7 @@ public static class PtnOpenQuestionCodes
     public const string ConceptNotBoundPrefix = "NOT_BOUND:";
     public const string OperationReferenceRequired = "OPERATION_REFERENCE_REQUIRED";
     public const string OperationSelectionRequired = "OPERATION_SELECTION_REQUIRED";
+    public const string TableSelectionRequired = "TABLE_SELECTION_REQUIRED";
     public const string AssertionReferenceRequired = "ASSERTION_REFERENCE_REQUIRED";
     public const string EvidenceUnavailable = "EVIDENCE_UNAVAILABLE";
 }

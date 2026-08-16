@@ -9,6 +9,9 @@ public static class ArazzoCompilationConsts
     public const string TargetVersion = "1.0.1";
     public const string DatabaseExtension = "x-checknexus-db";
     public const string DatabaseSourceDescriptionName = "databaseChecker";
+    public const string ApiSourceDescriptionName = "sutApi";
+    public const string OpenApiSourceType = "openapi";
+    public const string JsonContentType = "application/json";
     public const string DatabaseConnectionRuntimeExpression = "{$inputs.dbConnectionId}";
     public const string PassedCriterion = "$response.body#/data/passed == true";
     public const string ObservedRowCountExpression = "$response.body#/data/observedRowCount";
@@ -43,6 +46,9 @@ public static class ArazzoCompilationConsts
     public static class Fields
     {
         public const string Arazzo = "arazzo";
+        public const string Info = "info";
+        public const string Title = "title";
+        public const string Version = "version";
         public const string SourceDescriptions = "sourceDescriptions";
         public const string Name = "name";
         public const string Url = "url";
@@ -69,6 +75,7 @@ public static class ArazzoCompilationConsts
         public const string Parameters = "parameters";
         public const string In = "in";
         public const string WorkflowId = "workflowId";
+        public const string Summary = "summary";
         public const string RequestBody = "requestBody";
         public const string ContentType = "contentType";
         public const string Payload = "payload";

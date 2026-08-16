@@ -21,7 +21,7 @@ tmp/
 # This repository tracks SOURCE CODE only. The wiki vault, the release/publish
 # scripts and the agent instruction documents stay local: they are not part of
 # the shipped product and they are not reviewed as code. Root README.md is the
-# only prose kept under version control.
+# only prose kept under version control. The wiki lives in the GitHub wiki.
 docs/
 scripts/
 AGENTS.md
@@ -40,6 +40,10 @@ CLAUDE.md
 # They are deliberately not tracked here and deliberately not submodules:
 # their only upstreams are local worktree paths, so a submodule reference
 # would not resolve on any other machine. Each module documents its own
-# provenance in its PROVENANCE.md. This repository owns the platform wiki,
-# the shared Vault module and the release scripts.
+# provenance in its PROVENANCE.md.
 checkers/
+
+# The shared Vault module ships as the CheckNexus.Vault NuGet package and is
+# consumed here through a PackageReference, never a ProjectReference. Its
+# source is not part of this repository's build.
+vault/

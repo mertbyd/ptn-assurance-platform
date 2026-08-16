@@ -15,7 +15,10 @@ public sealed class GroundRequestDtoValidator : AbstractValidator<GroundRequestD
         RuleFor(input => input.ProfileKey).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.ProfileKeyRequired);
         RuleFor(input => input.SpecSnapshotId).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.SnapshotIdRequired);
         RuleFor(input => input.ConnectionId).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.ConnectionIdRequired);
-        RuleFor(input => input.OperationReferenceId).NotEmpty().WithMessage(TestModuleBridgeErrorCodes.Validation.OperationReferenceRequired);
+        RuleFor(input => input.StepIntent)
+            .NotEmpty()
+            .When(input => !input.OperationReferenceId.HasValue)
+            .WithMessage(TestModuleBridgeErrorCodes.Validation.StepIntentRequired);
         RuleFor(input => input.ResponseFormat).Must(PtnResponseFormatCodes.All.Contains)
             .WithMessage(TestModuleBridgeErrorCodes.Validation.ResponseFormatInvalid);
     }

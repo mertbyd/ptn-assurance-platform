@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Security.Cryptography;
+using System.Text;
 using Ptn.ApiContractChecker.Constants.Conformance.Lookups;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
@@ -17,6 +19,34 @@ namespace Ptn.TestModule.Managers.Bridge;
 // sistemdeki gorevi: Application servisini outcome siniflandirma kararindan uzak tutar.
 public class ApiOracleManager : TestModuleDomainService
 {
+    // Checker sayfalarini tek eksiksizlik karariyla birlestirip her gercek operasyona opak referans verir.
+    public SnapshotOperationInventory MergeOperationInventory(
+        Guid snapshotId,
+        IReadOnlyCollection<SnapshotOperationPage> pages)
+    {
+        var first = pages.FirstOrDefault();
+        var items = pages.SelectMany(page => page.Items).Select(item => new SnapshotOperation
+        {
+            ReferenceId = CreateReferenceId(
+                snapshotId.ToString(PtnBridgeConsts.ReferenceIdFormat),
+                item.OperationId,
+                item.Method,
+                item.Path),
+            OperationId = item.OperationId,
+            Method = item.Method,
+            Path = item.Path,
+            RequestSchemaRef = item.RequestSchemaRef,
+            ResponseSchemaRef = item.ResponseSchemaRef
+        }).ToList();
+        return new SnapshotOperationInventory
+        {
+            SnapshotId = snapshotId,
+            OutcomeCode = first is null ? PtnOutcomeCodes.Unavailable : NormalizeOutcome(first.OutcomeCode),
+            TotalCount = first?.TotalCount ?? 0,
+            IsComplete = first is not null && items.Count == first.TotalCount,
+            Items = items
+        };
+    }
     // Operasyon sorgusunu checker'in kapali verbosity koduyla tamamlar.
     public ApiOperationRequest CreateOperationRequest(
         OperationQuery query,
@@ -144,6 +174,14 @@ public class ApiOracleManager : TestModuleDomainService
             ? normalized
             : throw new BusinessException(TestModuleBridgeErrorCodes.CheckerCallFailed)
                 .WithData(nameof(outcomeCode), outcomeCode);
+
+    // Snapshot ve checker adresinden ayni operasyon icin kararli, tahmin-edilemez olmayan opak Guid uretir.
+    private static Guid CreateReferenceId(params string?[] parts)
+    {
+        var canonical = string.Join(PtnBridgeConsts.EvidenceReferenceSeparator, parts);
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(canonical));
+        return new Guid(bytes.AsSpan(0, 16));
+    }
 
     // Checker operation link kaynagini Bridge'in kapali kaynak sozlugune cevirir.
     private static string NormalizeOperationLinkSource(string sourceCode) =>

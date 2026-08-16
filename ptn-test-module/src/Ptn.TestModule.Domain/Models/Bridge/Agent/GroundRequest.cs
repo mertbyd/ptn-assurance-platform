@@ -9,7 +9,7 @@ public sealed class GroundRequest
     public string ProfileKey { get; set; } = string.Empty;
     public Guid SpecSnapshotId { get; set; }
     public Guid ConnectionId { get; set; }
-    public Guid OperationReferenceId { get; set; }
+    public Guid? OperationReferenceId { get; set; }
     public Guid? TableReferenceId { get; set; }
     public string StepIntent { get; set; } = string.Empty;
     public string ResponseFormat { get; set; } = string.Empty;

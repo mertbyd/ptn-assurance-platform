@@ -11,13 +11,15 @@ using Ptn.TestModule.Interface.Catalog;
 using Ptn.TestModule.Interface.Lookups;
 using Ptn.TestModule.Interface.Runs;
 using Ptn.TestModule.Managers.Compilation;
+using Ptn.TestModule.Constants.Bridge.Vocabulary;
+using Ptn.TestModule.Models.Bridge.Api;
 using Ptn.TestModule.Models.Catalog;
 using Volo.Abp.Domain.Entities;
 
 namespace Ptn.TestModule.Managers.Catalog;
 
 // islevi: Yayinlanmis senaryolarin dokundugu operasyon ve kural kumelerini snapshot bazinda toplar.
-// sistemdeki gorevi: Kapsamin payini hesaplar; payda API Checker'da operasyon envanteri acilmadan bilinemez.
+// sistemdeki gorevi: Kapsamin payini ve checker envanterinden kanitli paydasini hesaplar.
 /// <summary>
 /// Senaryo kapsam raporunun pay tarafini derleme ve bulgu kayitlarindan uretir.
 /// </summary>
@@ -60,6 +62,30 @@ public class ScenarioCoverageManager : TestModuleDomainService
         };
     }
 
+    // Eksiksiz checker envanterlerini snapshot gruplarina uygular ve global payda durumunu fail-closed cozer.
+    public ScenarioCoverageReport ApplyOperationInventories(
+        ScenarioCoverageReport report,
+        IReadOnlyCollection<SnapshotOperationInventory> inventories)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        ArgumentNullException.ThrowIfNull(inventories);
+        var bySnapshot = inventories.ToDictionary(item => item.SnapshotId);
+        var unknownReason = report.Snapshots.Count == 0
+            ? ScenarioCoverageConsts.DenominatorUnknownReason
+            : null;
+        foreach (var snapshot in report.Snapshots)
+        {
+            var snapshotUnknownReason = ApplyOperationInventory(snapshot, bySnapshot);
+            unknownReason ??= snapshotUnknownReason;
+        }
+
+        report.DenominatorState = unknownReason is null
+            ? ScenarioCoverageConsts.DenominatorKnownState
+            : ScenarioCoverageConsts.DenominatorUnknownState;
+        report.DenominatorUnknownReason = unknownReason ?? string.Empty;
+        return report;
+    }
+
     // Yayin durumunun lookup kimligini kapsam sorgularina cozer.
     /// <summary>Published senaryo durumunun lookup kimligini getirir.</summary>
     private async Task<Guid> GetPublishedStateIdAsync(CancellationToken cancellationToken)
@@ -85,7 +111,7 @@ public class ScenarioCoverageManager : TestModuleDomainService
                     ScenarioCount = group.Count(),
                     TouchedOperations = CollectOperations(group),
 
-                    // Snapshot operasyon envanteri checker'da yoktur; sayi uydurulmaz (RULE-0001).
+                    // Checker cevabi uygulanana kadar sayi uydurulmaz (RULE-0001).
                     TotalOperationCount = null
                 })
                 .OrderBy(group => group.SpecSnapshotId)
@@ -103,5 +129,33 @@ public class ScenarioCoverageManager : TestModuleDomainService
         }
 
         return [.. operations];
+    }
+
+    // Tek snapshot icin yalniz Passed ve eksiksiz envanterin gercek toplam sayisini kabul eder.
+    private static string? ApplyOperationInventory(
+        ScenarioCoverageSnapshotGroup snapshot,
+        IReadOnlyDictionary<Guid, SnapshotOperationInventory> inventories)
+    {
+        if (!snapshot.SpecSnapshotId.HasValue)
+        {
+            return ScenarioCoverageConsts.SnapshotIdentityMissingReason;
+        }
+        if (!inventories.TryGetValue(snapshot.SpecSnapshotId.Value, out var inventory))
+        {
+            return ScenarioCoverageConsts.DenominatorUnknownReason;
+        }
+        if (inventory.OutcomeCode == PtnOutcomeCodes.SnapshotNotFound)
+        {
+            return ScenarioCoverageConsts.SnapshotNotFoundReason;
+        }
+        if (inventory.OutcomeCode != PtnOutcomeCodes.Passed ||
+            !inventory.IsComplete ||
+            inventory.TotalCount is < 0 or > int.MaxValue)
+        {
+            return ScenarioCoverageConsts.DenominatorUnknownReason;
+        }
+
+        snapshot.TotalOperationCount = (int)inventory.TotalCount;
+        return null;
     }
 }

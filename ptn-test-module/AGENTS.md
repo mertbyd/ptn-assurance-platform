@@ -50,6 +50,11 @@ goren her yer **yanlistir**.
 - Sabit anlamlilar (sema, route, hata kodu, ayar, lookup kodu) `Ptn.TestModule.Domain.Shared`
   altinda sahiplenilir.
 - Surumler `common.props` icindeki degiskenlerden yonetilir; csproj'a sabit surum yazilmaz.
+- **Ham SQL yazan her is, ABP taban kolonlarini tirnakli PascalCase adresler.** Modul kolonlari
+  naming convention ile snake_case'e cevrilir; ABP'nin kendi taban kolonlari (`"TenantId"`,
+  `"CreationTime"`, `"CreatorId"`, `"IsDeleted"`, `"ConcurrencyStamp"`, `"ExtraProperties"`)
+  cevrilmez. Bu yuzden ayni ifade icinde `r."TenantId"` ile `r.test_key` yan yana yazilir.
+  Ornek: `Migrations/20260815201419_ScenarioHealthView.cs`.
 
 ## Dogrulama
 

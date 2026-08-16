@@ -7,6 +7,9 @@ namespace Ptn.TestModule.Services.Bridge;
 // sistemdeki gorevi: Bridge servis yuzeyini checker ve Domain modellerinden bagimsiz sunar.
 public interface IApiOracleAppService : IApplicationService
 {
+    // Snapshot operasyon envanterinin tum sayfalarini checker'dan okuyup native sozlesmeyle dondurur.
+    Task<SnapshotOperationInventoryDto> ListSnapshotOperationsAsync(Guid snapshotId, CancellationToken cancellationToken);
+
     // Operasyon baglama adaylarini normalize public sonuc olarak getirir.
     Task<OperationBindingDto> SuggestOperationBindingsAsync(OperationQueryDto input, CancellationToken cancellationToken);
 
