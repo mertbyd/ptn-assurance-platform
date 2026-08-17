@@ -3,7 +3,7 @@ id: CURRENT-0005
 type: current
 status: active
 title: UI backend controller catalog
-updated: 2026-08-16
+updated: 2026-08-17
 decision_refs:
   - ADR-0002
   - ADR-0012
@@ -45,10 +45,16 @@ rule_refs:
 | Test Module | 13 | 54 | `<TEST_MODULE_ORIGIN>` |
 | API Contract Checker | 10 | 53 | `<TEST_MODULE_ORIGIN>` |
 | Database Checker | 17 | 72 | `<TEST_MODULE_ORIGIN>` |
-| Emailing | 3 | 10 | `<TEST_MODULE_ORIGIN>` |
 | Notifications | 1 | 4 | `<TEST_MODULE_ORIGIN>` |
 | ABP framework | 3 | 3 | `<TEST_MODULE_ORIGIN>` |
-| **Toplam** | **47** | **196** | 192 benzersiz method+route |
+| **Toplam** | ~~47~~ | ~~196~~ | yeniden üretilmeli |
+
+> [!WARNING] Toplamlar bayat
+> Emailing HTTP modülü artık compose edilmiyor (3 controller / 10 action düştü) ve checker lookup
+> rotaları ön ek aldı, dolayısıyla benzersiz method+route sayısı da değişti. Sayıları elle
+> düzeltmeyin: bu katalog yalnız composition host ayağa kaldırılıp
+> `IApiDescriptionGroupCollectionProvider` yeniden okunarak üretilir. Rota ve erişim sütunları
+> kaynaktan düzeltilmiştir; **sayaçlar** bir sonraki canlı üretime kadar güvenilmezdir.
 
 UI, ortam portunu veya localhost değerini sabitlemez. Test Module çağrıları gateway/service
 discovery ile verilen `<TEST_MODULE_ORIGIN>` üzerinden gider. Yetkili action'larda Authenticator'ın
@@ -64,6 +70,13 @@ istemcisinde tek yerde açılır.
   authorization policy tanımlamadığı için bu, mevcut transportta kimlik doğrulaması zorunlu
   olmadığı anlamına gelir; UI bunu güvenli kabul etmez.
 
+> [!NOTE] Yetki taraması — 2026-08-17
+> Test Module'ün kendi HTTP yüzeyi tarandı: **10 controller'ın hepsi `[Authorize]` taşıyor.**
+> Tek istisna `POST api/test-module/runs/webhook` — bilinçli `[AllowAnonymous]`, paylaşılan sır
+> başlığıyla doğrulanır ve ayar tanımlı değilse uç kapalıdır. Yetkisiz kalan tek uç Emailing
+> paketindeydi; o modülün HTTP yüzeyi artık compose edilmiyor. Yani bu katalogda UI'nin
+> "güvenli değil" diye ayırması gereken başka bir satır kalmadı.
+
 ## Authenticator neden listede değil?
 
 Test Module bir **resource server**dır. `Authenticator.EntityFrameworkCore` tiplerini kalıcılık
@@ -75,25 +88,26 @@ yanlıştır. Mimari sınır: [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH
 
 ## UI'yi doğrudan etkileyen çelişkiler ve blokajlar
 
-> [!CAUTION] Aynı method+route iki checker tarafından sahipleniliyor
-> Aşağıdaki dört imza Test Module endpoint tablosunda iki kez bulunur. Permission farkı route
-> seçmez; çağrı runtime'da belirsiz eşleşmeye düşebilir. Backend route namespace'i ayrılmadan UI
-> bu dört imzayı kullanmamalıdır.
+> [!NOTE] Route çakışması kapandı — `CheckNexus 0.2.0-alpha.9`
+> İki checker lookup'larını sahipsiz ortak `api/lookups` isim alanına koyuyordu ve
+> `difference-kinds` çakışıyordu: Swagger üretimi `SwaggerGeneratorException` ile düşüyor, o rota
+> gerçek isteklerde belirsiz kalıyordu. Her aile artık kendi önekini taşır — aşağıdaki envanter
+> güncel hâli gösterir. Eski `api/lookups/...` yolları **çalışmaz**.
 
-| Method | Route | API Contract Checker | Database Checker |
-|---|---|---|---|
-| `GET` | `/api/lookups/difference-kinds` | `DifferenceKind.GetList` | `DifferenceKind.GetList` |
-| `POST` | `/api/lookups/difference-kinds` | `DifferenceKind.Create` | `DifferenceKind.Create` |
-| `GET` | `/api/lookups/difference-kinds/{id}` | `DifferenceKind.Get` | `DifferenceKind.Get` |
-| `PUT` | `/api/lookups/difference-kinds/{id}` | `DifferenceKind.Update` | `DifferenceKind.Update` |
+| Aile | Yeni lookup öneki |
+|---|---|
+| API Contract Checker | `api/api-contract/lookups/…` |
+| Database Checker | `api/database-comparison/lookups/…` |
 
-`DatabaseChecker` tarafındaki `DELETE /api/lookups/difference-kinds/{id}` ve API Checker tarafındaki
-`POST /api/lookups/difference-kinds/{id}/passivate` benzersizdir; çakışan dört imzadan farklıdır.
+Test Module kendi rotalarını zaten `api/test-module/…` ile ön ekliyordu; çakışmaya karışmadı.
 
-> [!WARNING] Email gönderme action'ında transport authorization metadata'sı yok
-> `POST /api/emailing/emails` mevcut hostta `Unspecified` görünür. UI bu action'ı doğrudan
-> son kullanıcıya açmamalıdır; backend permission/fallback policy kararı verilmeden güvenli kabul
-> edilmez. Google callback ve notification SSE stream ise tasarım gereği açıkça `Anonymous`tır.
+> [!NOTE] Emailing HTTP yüzeyi artık compose edilmiyor
+> `POST /api/emailing/emails` hiçbir `[Authorize]` taşımıyordu ve arkasındaki
+> `EmailAppService.SendAsync` de yetki kontrolü yapmıyordu; compose edildiği sürece host
+> **kimlik doğrulamasız e-posta gönderimine** açıktı. Emailing artık tip olarak alınır, HTTP
+> modülü compose edilmez (ADR-0013 deseni, `3fd78aa`). Şablon ve provider uçları da bu yüzden
+> listede yoktur. UI e-posta ekranı planlıyorsa önce paketin yetkili bir gönderim ucu yayımlaması
+> gerekir. Notification SSE stream tasarım gereği `Anonymous`tır.
 
 > [!WARNING] Yerel HTTP smoke ortamı eksik ABP tabloları nedeniyle hazır değildi
 > Host migration ve seed kapalıyken ayağa kalktı; ancak normal Swagger isteği yerel veritabanında
@@ -244,11 +258,11 @@ yanlıştır. Mimari sınır: [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/check-run-statuses` | `ApiContractChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<CheckRunStatusDto>>` |
-| `Create` | `POST` | `/api/lookups/check-run-statuses` | `ApiContractChecker.Lookups.Manage` | `input:CreateCheckRunStatusDto` | `200:Result<CheckRunStatusDto>` |
-| `Get` | `GET` | `/api/lookups/check-run-statuses/{id}` | `ApiContractChecker.Lookups.View` | `id:Guid` | `200:Result<CheckRunStatusDto>` |
-| `Update` | `PUT` | `/api/lookups/check-run-statuses/{id}` | `ApiContractChecker.Lookups.Manage` | `id:Guid,input:UpdateCheckRunStatusDto` | `200:Result<CheckRunStatusDto>` |
-| `Passivate` | `POST` | `/api/lookups/check-run-statuses/{id}/passivate` | `ApiContractChecker.Lookups.Manage` | `id:Guid` | `200:Result<CheckRunStatusDto>` |
+| `GetList` | `GET` | `/api/api-contract/lookups/check-run-statuses` | `ApiContractChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<CheckRunStatusDto>>` |
+| `Create` | `POST` | `/api/api-contract/lookups/check-run-statuses` | `ApiContractChecker.Lookups.Manage` | `input:CreateCheckRunStatusDto` | `200:Result<CheckRunStatusDto>` |
+| `Get` | `GET` | `/api/api-contract/lookups/check-run-statuses/{id}` | `ApiContractChecker.Lookups.View` | `id:Guid` | `200:Result<CheckRunStatusDto>` |
+| `Update` | `PUT` | `/api/api-contract/lookups/check-run-statuses/{id}` | `ApiContractChecker.Lookups.Manage` | `id:Guid,input:UpdateCheckRunStatusDto` | `200:Result<CheckRunStatusDto>` |
+| `Passivate` | `POST` | `/api/api-contract/lookups/check-run-statuses/{id}/passivate` | `ApiContractChecker.Lookups.Manage` | `id:Guid` | `200:Result<CheckRunStatusDto>` |
 
 ### `ContractCheckRunController` — 6 action
 
@@ -271,31 +285,31 @@ yanlıştır. Mimari sınır: [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/difference-directions` | `ApiContractChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<DifferenceDirectionDto>>` |
-| `Create` | `POST` | `/api/lookups/difference-directions` | `ApiContractChecker.Lookups.Manage` | `input:CreateDifferenceDirectionDto` | `200:Result<DifferenceDirectionDto>` |
-| `Get` | `GET` | `/api/lookups/difference-directions/{id}` | `ApiContractChecker.Lookups.View` | `id:Guid` | `200:Result<DifferenceDirectionDto>` |
-| `Update` | `PUT` | `/api/lookups/difference-directions/{id}` | `ApiContractChecker.Lookups.Manage` | `id:Guid,input:UpdateDifferenceDirectionDto` | `200:Result<DifferenceDirectionDto>` |
-| `Passivate` | `POST` | `/api/lookups/difference-directions/{id}/passivate` | `ApiContractChecker.Lookups.Manage` | `id:Guid` | `200:Result<DifferenceDirectionDto>` |
+| `GetList` | `GET` | `/api/api-contract/lookups/difference-directions` | `ApiContractChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<DifferenceDirectionDto>>` |
+| `Create` | `POST` | `/api/api-contract/lookups/difference-directions` | `ApiContractChecker.Lookups.Manage` | `input:CreateDifferenceDirectionDto` | `200:Result<DifferenceDirectionDto>` |
+| `Get` | `GET` | `/api/api-contract/lookups/difference-directions/{id}` | `ApiContractChecker.Lookups.View` | `id:Guid` | `200:Result<DifferenceDirectionDto>` |
+| `Update` | `PUT` | `/api/api-contract/lookups/difference-directions/{id}` | `ApiContractChecker.Lookups.Manage` | `id:Guid,input:UpdateDifferenceDirectionDto` | `200:Result<DifferenceDirectionDto>` |
+| `Passivate` | `POST` | `/api/api-contract/lookups/difference-directions/{id}/passivate` | `ApiContractChecker.Lookups.Manage` | `id:Guid` | `200:Result<DifferenceDirectionDto>` |
 
 ### `DifferenceKindController` — 5 action
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/difference-kinds` | `ApiContractChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<DifferenceKindDto>>` |
-| `Create` | `POST` | `/api/lookups/difference-kinds` | `ApiContractChecker.Lookups.Manage` | `input:CreateDifferenceKindDto` | `200:Result<DifferenceKindDto>` |
-| `Get` | `GET` | `/api/lookups/difference-kinds/{id}` | `ApiContractChecker.Lookups.View` | `id:Guid` | `200:Result<DifferenceKindDto>` |
-| `Update` | `PUT` | `/api/lookups/difference-kinds/{id}` | `ApiContractChecker.Lookups.Manage` | `id:Guid,input:UpdateDifferenceKindDto` | `200:Result<DifferenceKindDto>` |
-| `Passivate` | `POST` | `/api/lookups/difference-kinds/{id}/passivate` | `ApiContractChecker.Lookups.Manage` | `id:Guid` | `200:Result<DifferenceKindDto>` |
+| `GetList` | `GET` | `/api/api-contract/lookups/difference-kinds` | `ApiContractChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<DifferenceKindDto>>` |
+| `Create` | `POST` | `/api/api-contract/lookups/difference-kinds` | `ApiContractChecker.Lookups.Manage` | `input:CreateDifferenceKindDto` | `200:Result<DifferenceKindDto>` |
+| `Get` | `GET` | `/api/api-contract/lookups/difference-kinds/{id}` | `ApiContractChecker.Lookups.View` | `id:Guid` | `200:Result<DifferenceKindDto>` |
+| `Update` | `PUT` | `/api/api-contract/lookups/difference-kinds/{id}` | `ApiContractChecker.Lookups.Manage` | `id:Guid,input:UpdateDifferenceKindDto` | `200:Result<DifferenceKindDto>` |
+| `Passivate` | `POST` | `/api/api-contract/lookups/difference-kinds/{id}/passivate` | `ApiContractChecker.Lookups.Manage` | `id:Guid` | `200:Result<DifferenceKindDto>` |
 
 ### `DifferenceSeverityController` — 5 action
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/difference-severities` | `ApiContractChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<DifferenceSeverityDto>>` |
-| `Create` | `POST` | `/api/lookups/difference-severities` | `ApiContractChecker.Lookups.Manage` | `input:CreateDifferenceSeverityDto` | `200:Result<DifferenceSeverityDto>` |
-| `Get` | `GET` | `/api/lookups/difference-severities/{id}` | `ApiContractChecker.Lookups.View` | `id:Guid` | `200:Result<DifferenceSeverityDto>` |
-| `Update` | `PUT` | `/api/lookups/difference-severities/{id}` | `ApiContractChecker.Lookups.Manage` | `id:Guid,input:UpdateDifferenceSeverityDto` | `200:Result<DifferenceSeverityDto>` |
-| `Passivate` | `POST` | `/api/lookups/difference-severities/{id}/passivate` | `ApiContractChecker.Lookups.Manage` | `id:Guid` | `200:Result<DifferenceSeverityDto>` |
+| `GetList` | `GET` | `/api/api-contract/lookups/difference-severities` | `ApiContractChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<DifferenceSeverityDto>>` |
+| `Create` | `POST` | `/api/api-contract/lookups/difference-severities` | `ApiContractChecker.Lookups.Manage` | `input:CreateDifferenceSeverityDto` | `200:Result<DifferenceSeverityDto>` |
+| `Get` | `GET` | `/api/api-contract/lookups/difference-severities/{id}` | `ApiContractChecker.Lookups.View` | `id:Guid` | `200:Result<DifferenceSeverityDto>` |
+| `Update` | `PUT` | `/api/api-contract/lookups/difference-severities/{id}` | `ApiContractChecker.Lookups.Manage` | `id:Guid,input:UpdateDifferenceSeverityDto` | `200:Result<DifferenceSeverityDto>` |
+| `Passivate` | `POST` | `/api/api-contract/lookups/difference-severities/{id}/passivate` | `ApiContractChecker.Lookups.Manage` | `id:Guid` | `200:Result<DifferenceSeverityDto>` |
 
 ### `ResponseConformanceController` — 7 action
 
@@ -313,11 +327,11 @@ yanlıştır. Mimari sınır: [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/spec-formats` | `ApiContractChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<SpecFormatDto>>` |
-| `Create` | `POST` | `/api/lookups/spec-formats` | `ApiContractChecker.Lookups.Manage` | `input:CreateSpecFormatDto` | `200:Result<SpecFormatDto>` |
-| `Get` | `GET` | `/api/lookups/spec-formats/{id}` | `ApiContractChecker.Lookups.View` | `id:Guid` | `200:Result<SpecFormatDto>` |
-| `Update` | `PUT` | `/api/lookups/spec-formats/{id}` | `ApiContractChecker.Lookups.Manage` | `id:Guid,input:UpdateSpecFormatDto` | `200:Result<SpecFormatDto>` |
-| `Passivate` | `POST` | `/api/lookups/spec-formats/{id}/passivate` | `ApiContractChecker.Lookups.Manage` | `id:Guid` | `200:Result<SpecFormatDto>` |
+| `GetList` | `GET` | `/api/api-contract/lookups/spec-formats` | `ApiContractChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<SpecFormatDto>>` |
+| `Create` | `POST` | `/api/api-contract/lookups/spec-formats` | `ApiContractChecker.Lookups.Manage` | `input:CreateSpecFormatDto` | `200:Result<SpecFormatDto>` |
+| `Get` | `GET` | `/api/api-contract/lookups/spec-formats/{id}` | `ApiContractChecker.Lookups.View` | `id:Guid` | `200:Result<SpecFormatDto>` |
+| `Update` | `PUT` | `/api/api-contract/lookups/spec-formats/{id}` | `ApiContractChecker.Lookups.Manage` | `id:Guid,input:UpdateSpecFormatDto` | `200:Result<SpecFormatDto>` |
+| `Passivate` | `POST` | `/api/api-contract/lookups/spec-formats/{id}/passivate` | `ApiContractChecker.Lookups.Manage` | `id:Guid` | `200:Result<SpecFormatDto>` |
 
 ### `SpecSnapshotController` — 6 action
 
@@ -359,11 +373,11 @@ yanlıştır. Mimari sınır: [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/comparison-confidences` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<ComparisonConfidenceDto>>` |
-| `Create` | `POST` | `/api/lookups/comparison-confidences` | `DatabaseChecker.Lookups.Manage` | `input:CreateComparisonConfidenceDto` | `200:Result<ComparisonConfidenceDto>` |
-| `Delete` | `DELETE` | `/api/lookups/comparison-confidences/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
-| `Get` | `GET` | `/api/lookups/comparison-confidences/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<ComparisonConfidenceDto>` |
-| `Update` | `PUT` | `/api/lookups/comparison-confidences/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateComparisonConfidenceDto` | `200:Result<ComparisonConfidenceDto>` |
+| `GetList` | `GET` | `/api/database-comparison/lookups/comparison-confidences` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<ComparisonConfidenceDto>>` |
+| `Create` | `POST` | `/api/database-comparison/lookups/comparison-confidences` | `DatabaseChecker.Lookups.Manage` | `input:CreateComparisonConfidenceDto` | `200:Result<ComparisonConfidenceDto>` |
+| `Delete` | `DELETE` | `/api/database-comparison/lookups/comparison-confidences/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
+| `Get` | `GET` | `/api/database-comparison/lookups/comparison-confidences/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<ComparisonConfidenceDto>` |
+| `Update` | `PUT` | `/api/database-comparison/lookups/comparison-confidences/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateComparisonConfidenceDto` | `200:Result<ComparisonConfidenceDto>` |
 
 ### `ComparisonDefinitionController` — 4 action
 
@@ -389,21 +403,21 @@ yanlıştır. Mimari sınır: [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/comparison-run-statuses` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<ComparisonRunStatusDto>>` |
-| `Create` | `POST` | `/api/lookups/comparison-run-statuses` | `DatabaseChecker.Lookups.Manage` | `input:CreateComparisonRunStatusDto` | `200:Result<ComparisonRunStatusDto>` |
-| `Delete` | `DELETE` | `/api/lookups/comparison-run-statuses/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
-| `Get` | `GET` | `/api/lookups/comparison-run-statuses/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<ComparisonRunStatusDto>` |
-| `Update` | `PUT` | `/api/lookups/comparison-run-statuses/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateComparisonRunStatusDto` | `200:Result<ComparisonRunStatusDto>` |
+| `GetList` | `GET` | `/api/database-comparison/lookups/comparison-run-statuses` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<ComparisonRunStatusDto>>` |
+| `Create` | `POST` | `/api/database-comparison/lookups/comparison-run-statuses` | `DatabaseChecker.Lookups.Manage` | `input:CreateComparisonRunStatusDto` | `200:Result<ComparisonRunStatusDto>` |
+| `Delete` | `DELETE` | `/api/database-comparison/lookups/comparison-run-statuses/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
+| `Get` | `GET` | `/api/database-comparison/lookups/comparison-run-statuses/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<ComparisonRunStatusDto>` |
+| `Update` | `PUT` | `/api/database-comparison/lookups/comparison-run-statuses/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateComparisonRunStatusDto` | `200:Result<ComparisonRunStatusDto>` |
 
 ### `ComparisonTypeController` — 5 action
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/comparison-types` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<ComparisonTypeDto>>` |
-| `Create` | `POST` | `/api/lookups/comparison-types` | `DatabaseChecker.Lookups.Manage` | `input:CreateComparisonTypeDto` | `200:Result<ComparisonTypeDto>` |
-| `Delete` | `DELETE` | `/api/lookups/comparison-types/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
-| `Get` | `GET` | `/api/lookups/comparison-types/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<ComparisonTypeDto>` |
-| `Update` | `PUT` | `/api/lookups/comparison-types/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateComparisonTypeDto` | `200:Result<ComparisonTypeDto>` |
+| `GetList` | `GET` | `/api/database-comparison/lookups/comparison-types` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<ComparisonTypeDto>>` |
+| `Create` | `POST` | `/api/database-comparison/lookups/comparison-types` | `DatabaseChecker.Lookups.Manage` | `input:CreateComparisonTypeDto` | `200:Result<ComparisonTypeDto>` |
+| `Delete` | `DELETE` | `/api/database-comparison/lookups/comparison-types/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
+| `Get` | `GET` | `/api/database-comparison/lookups/comparison-types/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<ComparisonTypeDto>` |
+| `Update` | `PUT` | `/api/database-comparison/lookups/comparison-types/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateComparisonTypeDto` | `200:Result<ComparisonTypeDto>` |
 
 ### `DatabaseConnectionController` — 6 action
 
@@ -420,11 +434,11 @@ yanlıştır. Mimari sınır: [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/database-engines` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<DatabaseEngineDto>>` |
-| `Create` | `POST` | `/api/lookups/database-engines` | `DatabaseChecker.Lookups.Manage` | `input:CreateDatabaseEngineDto` | `200:Result<DatabaseEngineDto>` |
-| `Delete` | `DELETE` | `/api/lookups/database-engines/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
-| `Get` | `GET` | `/api/lookups/database-engines/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<DatabaseEngineDto>` |
-| `Update` | `PUT` | `/api/lookups/database-engines/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateDatabaseEngineDto` | `200:Result<DatabaseEngineDto>` |
+| `GetList` | `GET` | `/api/database-comparison/lookups/database-engines` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<DatabaseEngineDto>>` |
+| `Create` | `POST` | `/api/database-comparison/lookups/database-engines` | `DatabaseChecker.Lookups.Manage` | `input:CreateDatabaseEngineDto` | `200:Result<DatabaseEngineDto>` |
+| `Delete` | `DELETE` | `/api/database-comparison/lookups/database-engines/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
+| `Get` | `GET` | `/api/database-comparison/lookups/database-engines/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<DatabaseEngineDto>` |
+| `Update` | `PUT` | `/api/database-comparison/lookups/database-engines/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateDatabaseEngineDto` | `200:Result<DatabaseEngineDto>` |
 
 ### `DiagnosisController` — 1 action
 
@@ -436,11 +450,11 @@ yanlıştır. Mimari sınır: [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/difference-kinds` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<DifferenceKindDto>>` |
-| `Create` | `POST` | `/api/lookups/difference-kinds` | `DatabaseChecker.Lookups.Manage` | `input:CreateDifferenceKindDto` | `200:Result<DifferenceKindDto>` |
-| `Delete` | `DELETE` | `/api/lookups/difference-kinds/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
-| `Get` | `GET` | `/api/lookups/difference-kinds/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<DifferenceKindDto>` |
-| `Update` | `PUT` | `/api/lookups/difference-kinds/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateDifferenceKindDto` | `200:Result<DifferenceKindDto>` |
+| `GetList` | `GET` | `/api/database-comparison/lookups/difference-kinds` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<DifferenceKindDto>>` |
+| `Create` | `POST` | `/api/database-comparison/lookups/difference-kinds` | `DatabaseChecker.Lookups.Manage` | `input:CreateDifferenceKindDto` | `200:Result<DifferenceKindDto>` |
+| `Delete` | `DELETE` | `/api/database-comparison/lookups/difference-kinds/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
+| `Get` | `GET` | `/api/database-comparison/lookups/difference-kinds/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<DifferenceKindDto>` |
+| `Update` | `PUT` | `/api/database-comparison/lookups/difference-kinds/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateDifferenceKindDto` | `200:Result<DifferenceKindDto>` |
 
 ### `ProjectionController` — 1 action
 
@@ -452,11 +466,11 @@ yanlıştır. Mimari sınır: [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/report-formats` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<ReportFormatDto>>` |
-| `Create` | `POST` | `/api/lookups/report-formats` | `DatabaseChecker.Lookups.Manage` | `input:CreateReportFormatDto` | `200:Result<ReportFormatDto>` |
-| `Delete` | `DELETE` | `/api/lookups/report-formats/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
-| `Get` | `GET` | `/api/lookups/report-formats/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<ReportFormatDto>` |
-| `Update` | `PUT` | `/api/lookups/report-formats/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateReportFormatDto` | `200:Result<ReportFormatDto>` |
+| `GetList` | `GET` | `/api/database-comparison/lookups/report-formats` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<ReportFormatDto>>` |
+| `Create` | `POST` | `/api/database-comparison/lookups/report-formats` | `DatabaseChecker.Lookups.Manage` | `input:CreateReportFormatDto` | `200:Result<ReportFormatDto>` |
+| `Delete` | `DELETE` | `/api/database-comparison/lookups/report-formats/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
+| `Get` | `GET` | `/api/database-comparison/lookups/report-formats/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<ReportFormatDto>` |
+| `Update` | `PUT` | `/api/database-comparison/lookups/report-formats/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateReportFormatDto` | `200:Result<ReportFormatDto>` |
 
 ### `SchemaComparisonController` — 1 action
 
@@ -478,21 +492,21 @@ yanlıştır. Mimari sınır: [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/schema-object-types` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<SchemaObjectTypeDto>>` |
-| `Create` | `POST` | `/api/lookups/schema-object-types` | `DatabaseChecker.Lookups.Manage` | `input:CreateSchemaObjectTypeDto` | `200:Result<SchemaObjectTypeDto>` |
-| `Delete` | `DELETE` | `/api/lookups/schema-object-types/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
-| `Get` | `GET` | `/api/lookups/schema-object-types/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<SchemaObjectTypeDto>` |
-| `Update` | `PUT` | `/api/lookups/schema-object-types/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateSchemaObjectTypeDto` | `200:Result<SchemaObjectTypeDto>` |
+| `GetList` | `GET` | `/api/database-comparison/lookups/schema-object-types` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<SchemaObjectTypeDto>>` |
+| `Create` | `POST` | `/api/database-comparison/lookups/schema-object-types` | `DatabaseChecker.Lookups.Manage` | `input:CreateSchemaObjectTypeDto` | `200:Result<SchemaObjectTypeDto>` |
+| `Delete` | `DELETE` | `/api/database-comparison/lookups/schema-object-types/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
+| `Get` | `GET` | `/api/database-comparison/lookups/schema-object-types/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<SchemaObjectTypeDto>` |
+| `Update` | `PUT` | `/api/database-comparison/lookups/schema-object-types/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateSchemaObjectTypeDto` | `200:Result<SchemaObjectTypeDto>` |
 
 ### `ScopeKindController` — 5 action
 
 | Action | HTTP | Route | Erişim | Input | Başarılı response |
 |---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/lookups/scope-kinds` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<ScopeKindDto>>` |
-| `Create` | `POST` | `/api/lookups/scope-kinds` | `DatabaseChecker.Lookups.Manage` | `input:CreateScopeKindDto` | `200:Result<ScopeKindDto>` |
-| `Delete` | `DELETE` | `/api/lookups/scope-kinds/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
-| `Get` | `GET` | `/api/lookups/scope-kinds/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<ScopeKindDto>` |
-| `Update` | `PUT` | `/api/lookups/scope-kinds/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateScopeKindDto` | `200:Result<ScopeKindDto>` |
+| `GetList` | `GET` | `/api/database-comparison/lookups/scope-kinds` | `DatabaseChecker.Lookups.View` | `input:PagedResultRequestDto` | `200:Result<PagedResultDto<ScopeKindDto>>` |
+| `Create` | `POST` | `/api/database-comparison/lookups/scope-kinds` | `DatabaseChecker.Lookups.Manage` | `input:CreateScopeKindDto` | `200:Result<ScopeKindDto>` |
+| `Delete` | `DELETE` | `/api/database-comparison/lookups/scope-kinds/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid` | `200:Result` |
+| `Get` | `GET` | `/api/database-comparison/lookups/scope-kinds/{id}` | `DatabaseChecker.Lookups.View` | `id:Guid` | `200:Result<ScopeKindDto>` |
+| `Update` | `PUT` | `/api/database-comparison/lookups/scope-kinds/{id}` | `DatabaseChecker.Lookups.Manage` | `id:Guid,input:UpdateScopeKindDto` | `200:Result<ScopeKindDto>` |
 
 ### `WriteSetCapabilityController` — 3 action
 
@@ -501,33 +515,6 @@ yanlıştır. Mimari sınır: [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH
 | `Capture` | `POST` | `/capabilities/write-set/capture` | `DatabaseChecker.Capabilities.Capture` | `input:WriteSetCaptureRequestDto` | `200:Result<WriteSetResultDto>` |
 | `Probe` | `POST` | `/capabilities/write-set/probe` | `DatabaseChecker.Capabilities.Probe` | `input:CapabilityProbeRequestDto` | `200:Result<CapabilityLevelDto>` |
 | `Release` | `POST` | `/capabilities/write-set/release` | `DatabaseChecker.Capabilities.Capture` | `connectionId:Guid,captureRef:Guid` | `200:Result<WriteSetResultDto>` |
-
-## Emailing — 3 controller / 10 action
-
-### `EmailController` — 1 action
-
-| Action | HTTP | Route | Erişim | Input | Başarılı response |
-|---|---|---|---|---|---|
-| `Send` | `POST` | `/api/emailing/emails` | `Unspecified` | `input:SendEmailDto` | `200:void,204:void` |
-
-### `EmailProviderController` — 4 action
-
-| Action | HTTP | Route | Erişim | Input | Başarılı response |
-|---|---|---|---|---|---|
-| `GetGoogleAuthorization` | `GET` | `/api/emailing/platform/google/authorization` | `Piton.Emailing.Provider,Piton.Emailing.Provider.Manage` | `-` | `200:EmailAuthorizationDto` |
-| `CompleteGoogleAuthorization` | `GET` | `/api/emailing/platform/google/callback` | `Anonymous` | `code:String,state:String` | `200:EmailProviderStatusDto` |
-| `GetStatus` | `GET` | `/api/emailing/platform/status` | `Piton.Emailing.Provider,Piton.Emailing.Provider.View` | `-` | `200:EmailProviderStatusDto` |
-| `SendTest` | `POST` | `/api/emailing/platform/test` | `Piton.Emailing.Provider,Piton.Emailing.Provider.Manage` | `input:EmailProviderTestDto` | `200:void,204:void` |
-
-### `EmailTemplateController` — 5 action
-
-| Action | HTTP | Route | Erişim | Input | Başarılı response |
-|---|---|---|---|---|---|
-| `GetList` | `GET` | `/api/email-templates` | `Piton.Emailing.EmailTemplates` | `input:PagedAndSortedResultRequestDto` | `200:PagedResultDto<EmailTemplateDto>` |
-| `Create` | `POST` | `/api/email-templates` | `Piton.Emailing.EmailTemplates,Piton.Emailing.EmailTemplates.Manage` | `input:CreateEmailTemplateDto` | `200:EmailTemplateDto` |
-| `Delete` | `DELETE` | `/api/email-templates/{id}` | `Piton.Emailing.EmailTemplates,Piton.Emailing.EmailTemplates.Manage` | `id:Guid` | `200:void,204:void` |
-| `Get` | `GET` | `/api/email-templates/{id}` | `Piton.Emailing.EmailTemplates` | `id:Guid` | `200:EmailTemplateDto` |
-| `Update` | `PUT` | `/api/email-templates/{id}` | `Piton.Emailing.EmailTemplates,Piton.Emailing.EmailTemplates.Manage` | `id:Guid,input:UpdateEmailTemplateDto` | `200:EmailTemplateDto` |
 
 ## Notifications — 1 controller / 4 action
 

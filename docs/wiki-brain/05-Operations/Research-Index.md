@@ -16,8 +16,8 @@ rule_refs:
 
 # Araştırma indeksi
 
-`90-Inbox` altında 14 araştırma belgesi, 3 plan ve 1 backlog var. Bu sayfa hangisini ne zaman
-açacağını söyler. **Hepsini okuma.**
+`90-Inbox` altında **17 araştırma belgesi, 5 plan, 4 denetim ve 1 backlog** var (2026-08-17
+sayımı). Bu sayfa hangisini ne zaman açacağını söyler. **Hepsini okuma.**
 
 > **Yetki hatırlatması (ADR-0001):** `90-Inbox` kanonik değildir. Karara bağlanan her şey
 > ADR/Rule/Current sayfalarına taşınır. Bir çelişkide **ADR kazanır**.
@@ -50,6 +50,21 @@ Araştırma belgelerine **girmene gerek yok**.
 | 6 | ADR-0014 + RULE-0005 + RULE-0006 | Ajan sınırlarının resmî hali |
 
 Bu belgeler yapay zekâ tarafının tamamıdır. Diğerleri checker motorlarıyla ilgilidir.
+
+### UI yazacaksan
+
+| Sıra | Belge | Neden |
+|---|---|---|
+| 1 | **[[01-Current/UI-Requirements-Truth\|CURRENT-0007]]** | Gereksinimler, kapalı sözlükler, engeller — buradan başla |
+| 2 | **[[04-Architecture/UI-Agent-Experience\|ARCH-0005]]** | Ajan yüzeyinin tam sözleşmesi |
+| 3 | **[[04-Architecture/UI-Endpoint-Screen-Matrix\|ARCH-0006]]** | Ekran–uç–izin matrisi |
+| 4 | **[[03-Decisions/ADR-0025-Ui-Yigini-Ve-Uc-Kokenli-Yuzey-Siniri\|ADR-0025]]** | Yığın kararı (`proposed`) |
+| 5 | **[[05-Operations/UI-Build-Guide\|GUIDE-0006]]** | Kurulum ve faz planı |
+| 6 | **RESEARCH-0017** | Dış tarama: protokoller, kütüphaneler, UX desenleri |
+| 7 | RESEARCH-0012 §4–5A | Ürün içi sohbet ajanı, izin kademeleri, onay ekranı kuralları |
+
+Ajan ekranını yazmadan önce **RULE-0005 · RULE-0006 · RULE-0007** okunur; ajanın
+yapamadıkları UI'nin de yapamadıklarıdır.
 
 ### Checker motorlarına dokunacaksan
 
@@ -100,6 +115,14 @@ yakınsaması) ve RESEARCH-0006/0008 (tarihsel).
 | **0013** | **Runner-Oracle Ayrımı ve Ajan Yazarlık Kanıtı** | **Kendi runner'ımızı yazmalı mıyız? Ajan testi işe yarıyor mu? Geçişin getirisi ne?** | 🟢 **Aktif** — ADR-0014/0015/0016'nın **tek dayanak kaydı** |
 | **0014** | **Senaryo Yazarlık Hattı ve Belirsizlik Yönetimi** | **Arazzo hatasız nasıl yazılır? Assertion nereden gelir? Ajan ne sorar, nasıl sorar?** | 🟢 **Aktif** → **ADR-0017** |
 | **0015** | **Ajan Gerçeklikleri ve Checker Köprüsü** | **Halüsinasyon neden olur? Bağlam neden kopar? Ollama yapabilir mi? 403'ün sebebi nasıl kanıtla bulunur? Yazarlık için generic yetenek katmanı ne?** | 🟢 **Aktif** → **ADR-0018 + RULE-0007/0008** |
+| **0017** | **Ajan Arayüzü Desenleri ve Referans Uygulamalar** | **UI'yi yazarken hangi protokol, kütüphane ve UX deseni işe yarar? AG-UI benimsenmeli mi? Tipler nereden gelir? Arazzo için editör yazılmalı mı?** | 🟢 **Aktif** → **ADR-0025** |
+
+### Denetimler
+
+| # | Belge | Cevapladığı soru | Durum |
+|---|---|---|---|
+| **0004** | **UI Öncesi Wiki Gerçeklik Denetimi** | **Wiki'nin hangi iddiaları koda ve Git'e karşı tutmuyor?** Depo sınırı, ajan runtime, UI mimarisi, sayım tutarsızlıkları | 🟢 **Aktif** — altı karar sahibini bekliyor |
+| **0005** | **Backend Teslim Denetimi** | **UI ve ajan geliştiricisine devretmeden önce backend'de hata, eksik veya yanlış var mı?** 1 Blocker, 6 Risk, 6 Nit; denetim anında build 0 hata / test 383/383 | 🟢 **Aktif** — **B-1, R-1, R-2, R-4 kapandı (2026-08-17); test 392/392.** Kalan: feed kimliği, ajan yüzeyi kimlik doğrulaması, N-5 |
 
 ### Planlar ve backlog
 
@@ -147,6 +170,8 @@ yakınsaması) ve RESEARCH-0006/0008 (tarihsel).
 | TM-51..59 | İş bilgisi katmanı (sözlük, kural kataloğu, etki ayak izi) | PLAN-0003 Blok 8 |
 | ACC-18..22 | API checker MCP bütçe ve doğruluk kapıları | PLAN-0002 Blok 4 |
 | — | Ürün içi sohbet ajanı (`agent_sessions`) | **RULE-0005**, RESEARCH-0012 §4 |
+| F0–F5 | **UI portalı** — 24 ekran, altı faz | [[05-Operations/UI-Build-Guide\|GUIDE-0006]] §6 |
+| E-1..E-7 | UI'yi engelleyen kurulum/kod blokajları | [[01-Current/UI-Requirements-Truth\|CURRENT-0007]] §6 |
 
 ### Ölçüm yükümlülüğü
 
@@ -174,6 +199,10 @@ RESEARCH-0007 §7 ve RESEARCH-0012 §1 gereği her iddia ölçülmelidir:
 | RESEARCH-0006 §5.7 | `run_steps` aylık partition | **v1'de partition yok**; parçalı silme + 50M satır eşiği (ADR-0016 §B) |
 | RESEARCH-0009 §2.3 | `scenario.dryRun` sonucu ajana geri beslenir | **`dryRun` başarısızlığı ajana düzeltme yetkisi vermez** (**RULE-0005**, RESEARCH-0012 §3.1) |
 | RESEARCH-0012 §4.2 | Üç kademeli izin modeli | **Dört kademe**; sandbox yazımı kademe 3 (RESEARCH-0012 §5A.2, RULE-0005) |
+| RESEARCH-0012 §4.4 | `agent_sessions` 9. tablo olarak eklenecek | **ADR-0016'da yok** — model 4 ana + 5 lookup. Sohbet kalıcılığı **açık ürün sorusudur** (CURRENT-0007 S-1) |
+| RESEARCH-0012 §4.6 | "Ajan oturum açan kullanıcı adına çalışır; ABP izinleri ve tenant filtresi geçerli" | **Kodda yok.** Ajan yüzeyi kimliksiz, MCP'ye tek paylaşılan bearer ile bağlanıyor (AUDIT-0004 §D) |
+| ARCH-0007 §5A | Test Module `Volo.Abp.Identity`/`TenantManagement` yükler; UI `/api/identity/*`'ı oraya gönderir | **Resource server**; auth controller sayısı **0**, kimlik `<AUTH_ORIGIN>`'de (ADR-0013, AUDIT-0004 §B3) |
+| ARCH-0007 §2 | Tek `gen:api`, tek `schema.d.ts` | **Üç köken**; ajan yüzeyi OpenAPI yayınlamıyor (ADR-0025 §C) |
 
 ### ADR-0014/0015/0016 ile doğan yeni çelişkiler (2026-08-13)
 

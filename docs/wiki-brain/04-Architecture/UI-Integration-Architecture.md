@@ -1,9 +1,9 @@
 ---
-id: ARCH-0003
+id: ARCH-0007
 type: architecture
 status: active
 title: Birleşik UI Portalı ve API Entegrasyon Mimarisi (Derin Analiz ve Uç Matrisi)
-updated: 2026-08-16
+updated: 2026-08-17
 decision_refs:
   - CURRENT-0005
   - CURRENT-0006
@@ -15,6 +15,31 @@ rule_refs:
 ---
 
 # Birleşik UI Portalı ve API Entegrasyon Mimarisi (Derin Analiz)
+
+> [!WARNING] Kapsam — bu belge **eski UI analizidir**, hedef mimari değildir (2026-08-17)
+> Kimliği `ARCH-0003` idi ve `04-Architecture/Database-Ownership.md` ile çakışıyordu;
+> **`ARCH-0007`'ye alındı** (içerik değişmedi —
+> [[90-Inbox/AUDIT-0004-Ui-Oncesi-Wiki-Gerceklik-Denetimi|AUDIT-0004]] §F).
+>
+> Bugün geçerli hedef mimari şudur:
+> **ekran–uç–izin matrisi** [[04-Architecture/UI-Endpoint-Screen-Matrix|ARCH-0006]] ·
+> **ajan yüzeyi** [[04-Architecture/UI-Agent-Experience|ARCH-0005]] ·
+> **yığın ve köken sınırı** [[03-Decisions/ADR-0025-Ui-Yigini-Ve-Uc-Kokenli-Yuzey-Siniri|ADR-0025]] ·
+> **gereksinimler** [[01-Current/UI-Requirements-Truth|CURRENT-0007]].
+>
+> Aşağıdaki üç bölüm **eskidir** ve olduğu gibi uygulanamaz (AUDIT-0004 §B):
+> - **§2** "tek `gen:api`, tek `schema.d.ts`" — bugün **üç köken** var ve ajan yüzeyi
+>   OpenAPI yayınlamıyor.
+> - **§4** uç matrisi eski UI envanteridir; `/api/recipients`, `/api/email/sender`,
+>   `/api/comparison-recipients`, `/api/runs/comparison-runs/*`, `/api/operators` ve
+>   `/api/multi-tenancy/*` **bugünkü runtime kataloğunda yoktur** (CURRENT-0005).
+> - **§5A** Test Module'ün `Volo.Abp.Identity`/`TenantManagement` yüklediğini ve UI'nin
+>   `/api/identity/users`'ı Test Module hostuna göndereceğini söyler. **Yanlıştır:**
+>   Test Module bir **resource server**dır, auth controller sayısı **0**'dır ve kimlik
+>   ekranları `<AUTH_ORIGIN>`'e gider ([[03-Decisions/ADR-0013-Test-Module-Resource-Server-Auth-Consumption|ADR-0013]]).
+>
+> Belgenin kalıcı değeri **§1 ve §3**'tedir: iki eski UI'ın paradigma farkı ve feature
+> izolasyonu kuralı. Bunlar hâlâ geçerlidir.
 
 Bu belge, bağımsız modüllerden (`CheckNexus.ApiContracts`, `CheckNexus.DatabaseComparison`) beslenen ve `Ptn.TestModule` hostunda birleşen Assurance Platform'un, kullanıcı arayüzünde (UI) kod ve mimari seviyesinde nasıl entegre edileceğini tanımlar.
 

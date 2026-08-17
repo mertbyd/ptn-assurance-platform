@@ -114,12 +114,35 @@ Authenticator bunun üzerine auth'a özgü audit, authorization, lookup pasifle�
 invalidation/hydration ve kararlı hata kodlarını ekler. Foundation'ın genel fiziksel delete
 yüzeyi Auth lookup sözleşmesine açılmaz.
 
+## Ayrı bir resource server nasıl token alır — Authenticator `2.1.0`
+
+`2.0.0` yalnız **tek** scope kaydediyordu ve hiçbir client'a `client_credentials` vermiyordu;
+ayrı deploy edilen bir API eşleşen `aud` ile token alamıyordu. `2.1.0` bunu kapattı:
+
+| Ayar | Ne üretir |
+|---|---|
+| `ResourceServers:Registrations[].Scope` / `.Audience` / `.DisplayName` | O API'ye ait scope + audience kaydı |
+| `…[].MachineClientId` / `.MachineClientSecret` | Yalnız token/revocation ucu, `client_credentials` ve **kendi tek scope'u** olan confidential makine istemcisi |
+
+Makine istemcisine password grant, refresh token ve kullanıcı scope'ları **verilmez**; secret
+eksikse issuer fail-fast kapanır. Kurulum adımları ve token komutu:
+[[05-Operations/Local-Stack-Runbook|GUIDE-0007]].
+
+### İzin grant'ları kimin işi
+
+Issuer'ın kimlik seed'i yönetici rollerine **yalnız kendi hostunda tanımlı** izinleri verebilir.
+`TestModule.*` izinleri composition hostta yüklendiği için grant'ı da o host yazar — makine
+istemcisi ABP'nin client saglayıcısı (`"C"`) ile `client_id`, insan kullanıcı rol saglayıcısı
+(`"R"`) ile rol adı üzerinden. İki liste de `appsettings.json`'da (`AgentClients:Registrations`,
+`RolePermissions:Registrations`) ve yalnız bu modülün izinlerini kabul eder.
+
 ## Consumer kabul kapısı
 
 `2.0.0` public olduğuna göre (2026-08-13) Test Module'de şu kanıtlar birlikte alınır:
 
 1. Clean cache ile yalnız Authenticator direct package referansları kullanılarak restore edilir.
-   *(Durum: restore geçti; clean-cache tekrarı yapılmadı — global cache kullanıldı.)*
+   *(2026-08-17: **ölçüldü** — boş paket klasörüne yalnız nuget.org kaynağıyla restore `EXIT=0`,
+   370 paket indi; Authenticator `2.1.0` ve checker `0.2.0-alpha.9` çözüldü.)*
 2. Çözümlenen grafikte yedi Foundation `1.0.0` paketi transitif görünür. *(Doğrulanmadı.)*
 3. Tek ABP 10.6 / .NET 10 / EF Core 10.0.10 grafiği kurulur. *(Build 0 hata; EF Core 10.0.10'da
    birleşti — daha düşük Sqlite/Proxies sürümü CS1705 üretiyordu, test projesinde hizalandı.)*

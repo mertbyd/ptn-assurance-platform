@@ -23,6 +23,12 @@ decision_refs:
   - ADR-0017
   - ADR-0018
   - ADR-0019
+  - ADR-0020
+  - ADR-0021
+  - ADR-0022
+  - ADR-0023
+  - ADR-0024
+  - ADR-0025
 rule_refs:
   - RULE-0001
   - RULE-0002
@@ -96,6 +102,22 @@ kayıt ve teşhis [[03-Decisions/ADR-0016-Kayit-Ve-Teshis-Veri-Modeli|ADR-0016]]
 - Test Module entegrasyon hazırlığı → [[01-Current/Integration-Readiness-Truth|CURRENT-0004]]
 - UI backend controller kataloğu → [[01-Current/UI-Backend-Controller-Catalog|CURRENT-0005]]
 - Sistem bağlamı → [[04-Architecture/System-Context|ARCH-0001]]
+
+### UI yazacaksan — buradan gir
+
+| Sıra | Belge | Ne verir |
+|---|---|---|
+| 1 | **[[01-Current/UI-Requirements-Truth\|CURRENT-0007]]** | **Gereksinim analizi** — aktörler, 24 ekran, kapalı sözlükler, 14 davranışsal gereksinim, başlamayı engelleyen 7 madde |
+| 2 | **[[04-Architecture/UI-Agent-Experience\|ARCH-0005]]** | **Ajan yüzeyi** — dosya yüklemesinden sohbete, SSE olayları, durum makinesi, kapalı soru ve onay kartları |
+| 3 | **[[04-Architecture/UI-Endpoint-Screen-Matrix\|ARCH-0006]]** | **Ekran–uç–izin matrisi** — Test Module 65 ucu + ajan 5 ucu + checker yüzeyi |
+| 4 | **[[03-Decisions/ADR-0025-Ui-Yigini-Ve-Uc-Kokenli-Yuzey-Siniri\|ADR-0025]]** | Yığın, üç kökenli sınır, olay sözleşmesi — **`proposed`**, kabul bekliyor |
+| 5 | **[[05-Operations/UI-Build-Guide\|GUIDE-0006]]** | Klasör düzeni, kod üretimi, test stratejisi, altı fazlı plan |
+| 6 | [[90-Inbox/RESEARCH-0017-Ajan-Arayuzu-Desenleri-Ve-Referans-Uygulamalar\|RESEARCH-0017]] | Dış tarama — AG-UI, kesinti desenleri, `openapi-typescript` hattı, Arazzo araçları |
+| — | [[04-Architecture/UI-Integration-Architecture\|ARCH-0007]] | **Eski UI analizi** — §1 ve §3 geçerli; §2/§4/§5A eskidir (AUDIT-0004 §B) |
+| — | [[90-Inbox/AUDIT-0004-Ui-Oncesi-Wiki-Gerceklik-Denetimi\|AUDIT-0004]] | UI öncesi gerçeklik denetimi — depo sınırı, ajan runtime ve mimari çelişkiler |
+| 0 | **[[05-Operations/Local-Stack-Runbook\|GUIDE-0007]]** | **Yığını ayağa kaldırma — önce bunu oku.** Tek veritabanı kuralı, migration sırası, issuer seed anahtarları, token alma, izin grant'ları, belirti→sebep→çözüm tablosu |
+| — | **[[90-Inbox/AUDIT-0005-Backend-Teslim-Denetimi\|AUDIT-0005]]** | Backend teslim denetimi. **B-1 kapandı** (2026-08-17): on bir capability port'u `[ExposeServices]` aldı, `CapabilityPortWiringTests` nöbetçi. Kalan maddeler belgede işaretli |
+
 - Paket ve host haritası → [[04-Architecture/Package-Map|ARCH-0002]]
 - Auth tüketim modeli → [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH-CONSUMPTION]]
 - DB, şema ve migration sahipliği → [[04-Architecture/Database-Ownership|ARCH-0003]]
@@ -120,8 +142,8 @@ kayıt ve teşhis [[03-Decisions/ADR-0016-Kayit-Ve-Teshis-Veri-Modeli|ADR-0016]]
 - Resmî ve tarihsel kaynaklar → [[05-Operations/Source-Registry|SOURCE-0001]]
 - Önceki araştırmaların eksiksiz arşivi → [[05-Operations/Research-Archive|ARCHIVE-0001]]
 
-> `90-Inbox` altında 12 araştırma belgesi, 3 plan ve 1 backlog vardır. **Hepsini okuma** —
-> amacına göre okuma sırası [[05-Operations/Research-Index|GUIDE-0005]]'te.
+> `90-Inbox` altında 17 araştırma belgesi, 5 plan, 4 denetim ve 1 backlog vardır (2026-08-17).
+> **Hepsini okuma** — amacına göre okuma sırası [[05-Operations/Research-Index|GUIDE-0005]]'te.
 
 ## Değişmez özet
 
@@ -153,7 +175,13 @@ kayıt ve teşhis [[03-Decisions/ADR-0016-Kayit-Ve-Teshis-Veri-Modeli|ADR-0016]]
   (`RulesFingerprint`), API snapshot (`SpecSnapshotId` **+** `SpecFingerprint`), DB şeması
   (`DbConnectionId` **+** `DbSchemaFingerprint`) ve profil paketi (`ProfileFingerprint`).
   Mühür tutmuyorsa koşum `Failed` değil **`Inconclusive`**'dir (ADR-0020).
-  > [!WARNING] `ProfileFingerprint` çözülmemiş çelişkidir (2026-08-16)
+  > [!NOTE] `ProfileFingerprint` çelişkisi kapandı (2026-08-17, `c7c7773`)
+  > Aşağıdaki uyarı tarihsel kayıttır. Çözüm: mühür artık **başka bir belgenin hash'i değil**,
+  > `validate` isteğinin zaten adlandırdığı profil paketinin kendi içerik parmak izidir
+  > (`ProfilePack.ContentFingerprint`) ve sunucuda bağlanır. İstemci farklı bir değer taşırsa
+  > `ProfileFingerprintMismatch` ile reddedilir. ADR-0020'nin niyeti korunur.
+  >
+  > [!WARNING] Tarihsel: `ProfileFingerprint` çözülmemiş çelişkidir (2026-08-16)
   > `ScenarioPublicationGateManager.IsMaterialSealComplete` altı alanın hepsini — profil dâhil —
   > **dolu ister**; buna karşılık KBP-116 profil parmak izini **bilinçli olarak boş bırakmaya**
   > karar verdi ve sunucuda onu üreten hiçbir yol yok (yalnız çağıranın DTO'sundan geçer).
@@ -168,6 +196,16 @@ kayıt ve teşhis [[03-Decisions/ADR-0016-Kayit-Ve-Teshis-Veri-Modeli|ADR-0016]]
   ve doğrulama JWT bearer ile yapılır (ADR-0013, ADR-0012 md 4'ü revize eder).
 - Authenticator `2.0.0` (8 paket) ve Foundation `1.0.0` (7 paket) nuget.org'da publictir;
   2026-08-13'te 21/21 PackageId registry'den doğrulandı.
+- **UI üç kökene konuşur**: deterministik her şey `<TEST_MODULE_ORIGIN>` (65 uç, `Result<T>`,
+  ABP izinleri), model akışı `<AGENT_ORIGIN>` (5 uç, SSE), kimlik `<AUTH_ORIGIN>`. Tek
+  Swagger ve tek istemci varsayımı **eskidir** (ARCH-0006, ADR-0025).
+- **Ajan yüzeyi bugün kimliksizdir** ve tek paylaşılan MCP bearer'ı kullanır; tenant
+  izolasyonu ajan sınırında düşer. Bu kapanmadan UI ajan ekranı üretime çıkamaz
+  (ARCH-0005 §8, AUDIT-0004 §D).
+- **`kurallar.md`'yi yalnız ajana yüklemek mühür üretmez**; kanonik kaynak
+  `POST api/test-module/authoring/business-rules`'tur (ARCH-0005 §1).
+- Yazarlık oturumu **30 dk TTL**'li cache'tedir; süre dolunca Arazzo belgesi kaybolur —
+  UI sayacı göstermek zorundadır (ARCH-0005 §6).
 
 ## Wiki kuralı
 

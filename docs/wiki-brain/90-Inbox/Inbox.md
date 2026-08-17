@@ -32,7 +32,9 @@ Current/Rule/ADR/Roadmap sayfasına taşınır ve **buradan silinir**.
 - ~~**`SpecFingerprint`'i kim üretecek?**~~ **Kapandı (2026-08-16).** Soru hatalı kurulmuştu:
   kaynak checker'da zaten public — `ISpecSnapshotAppService.GetAsync` →
   `SpecSnapshotDetailDto.SpecContent.CanonicalHash`. Karar değil kod işi; TASK-KBP-117 Dilim 4.
-- **`ProfileFingerprint`'i kim üretecek — yoksa kapı onu zorunlu olmaktan mı çıkaracak?**
+- ~~**`ProfileFingerprint`'i kim üretecek?**~~ ✅ **Cevaplandı (2026-08-17, `c7c7773`):** sunucu
+  üretir — `validate` isteğinin adlandırdığı profil paketinin `ContentFingerprint`'i mühre bağlanır,
+  istemcinin farklı değeri `ProfileFingerprintMismatch` alır. Aşağıdaki soru tarihsel kayıttır.
   `ScenarioPublicationGateManager.cs:57` dolu ister; sunucuda üreten yol yok, KBP-116 ise
   bilinçle boş bırakıyor. `MaterialIntegrity` bugün elle değer verilmeden geçmiyor —
   [[01-Current/Platform-Truth|CURRENT-0001]] blokaj 9. **Öneri:** KBP-112 profil paketi kaynak
