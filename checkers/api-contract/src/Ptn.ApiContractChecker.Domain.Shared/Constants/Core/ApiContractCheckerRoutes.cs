@@ -36,13 +36,15 @@ public static class ApiContractCheckerRoutes
     public const string SwaggerRoot = "~/swagger";
     public const string SwaggerDocumentEndpoint = "/swagger/v1/swagger.json";
 
-    // Lookup endpointlerinin kararli route sozlesmesini toplar.
+    /* Lookup endpointlerinin kararli route sozlesmesini toplar. Onek modul adidir: iki checker ayni
+     * composition host'ta compose edildiginde ortak "api/lookups" isim alani sahipsiz kalir ve ayni
+     * adli lookup iki kez kaydedilirse Swagger uretimi ile rota cozumlemesi belirsizlesir. */
     public static class Lookups
     {
-        public const string SpecFormats = "api/lookups/spec-formats";
-        public const string CheckRunStatuses = "api/lookups/check-run-statuses";
-        public const string DifferenceSeverities = "api/lookups/difference-severities";
-        public const string DifferenceDirections = "api/lookups/difference-directions";
-        public const string DifferenceKinds = "api/lookups/difference-kinds";
+        public const string SpecFormats = "api/api-contract/lookups/spec-formats";
+        public const string CheckRunStatuses = "api/api-contract/lookups/check-run-statuses";
+        public const string DifferenceSeverities = "api/api-contract/lookups/difference-severities";
+        public const string DifferenceDirections = "api/api-contract/lookups/difference-directions";
+        public const string DifferenceKinds = "api/api-contract/lookups/difference-kinds";
     }
 }

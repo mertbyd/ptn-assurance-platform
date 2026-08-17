@@ -55,22 +55,25 @@ public static class DatabaseCheckerHttpApiConstants
         public const string SchemaComparison = "api/comparison/schema-comparison";
         /// <summary>Sema kesif rotasi.</summary>
         public const string SchemaDiscovery = "api/comparison/schema-discovery";
+        /* Lookup rotalarinin oneki modul adidir: iki checker ayni composition host'ta compose
+         * edildiginde ortak "api/lookups" isim alani sahipsiz kalir ve ayni adli lookup iki kez
+         * kaydedilirse Swagger uretimi ile rota cozumlemesi belirsizlesir. */
         /// <summary>Karsilastirma guveni lookup rotasi.</summary>
-        public const string ComparisonConfidences = "api/lookups/comparison-confidences";
+        public const string ComparisonConfidences = "api/database-comparison/lookups/comparison-confidences";
         /// <summary>Run durumu lookup rotasi.</summary>
-        public const string ComparisonRunStatuses = "api/lookups/comparison-run-statuses";
+        public const string ComparisonRunStatuses = "api/database-comparison/lookups/comparison-run-statuses";
         /// <summary>Karsilastirma turu lookup rotasi.</summary>
-        public const string ComparisonTypes = "api/lookups/comparison-types";
+        public const string ComparisonTypes = "api/database-comparison/lookups/comparison-types";
         /// <summary>Veritabani motoru lookup rotasi.</summary>
-        public const string DatabaseEngines = "api/lookups/database-engines";
+        public const string DatabaseEngines = "api/database-comparison/lookups/database-engines";
         /// <summary>Fark turu lookup rotasi.</summary>
-        public const string DifferenceKinds = "api/lookups/difference-kinds";
+        public const string DifferenceKinds = "api/database-comparison/lookups/difference-kinds";
         /// <summary>Rapor formati lookup rotasi.</summary>
-        public const string ReportFormats = "api/lookups/report-formats";
+        public const string ReportFormats = "api/database-comparison/lookups/report-formats";
         /// <summary>Sema nesne turu lookup rotasi.</summary>
-        public const string SchemaObjectTypes = "api/lookups/schema-object-types";
+        public const string SchemaObjectTypes = "api/database-comparison/lookups/schema-object-types";
         /// <summary>Kapsam turu lookup rotasi.</summary>
-        public const string ScopeKinds = "api/lookups/scope-kinds";
+        public const string ScopeKinds = "api/database-comparison/lookups/scope-kinds";
     }
 
     // islevi: Controller alt rota segmentlerini adlandirir.
