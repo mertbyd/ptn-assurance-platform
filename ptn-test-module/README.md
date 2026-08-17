@@ -78,6 +78,13 @@ belirti-sebep-cozum tablosu icin `docs/wiki-brain/05-Operations/Local-Stack-Runb
 
 ## Bilinen acik
 
-`Pintern.SaaS.Notifications.Domain` paketi `SystemStandards.Abp.Authorization` 1.0.0'a bagimlidir
-ve o paket nuget.org'da yayimli degildir; restore su an yalniz yerel NuGet cache'i sayesinde
-calisir. Temiz klon ve CI icin o paketin yayimlanmasi gerekir.
+`Pintern.SaaS.Notifications.*` paketleri `SystemStandards.Abp.Authorization` 1.0.0'a bagimlidir;
+o surum nuget.org'da yoktur. NuGet bagimlilik surumunu taban kabul ettigi icin yayimda olan
+2.1.0'i cozer ve `NU1603` uyarisi verir. Restore bu yuzden calisir: 2026-08-17'de bos bir paket
+klasorune yalniz `NuGet.Config`'teki nuget.org kaynagiyla yapilan temiz restore 370 paketi
+indirdi ve 0 hata dondu. Uyariyi kapatmak icin ya 1.0.0 yayimlanir ya da Notifications ailesi
+2.1.0 tabanina alinir; ikisi de bu deponun disindadir.
+
+`EntityFrameworkCore.Tests` bagimliligi `SQLitePCLRaw.lib.e_sqlite3` 2.1.11 `NU1903` guvenlik
+uyarisi verir (GHSA-2m69-gcr7-jv3q). Uretime cikmaz ama uyari-hata kapisi olan bir CI'da build'i
+kirar.
