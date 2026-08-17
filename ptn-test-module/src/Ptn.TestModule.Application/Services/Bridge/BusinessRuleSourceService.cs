@@ -13,6 +13,7 @@ namespace Ptn.TestModule.Services.Bridge;
 
 // islevi: Is kurali belgesini ayarli kokten okuyup ham baytlarini port sozlesmesine uygular.
 // sistemdeki gorevi: Muhur karari Manager'da kalirken dosya, ayar ve kok siniri I/O'sunu tek sinirda toplar.
+[ExposeServices(typeof(IBusinessRuleSourcePort))]
 public sealed class BusinessRuleSourceService : IBusinessRuleSourcePort, ITransientDependency
 {
     private readonly BusinessRuleFingerprintManager _manager;

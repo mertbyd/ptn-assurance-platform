@@ -15,6 +15,7 @@ namespace Ptn.TestModule.Services.Bridge;
 
 // islevi: Profil paketi kokune yazma ve yuklu anahtarlari listeleme dosya sinirini uygular.
 // sistemdeki gorevi: Ad, butce ve kok kararlarini Manager'da birakip yalniz dosya sistemi mekanigini tasir.
+[ExposeServices(typeof(IProfilePackSourcePort))]
 public sealed class ProfilePackSourceService : IProfilePackSourcePort, ITransientDependency
 {
     private readonly ProfilePackFileManager _manager;

@@ -19,11 +19,6 @@ public class TestModuleIsolatedAuthTestModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        // KBP-117 Test DI kısıtı: Prod tarafında [ExposeServices] eksiği olan test bağımlılıklarını burada karşıla
-        context.Services.AddTransient<Ptn.TestModule.Interface.Authoring.IAuthoringSessionStore, Ptn.TestModule.Services.Authoring.AuthoringSessionCacheService>();
-        context.Services.AddTransient<Ptn.TestModule.Interface.Compilation.IScenarioCompilationPort, Ptn.TestModule.Services.Compilation.ScenarioCompilationService>();
-        context.Services.AddTransient<Ptn.TestModule.Interface.Shared.IProcessBoundaryPort, Ptn.TestModule.Services.Shared.ProcessBoundaryService>();
-
         // AddAlwaysAllowAuthorization tarafindan eklenen sahte yetkilendiriciyi kaldir, gercek yetki denetimi calissin.
         var alwaysAllowDescriptor = context.Services.FirstOrDefault(s => s.ImplementationType != null && s.ImplementationType.Name == "AlwaysAllowAuthorizationService");
         if (alwaysAllowDescriptor != null)
@@ -47,6 +42,9 @@ public class TestModuleIsolatedAuthTestModule : AbpModule
         context.Services.AddSingleton(NSubstitute.Substitute.For<Ptn.ApiContractChecker.Services.Conformance.IResponseConformanceAppService>());
         context.Services.AddSingleton(NSubstitute.Substitute.For<Ptn.ApiContractChecker.Services.Snapshots.ISpecSnapshotAppService>());
         context.Services.AddSingleton(NSubstitute.Substitute.For<Ptn.ApiContractChecker.Services.Diagnosis.IDiagnosisAppService>());
+
+        // Secret saglayicisini composition host'ta CheckNexus.Vault modulu kurar; modul testinde grafta yoktur.
+        context.Services.AddSingleton(NSubstitute.Substitute.For<Ptn.ApiContractChecker.Interface.Secrets.ISecretProvider>());
         
         // Sahte ama davranissal bir IPermissionChecker kaydet.
         context.Services.AddTransient<IPermissionChecker, FakePermissionChecker>();

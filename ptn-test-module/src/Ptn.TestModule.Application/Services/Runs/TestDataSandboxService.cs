@@ -10,6 +10,7 @@ namespace Ptn.TestModule.Services.Runs;
 
 // islevi: Ortama ozel yazma yetkili PostgreSQL baglantisini acip dogrulanmis Respawn planini uygular.
 // sistemdeki gorevi: Checker hedef baglantisini hic gormeden SUT test verisini kosumdan once bilinen bos duruma getirir.
+[ExposeServices(typeof(ITestDataSandbox))]
 public sealed class TestDataSandboxService : ITestDataSandbox, ITransientDependency
 {
     /// <summary>Reset stratejisi ile ayri baglanti adinin domain sahibidir.</summary>

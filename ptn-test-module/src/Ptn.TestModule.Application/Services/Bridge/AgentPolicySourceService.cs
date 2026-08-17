@@ -12,6 +12,7 @@ namespace Ptn.TestModule.Services.Bridge;
 
 // islevi: Ajan politikasi belgesini ayarli kokten okuyup ham baytlarini port sozlesmesine uygular.
 // sistemdeki gorevi: Politikayi assembly'ye gomulu kopyadan kurtarip is kurallariyla ayni dosya sinirina baglar.
+[ExposeServices(typeof(IAgentPolicySourcePort))]
 public sealed class AgentPolicySourceService : IAgentPolicySourcePort, ITransientDependency
 {
     private readonly BusinessRuleFingerprintManager _manager;

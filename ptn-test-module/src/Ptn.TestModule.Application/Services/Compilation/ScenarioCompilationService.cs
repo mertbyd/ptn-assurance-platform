@@ -19,6 +19,7 @@ namespace Ptn.TestModule.Services.Compilation;
 
 // islevi: Muhurlu malzemeden profili cozer, senaryoyu derler ve iki turetilebilirlik yuzeyine sorar.
 // sistemdeki gorevi: Yayin kanitinin tamamini sunucuda ureten duz Application orkestrasyonudur; karar vermez (ADR-0015 §C).
+[ExposeServices(typeof(IScenarioCompilationPort))]
 public sealed class ScenarioCompilationService : IScenarioCompilationPort, ITransientDependency
 {
     private static readonly DatabaseOracleMapper DatabaseMapper = new();

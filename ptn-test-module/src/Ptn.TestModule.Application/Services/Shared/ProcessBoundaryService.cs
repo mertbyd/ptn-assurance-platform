@@ -15,6 +15,7 @@ namespace Ptn.TestModule.Services.Shared;
 
 // islevi: Manager'in descriptor'ini dosya sistemi ve process framework cagri zinciriyle uygular.
 // sistemdeki gorevi: Saf plan kararlarindan ayrilmis tek process ve filesystem I/O siniridir.
+[ExposeServices(typeof(IProcessBoundaryPort))]
 public sealed class ProcessBoundaryService : IProcessBoundaryPort, ITransientDependency
 {
     private readonly ProcessPlanManager _manager;

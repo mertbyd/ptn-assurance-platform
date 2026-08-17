@@ -16,6 +16,7 @@ namespace Ptn.TestModule.Services.Runs;
 
 // islevi: Arazzo belgesini wire DTO'suna cozer ve Planner'in kurdugu plani ortak surec sinirinda kosar.
 // sistemdeki gorevi: Mapperly ve Manager cagrilarini siralayan ince Application orkestrasyonudur (ADR-0015 §A).
+[ExposeServices(typeof(IWorkflowRunnerPort))]
 public sealed class WorkflowRunnerService : IWorkflowRunnerPort, ITransientDependency
 {
     private static readonly TestRunMapper Mapper = new();

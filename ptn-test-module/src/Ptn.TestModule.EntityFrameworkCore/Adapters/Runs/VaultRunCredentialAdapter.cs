@@ -10,6 +10,7 @@ namespace Ptn.TestModule.EntityFrameworkCore.Adapters.Runs;
 // islevi: Mantiksal secret referansini composition host'un Vault saglayicisi uzerinden kimlik basligina cevirir.
 // sistemdeki gorevi: Secret deposu sozlesmesini provider katmaninda tutup Domain'e sadece kendi modelini verir.
 /// <summary>Kosum API sirrini mevcut secret saglayicisindan cozen provider adapter'idir.</summary>
+[ExposeServices(typeof(IRunCredentialPort))]
 public sealed class VaultRunCredentialAdapter : IRunCredentialPort, ITransientDependency
 {
     /// <summary>Host tarafindan Vault'a baglanan ortak secret saglayicisidir.</summary>

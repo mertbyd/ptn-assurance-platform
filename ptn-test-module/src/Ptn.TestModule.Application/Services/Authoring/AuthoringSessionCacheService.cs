@@ -12,6 +12,7 @@ namespace Ptn.TestModule.Services.Authoring;
 
 // islevi: Authoring session okumasi ve TTL'li yazimini ABP distributed cache'e uygular.
 // sistemdeki gorevi: Cache I/O'sunu AppService ve Manager kararlarindan tek yerde ayirir.
+[ExposeServices(typeof(IAuthoringSessionStore))]
 public sealed class AuthoringSessionCacheService : IAuthoringSessionStore, ITransientDependency
 {
     private readonly IDistributedCache<AuthoringSession, Guid> _cache;

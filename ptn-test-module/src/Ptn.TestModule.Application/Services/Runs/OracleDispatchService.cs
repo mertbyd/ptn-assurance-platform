@@ -14,6 +14,7 @@ namespace Ptn.TestModule.Services.Runs;
 
 // islevi: HAR'in her adimini mevcut Bridge yuzeyleri uzerinden hakemlere dagitir ve teshis cagrisini yapar.
 // sistemdeki gorevi: Uzak checker cagrilarini UoW disinda sirayla yapan ince orkestrasyondur; her karar Manager'dadir (ADR-0015 §B/§F).
+[ExposeServices(typeof(IOracleDispatchPort))]
 public sealed class OracleDispatchService : IOracleDispatchPort, ITransientDependency
 {
     // Bridge DTO'lari ile domain modelleri arasindaki compile-time eslemeleri saglar.
