@@ -215,7 +215,18 @@ burasıdır. `appsettings.json`:
 }
 ```
 
-`Database:SeedOnStartup` açıkken host bu grant'ları `abp.AbpPermissionGrants` tablosuna
+İnsan kullanıcı için aynı şey rol üzerinden yürür — issuer seed'i **yalnız kendi hostunda tanımlı**
+izinleri dağıtabildiği için `TestModule.*` izinlerini o veremez:
+
+```json
+"RolePermissions": {
+  "Registrations": [
+    { "RoleName": "SuperAdmin", "Permissions": [ "TestModule.Scenarios.Create", "TestModule.Runs.View" ] }
+  ]
+}
+```
+
+`Database:SeedOnStartup` açıkken host iki listeyi de `abp.AbpPermissionGrants` tablosuna
 idempotent yazar. Liste yalnız **bu modülün** izinlerini kabul eder: yabancı ya da hatalı
 yazılmış bir izin adı host'u açılışta durdurur, çünkü sessizce yazılmayan bir grant sonradan
 sebebi anlaşılmayan 403 olarak döner. Onay gibi ayrıcalıklı izinleri (`Scenarios.Approve`)
