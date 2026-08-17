@@ -341,6 +341,43 @@ Authenticator public envanteri için
 - NuGet.org exact `2.0.0` preflight'ta sekiz PackageId de boştu; onaylı push sonrasında
   sekiz PackageId'nin tamamı registry'de doğrulandı.
 
+## Authenticator `2.1.0` — 2026-08-17
+
+**Owner:** `mertbyd`
+
+**Registry:** NuGet.org
+
+**Durum:** Yayımlandı; sekiz katman + host tool paketi doğrulandı
+
+- Issuer artık `ResourceServers:Registrations` listesindeki her kayıt için scope ve audience
+  üretir. `MachineClientId` verilen kayıt, yalnız token/revocation ucu, `client_credentials`
+  grant'ı ve kendi tek scope'unu taşıyan confidential makine istemcisi alır; password grant,
+  refresh token ve kullanıcı scope'ları verilmez.
+- **Consumer etkisi:** `2.0.0` hiçbir client'a `client_credentials` vermiyordu; ayrı deploy
+  edilen bir resource server bu sürüm olmadan eşleşen `aud` ile token alamaz.
+- Makine istemcisi tanımlıyken secret zorunludur; eksikse host fail-fast kapanır.
+- Release build 0 hata/0 uyarı; 218/218 test geçti.
+- `Authenticator.HttpApi.Host` dotnet tool paketi de aynı sürüme çıktı — hostu tool olarak
+  çalıştıran ortamlar güncellemeden yeni seed davranışını almaz.
+
+## CheckNexus `0.2.0-alpha.9` — 2026-08-17
+
+**Owner:** `mertbyd`
+
+**Registry:** NuGet.org
+
+**Durum:** Yayımlandı; iki sekizli aile aynı sürüme hizalandı, 16 nupkg + 16 snupkg
+
+- **Kırıcı değişiklik:** lookup rotaları modül önekine taşındı —
+  `api/lookups/*` → `api/api-contract/lookups/*` ve `api/database-comparison/lookups/*`.
+- Sebep: iki aile ortak `api/lookups` isim alanını sahipsiz paylaşıyordu. Tek composition
+  hostta compose edildiklerinde `difference-kinds` çakışıyor, Swagger üretimi
+  `SwaggerGeneratorException` ile düşüyor ve o rota gerçek isteklerde belirsiz kalıyordu.
+- `ConflictingActionsResolver` kullanılmadı; o uçlardan birini sessizce gizlerdi.
+- Test: api-contract 322/322, database-comparison 228/228.
+- Consumer Test Module `0.2.0-alpha.9`'a alındı; 389/389 test geçti ve temiz klon restore'u
+  yalnız nuget.org kaynağıyla 370 paketi çözdü.
+
 ## Değişmez yayın kuralları
 
 - Yayımlanan sürüm immutable kabul edilir.
