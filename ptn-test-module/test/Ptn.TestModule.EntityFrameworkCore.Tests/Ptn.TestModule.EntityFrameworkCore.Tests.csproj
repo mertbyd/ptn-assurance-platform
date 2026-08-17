@@ -14,6 +14,10 @@
          daha dusuk bir Sqlite/Proxies surumu CS1705 assembly surum catismasi uretir. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
+    <!-- EF Core Sqlite 2.1.11'i transitif getiriyor; o surum GHSA-2m69-gcr7-jv3q tasidigi icin NU1903
+         uretir ve WarningsAsErrors kapisi olan bir pipeline'i kirar. Yamali 2.1.13 ayni minor hatta
+         kalir: bundle paketi core/lib/provider uclusunu birlikte yukseltir. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.13" />
     <PackageReference Include="Volo.Abp.EntityFrameworkCore.Sqlite" Version="$(AbpVersion)" />
     <ProjectReference Include="..\..\src\Ptn.TestModule.EntityFrameworkCore\Ptn.TestModule.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\Ptn.TestModule.Application.Tests\Ptn.TestModule.Application.Tests.csproj" />
