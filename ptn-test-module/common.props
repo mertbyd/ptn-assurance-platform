@@ -19,8 +19,8 @@
   <PropertyGroup>
     <AbpVersion>10.6.0</AbpVersion>
     <AuthenticatorVersion>2.1.0</AuthenticatorVersion>
-    <CheckNexusApiContractsVersion>0.2.0-alpha.7</CheckNexusApiContractsVersion>
-    <CheckNexusDatabaseComparisonVersion>0.2.0-alpha.8</CheckNexusDatabaseComparisonVersion>
+    <CheckNexusApiContractsVersion>0.2.0-alpha.9</CheckNexusApiContractsVersion>
+    <CheckNexusDatabaseComparisonVersion>0.2.0-alpha.9</CheckNexusDatabaseComparisonVersion>
     <CheckNexusVaultVersion>0.2.0-alpha.2</CheckNexusVaultVersion>
     <NotificationsVersion>0.1.0-alpha.1</NotificationsVersion>
     <PitonEmailingVersion>1.5.0</PitonEmailingVersion>
