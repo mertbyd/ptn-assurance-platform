@@ -43,11 +43,19 @@ public class PackageBoundaryTests
         content.ShouldNotContain("<CheckNexusVersion>");
     }
 
-    /* Emailing HTTP yuzeyinin compose edilmedigini dogrular. Paketin EmailController'i ve
-     * EmailAppService.SendAsync'i yetki kontrolu tasimadigi icin compose edildiginde
-     * POST /api/emailing/emails kimlik dogrulamasiz gonderime acilir. */
+    // Authenticator ailesinin tenant yonetim sozlesmesini tasiyan yayinlanmis surume sabitlenmesini dogrular.
     [Fact]
-    public void Emailing_http_surface_should_not_be_composed_into_the_host()
+    public void Authenticator_family_should_use_the_tenant_administrator_release()
+    {
+        var content = File.ReadAllText(Path.Combine(FindModuleRoot().FullName, "common.props"));
+
+        content.ShouldContain("<AuthenticatorVersion>2.2.0</AuthenticatorVersion>");
+    }
+
+    /* Provider ve sablon yonetimi compose edilirken paketin anonim EmailController'inin
+     * host endpoint modelinden cikarildigini statik olarak dogrular. */
+    [Fact]
+    public void Emailing_management_should_be_composed_without_the_unsafe_send_controller()
     {
         var hostModule = File.ReadAllText(Path.Combine(
             FindModuleRoot().FullName,
@@ -55,8 +63,37 @@ public class PackageBoundaryTests
             "Ptn.TestModule.HttpApi.Host",
             "TestModuleHttpApiHostModule.cs"));
 
-        hostModule.ShouldNotContain("typeof(EmailingHttpApiModule)");
+        hostModule.ShouldContain("typeof(EmailingHttpApiModule)");
         hostModule.ShouldContain("typeof(EmailingApplicationModule)");
+        hostModule.ShouldContain("UnsafeEmailControllerConvention");
+        hostModule.ShouldContain("EmailingDbProperties.DbSchema = \"email\"");
+        hostModule.ShouldContain("EmailingDbProperties.EmailTemplatesTable = \"email_templates\"");
+
+        var convention = File.ReadAllText(Path.Combine(
+            FindModuleRoot().FullName,
+            "host",
+            "Ptn.TestModule.HttpApi.Host",
+            "Emailing",
+            "UnsafeEmailControllerConvention.cs"));
+        convention.ShouldContain("controller.ControllerType == typeof(EmailController)");
+        convention.ShouldContain("controller.Actions.Clear()");
+    }
+
+    // Provider hata govdesi secret tasiyabilecegi icin adapter yalniz durum kodunu disari aktarabilir.
+    [Fact]
+    public void Emailing_vault_adapter_should_not_read_or_expose_error_response_bodies()
+    {
+        var adapter = File.ReadAllText(Path.Combine(
+            FindModuleRoot().FullName,
+            "host",
+            "Ptn.TestModule.HttpApi.Host",
+            "Emailing",
+            "VaultEmailSecretStore.cs"));
+
+        adapter.ShouldNotContain("ReadAsStringAsync");
+        adapter.ShouldNotContain("WithData(\"Response\"");
+        adapter.ShouldContain("HttpCompletionOption.ResponseHeadersRead");
+        adapter.ShouldContain("TestModuleEmailingErrorCodes.VaultRequestFailed");
     }
 
     // MCP SDK'sinin yalniz composition hostta kaldigini ve model istemci paketinin eklenmedigini dogrular.

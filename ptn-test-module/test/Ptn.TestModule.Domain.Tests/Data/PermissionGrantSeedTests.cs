@@ -27,7 +27,10 @@ public class PermissionGrantSeedTests
     public async Task Should_grant_configured_permissions_to_the_client_provider()
     {
         var permissionDataSeeder = Substitute.For<IPermissionDataSeeder>();
-        var contributor = NewContributor(permissionDataSeeder, agentPermission: TestModulePermissions.Bridge.Ground);
+        var contributor = NewContributor(
+            permissionDataSeeder,
+            out var permissionDefinitionManager,
+            agentPermission: TestModulePermissions.Bridge.Ground);
 
         await contributor.SeedAsync(new DataSeedContext());
 
@@ -36,6 +39,7 @@ public class PermissionGrantSeedTests
             AgentClientId,
             Arg.Is<IEnumerable<string>>(names => names.Contains(TestModulePermissions.Bridge.Ground)),
             Arg.Any<Guid?>());
+        await permissionDefinitionManager.Received(1).GetPermissionsAsync();
     }
 
     // Yonetici rolu izinleri ABP'nin rol saglayicisina rol adiyla yazilmalidir.
@@ -43,7 +47,10 @@ public class PermissionGrantSeedTests
     public async Task Should_grant_configured_permissions_to_the_role_provider()
     {
         var permissionDataSeeder = Substitute.For<IPermissionDataSeeder>();
-        var contributor = NewContributor(permissionDataSeeder, rolePermission: TestModulePermissions.Scenarios.Create);
+        var contributor = NewContributor(
+            permissionDataSeeder,
+            out _,
+            rolePermission: TestModulePermissions.Scenarios.Create);
 
         await contributor.SeedAsync(new DataSeedContext());
 
@@ -59,7 +66,10 @@ public class PermissionGrantSeedTests
     public async Task Should_reject_a_permission_that_this_module_does_not_define()
     {
         var permissionDataSeeder = Substitute.For<IPermissionDataSeeder>();
-        var contributor = NewContributor(permissionDataSeeder, agentPermission: "AbpIdentity.Users.Delete");
+        var contributor = NewContributor(
+            permissionDataSeeder,
+            out _,
+            agentPermission: "AbpIdentity.Users.Delete");
 
         var exception = await Should.ThrowAsync<InvalidOperationException>(
             () => contributor.SeedAsync(new DataSeedContext()));
@@ -72,9 +82,15 @@ public class PermissionGrantSeedTests
     // Katkiciyi istenen kayitlari tasiyan bellek ici yapilandirmayla kurar.
     private static PermissionGrantDataSeedContributor NewContributor(
         IPermissionDataSeeder permissionDataSeeder,
+        out IPermissionDefinitionManager permissionDefinitionManager,
         string? agentPermission = null,
         string? rolePermission = null)
     {
+        permissionDefinitionManager = Substitute.For<IPermissionDefinitionManager>();
+        permissionDefinitionManager
+            .GetPermissionsAsync()
+            .Returns(TestModulePermissions.GetAll().Select(CreatePermissionDefinition).ToArray());
+
         var settings = new Dictionary<string, string?>();
         if (agentPermission is not null)
         {
@@ -90,6 +106,19 @@ public class PermissionGrantSeedTests
 
         return new PermissionGrantDataSeedContributor(
             new ConfigurationBuilder().AddInMemoryCollection(settings).Build(),
+            permissionDefinitionManager,
             permissionDataSeeder);
+    }
+
+    // ABP izin tanimi testte yalnizca Name alaniyla okunur; test alt tipi korumali kurucuyu guvenli acar.
+    private static PermissionDefinition CreatePermissionDefinition(string permissionName)
+        => new TestPermissionDefinition(permissionName);
+
+    private sealed class TestPermissionDefinition : PermissionDefinition
+    {
+        public TestPermissionDefinition(string name)
+            : base(name)
+        {
+        }
     }
 }

@@ -16,9 +16,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
 using ModelContextProtocol.AspNetCore;
+using Ptn.TestModule.Emailing;
 using Ptn.TestModule.Mcp;
 using Pintern.Notifications;
 using Piton.Emailing;
+using Piton.Emailing.EmailTemplates;
 using Ptn.TestModule.Constants;
 using Ptn.TestModule.EntityFrameworkCore;
 using Ptn.TestModule.MultiTenancy;
@@ -58,12 +60,8 @@ namespace Ptn.TestModule;
     typeof(DatabaseCheckerModule),
     typeof(CheckNexusVaultModule),
     typeof(NotificationsHttpApiModule),
-    /* Emailing yetenegi tip olarak alinir, HTTP yuzeyi compose EDILMEZ (ADR-0013 deseni).
-     * Sebep olculdu: paketin EmailController'i ve arkasindaki EmailAppService.SendAsync'i hicbir
-     * [Authorize] ya da CheckPolicy tasimiyor; bu host onlari compose ettiginde
-     * POST /api/emailing/emails kimlik dogrulamasiz e-posta gonderimine acilir. Sablon ve provider
-     * controller'lari yetkili olsa da ayni modulden gelir. Paket yetkili bir gonderim ucu
-     * yayimladiginda HttpApi modulu geri eklenir. */
+    // Provider ve sablon HTTP yuzeyi compose edilir; anonim EmailController ayrica kaldirilir.
+    typeof(EmailingHttpApiModule),
     typeof(EmailingApplicationModule),
     typeof(EmailingInfrastructureModule),
     typeof(AbpAspNetCoreMultiTenancyModule),
@@ -92,6 +90,8 @@ public class TestModuleHttpApiHostModule : AbpModule
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+        EmailingDbProperties.DbSchema = "email";
+        EmailingDbProperties.EmailTemplatesTable = "email_templates";
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -111,6 +111,9 @@ public class TestModuleHttpApiHostModule : AbpModule
             });
         });
         Configure<AbpMultiTenancyOptions>(options => options.IsEnabled = MultiTenancyConsts.IsEnabled);
+        Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options =>
+            options.Conventions.Add(new UnsafeEmailControllerConvention()));
+        context.Services.AddHttpClient(TestModuleEmailingVaultConstants.HttpClientName);
 
         ConfigureVirtualFileSystem(hostingEnvironment);
         ConfigureLocalization();

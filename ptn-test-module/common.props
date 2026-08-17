@@ -18,7 +18,7 @@
        grafigi 10.6.0'da birlesir. -->
   <PropertyGroup>
     <AbpVersion>10.6.0</AbpVersion>
-    <AuthenticatorVersion>2.1.0</AuthenticatorVersion>
+    <AuthenticatorVersion>2.2.0</AuthenticatorVersion>
     <CheckNexusApiContractsVersion>0.2.0-alpha.9</CheckNexusApiContractsVersion>
     <CheckNexusDatabaseComparisonVersion>0.2.0-alpha.9</CheckNexusDatabaseComparisonVersion>
     <CheckNexusVaultVersion>0.2.0-alpha.2</CheckNexusVaultVersion>

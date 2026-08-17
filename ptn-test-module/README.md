@@ -29,7 +29,7 @@ test/
 
 | Katman | Paket |
 |---|---|
-| Domain.Shared | `Authenticator.Domain.Shared` 2.0.0 · `Pintern.SaaS.Notifications.Domain.Shared` |
+| Domain.Shared | `Authenticator.Domain.Shared` 2.2.0 · `Pintern.SaaS.Notifications.Domain.Shared` |
 | Domain | `Authenticator.Domain` · `Pintern.SaaS.Notifications.Domain` |
 | Application.Contracts | `Authenticator.Application.Contracts` · `Pintern.SaaS.Notifications.Application.Contracts` · `SystemStandards.Core` · `SystemStandards.Validation` |
 | Application | `Authenticator.Application` · `Pintern.SaaS.Notifications.Application` |
@@ -38,9 +38,10 @@ test/
 | HttpApi.Host | `CheckNexus.ApiContracts` · `CheckNexus.DatabaseComparison` · `Pintern.SaaS.Notifications.HttpApi` · `Piton.Emailing.Application/HttpApi/Infrastructure` · `SystemStandards.AspNetCore` |
 
 `Nexum.Abp.Foundation.*` 1.0.0 **transitif** gelir; dogrudan `PackageReference` yazilmaz (ADR-0012).
-`CheckNexus.Vault` yayimlandiginda host'a eklenecektir.
+`CheckNexus.Vault` 0.2.0-alpha.2 hostta compose edilir; checker ve Emailing secret degerleri
+yalniz Vault referansi uzerinden cozulur.
 
-ABP tabani **10.6.0**'dir: Authenticator 2.0.0 ailesi bu surume baglidir. Checker'lar,
+ABP tabani **10.6.0**'dir: Authenticator 2.2.0 ailesi bu surume baglidir. Checker'lar,
 SystemStandards ve Emailing 10.3.0 ile derlenmistir; NuGet grafigi 10.6.0'da birlesir.
 
 ## Auth tuketim modeli
