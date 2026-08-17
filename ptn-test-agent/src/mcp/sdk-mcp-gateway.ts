@@ -9,7 +9,7 @@ import {
 import { z } from 'zod';
 import type { McpGateway, McpTool, McpToolResult } from './mcp-gateway.js';
 
-const JsonValueSchema: z.ZodType<unknown> = z.lazy(() => z.union([
+const JsonValueSchema: z.ZodType = z.lazy(() => z.union([
   z.string(),
   z.number(),
   z.boolean(),
@@ -22,13 +22,19 @@ export class SdkMcpGateway implements McpGateway {
   readonly #client: Client;
   readonly #transport: StreamableHTTPClientTransport;
   readonly #ajv = new Ajv({ allErrors: true, strict: false });
+  #bearerToken: string;
 
   public constructor(url: URL, bearerToken: string) {
+    this.#bearerToken = bearerToken;
     this.#client = new Client({ name: 'ptn-test-authoring-agent', version: '0.1.0' });
     this.#transport = new StreamableHTTPClientTransport(url, {
-      authProvider: { token: async () => bearerToken },
+      authProvider: { token: () => Promise.resolve(this.#bearerToken) },
       onInsufficientScope: 'throw',
     });
+  }
+
+  public setBearerToken(token: string): void {
+    this.#bearerToken = token;
   }
 
   public connect(): Promise<void> {
@@ -85,8 +91,8 @@ function mapMcpTool(tool: Tool): McpTool {
   const result: McpTool = {
     name: tool.name,
     description: tool.description ?? '',
-    inputSchema: tool.inputSchema as Record<string, unknown>,
-    ...(tool.outputSchema === undefined ? {} : { outputSchema: tool.outputSchema as Record<string, unknown> }),
+    inputSchema: tool.inputSchema,
+    ...(tool.outputSchema === undefined ? {} : { outputSchema: tool.outputSchema }),
   };
   return result;
 }

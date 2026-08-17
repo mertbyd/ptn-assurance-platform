@@ -12,6 +12,7 @@ export interface McpToolResult {
 }
 
 export interface McpGateway {
+  setBearerToken(token: string): void;
   connect(): Promise<void>;
   close(): Promise<void>;
   readTextResource(uri: string, signal?: AbortSignal): Promise<string>;

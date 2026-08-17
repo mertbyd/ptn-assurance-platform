@@ -30,7 +30,7 @@ export const UploadSchema = z.object({
 
 export const StepProposalSchema = z.object({
   stepId: z.string().trim().regex(/^[A-Za-z][A-Za-z0-9_-]{0,63}$/),
-  operationReferenceId: z.string().uuid(),
+  operationReferenceId: z.uuid(),
   requestBodyJson: z.string().max(64_000).nullable().optional(),
   assertionPaths: z.array(z.string().trim().min(1).max(512)).min(1).max(50),
 }).strict();

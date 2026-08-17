@@ -4,7 +4,8 @@ const EnvironmentSchema = z.object({
   AGENT_MODEL: z.string().trim().min(1),
   OPENAI_API_KEY: z.string().min(1),
   PTN_MCP_URL: z.url(),
-  PTN_MCP_BEARER_TOKEN: z.string().min(1),
+  AUTH_ORIGIN: z.url(),
+  UI_ORIGIN: z.url().default('http://localhost:3000'),
   AGENT_HOST: z.string().default('127.0.0.1'),
   AGENT_PORT: z.coerce.number().int().min(1).max(65_535).default(4310),
   AGENT_MAX_TURNS: z.coerce.number().int().positive().max(64).default(8),
@@ -16,7 +17,8 @@ export interface AgentConfig {
   readonly model: string;
   readonly openAiApiKey: string;
   readonly mcpUrl: URL;
-  readonly mcpBearerToken: string;
+  readonly authOrigin: URL;
+  readonly uiOrigin: string;
   readonly host: string;
   readonly port: number;
   readonly maxTurns: number;
@@ -30,7 +32,8 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): AgentC
     model: parsed.AGENT_MODEL,
     openAiApiKey: parsed.OPENAI_API_KEY,
     mcpUrl: new URL(parsed.PTN_MCP_URL),
-    mcpBearerToken: parsed.PTN_MCP_BEARER_TOKEN,
+    authOrigin: new URL(parsed.AUTH_ORIGIN),
+    uiOrigin: new URL(parsed.UI_ORIGIN).origin,
     host: parsed.AGENT_HOST,
     port: parsed.AGENT_PORT,
     maxTurns: parsed.AGENT_MAX_TURNS,

@@ -1,11 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import type { AgentMoment, ClosedQuestion, StepProposal } from '../contracts.js';
 import type { McpTool } from '../mcp/mcp-gateway.js';
+import type { McpGateway } from '../mcp/mcp-gateway.js';
 
 export type SessionStatus = 'ready' | 'running' | 'input_required' | 'approval_required' | 'cancelled';
 
 export interface AgentSession {
   readonly id: string;
+  readonly ownerId: string;
+  readonly gateway: McpGateway;
   readonly momentCode: AgentMoment;
   readonly instructions: string;
   readonly tools: McpTool[];
@@ -19,6 +22,7 @@ export interface AgentSession {
   pendingQuestions: ClosedQuestion[];
   pendingProposal?: StepProposal | undefined;
   activeAbort?: AbortController | undefined;
+  gatewayClosePromise?: Promise<void> | undefined;
 }
 
 export class SessionStore {
@@ -38,12 +42,25 @@ export class SessionStore {
     return session;
   }
 
-  public get(id: string): AgentSession {
+  public get(id: string, ownerId: string): AgentSession {
     const session = this.#sessions.get(id);
     if (session === undefined) {
       throw new SessionNotFoundError();
     }
+    if (session.ownerId !== ownerId) {
+      throw new SessionForbiddenError();
+    }
     return session;
+  }
+
+  public values(): AgentSession[] {
+    return [...this.#sessions.values()];
+  }
+}
+
+export class SessionForbiddenError extends Error {
+  public constructor() {
+    super('Agent session belongs to another principal.');
   }
 }
 

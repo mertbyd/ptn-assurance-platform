@@ -11,7 +11,7 @@ import {
 import type { McpGateway, McpTool, McpToolResult } from '../mcp/mcp-gateway.js';
 import type { ModelAdapter, ModelEvent, ModelInput, ModelTool } from '../model/model-adapter.js';
 import { ProposeStepToolName } from '../model/openai-model-adapter.js';
-import { SessionStore, type AgentSession } from '../session/session-store.js';
+import type { AgentSession, SessionStore } from '../session/session-store.js';
 
 const AgentPolicyUri = 'ptn://authoring/agent-policy.md';
 const BusinessRulesUri = 'ptn://authoring/kurallar.md';
@@ -25,45 +25,54 @@ export interface AuthoringAgentLimits {
 
 export class AuthoringAgent {
   public constructor(
-    private readonly gateway: McpGateway,
+    private readonly gatewayFactory: (bearerToken: string) => McpGateway,
     private readonly model: ModelAdapter,
     private readonly sessions: SessionStore,
     private readonly limits: AuthoringAgentLimits,
   ) {}
 
-  public async startSession(momentCode: AgentMoment): Promise<AgentSession> {
-    const [policy, businessRules, listedTools] = await Promise.all([
-      this.gateway.readTextResource(AgentPolicyUri),
-      this.gateway.readTextResource(BusinessRulesUri),
-      this.gateway.listTools(),
-    ]);
-    const profileTool = requiredTool(listedTools, ProfileToolName);
-    const profileResult = await this.gateway.callTool(profileTool, profileArguments(profileTool, momentCode));
-    if (profileResult.isError) {
-      throw new Error('The MCP server rejected the requested agent profile.');
-    }
-    const profile = AgentProfileSchema.parse(profileResult.value);
-    if (profile.momentCode !== momentCode) {
-      throw new Error('The MCP profile moment does not match the requested moment.');
-    }
+  public async startSession(momentCode: AgentMoment, ownerId: string, bearerToken: string): Promise<AgentSession> {
+    const gateway = this.gatewayFactory(bearerToken);
+    try {
+      await gateway.connect();
+      const [policy, businessRules, listedTools] = await Promise.all([
+        gateway.readTextResource(AgentPolicyUri),
+        gateway.readTextResource(BusinessRulesUri),
+        gateway.listTools(),
+      ]);
+      const profileTool = requiredTool(listedTools, ProfileToolName);
+      const profileResult = await gateway.callTool(profileTool, profileArguments(profileTool, momentCode));
+      if (profileResult.isError) {
+        throw new Error('The MCP server rejected the requested agent profile.');
+      }
+      const profile = AgentProfileSchema.parse(profileResult.value);
+      if (profile.momentCode !== momentCode) {
+        throw new Error('The MCP profile moment does not match the requested moment.');
+      }
 
-    const allowed = new Set(profile.allowedToolCodes);
-    const tools = listedTools.filter((tool) => allowed.has(tool.name) && tool.name !== ProfileToolName);
-    if (tools.length !== allowed.size - Number(allowed.has(ProfileToolName))) {
-      throw new Error('The MCP profile references a tool that is not discoverable.');
-    }
+      const allowed = new Set(profile.allowedToolCodes);
+      const tools = listedTools.filter((tool) => allowed.has(tool.name) && tool.name !== ProfileToolName);
+      if (tools.length !== allowed.size - Number(allowed.has(ProfileToolName))) {
+        throw new Error('The MCP profile references a tool that is not discoverable.');
+      }
 
-    return this.sessions.create({
-      momentCode,
-      instructions: createInstructions(policy, businessRules),
-      tools,
-      maxTurns: Math.min(profile.maxTurns, this.limits.maxTurns),
-      tokenLimit: Math.min(profile.tokenLimit, this.limits.tokenLimit),
-    });
+      return this.sessions.create({
+        ownerId,
+        gateway,
+        momentCode,
+        instructions: createInstructions(policy, businessRules),
+        tools,
+        maxTurns: Math.min(profile.maxTurns, this.limits.maxTurns),
+        tokenLimit: Math.min(profile.tokenLimit, this.limits.tokenLimit),
+      });
+    } catch (error) {
+      await closeFailedGateway(gateway, error);
+      throw error;
+    }
   }
 
-  public upload(sessionId: string, fileName: 'senaryo.md' | 'kurallar.md', content: string): void {
-    const session = this.sessions.get(sessionId);
+  public upload(sessionId: string, ownerId: string, bearerToken: string, fileName: 'senaryo.md' | 'kurallar.md', content: string): void {
+    const session = this.getSession(sessionId, ownerId, bearerToken);
     if (session.status === 'cancelled') {
       throw new Error('Cancelled sessions cannot accept uploads.');
     }
@@ -73,23 +82,36 @@ export class AuthoringAgent {
     session.uploads.set(fileName, content);
   }
 
-  public cancel(sessionId: string): void {
-    const session = this.sessions.get(sessionId);
+  public async cancel(sessionId: string, ownerId: string, bearerToken: string): Promise<void> {
+    const session = this.getSession(sessionId, ownerId, bearerToken);
     session.activeAbort?.abort();
     session.status = 'cancelled';
+    await this.closeSessionGateway(session);
   }
 
-  public resolveApproval(sessionId: string, approved: boolean): void {
-    const session = this.sessions.get(sessionId);
+  public async resolveApproval(sessionId: string, ownerId: string, bearerToken: string, approved: boolean): Promise<void> {
+    const session = this.getSession(sessionId, ownerId, bearerToken);
     if (session.status !== 'approval_required' || session.pendingProposal === undefined) {
       throw new Error('The session has no proposal awaiting approval.');
     }
     session.pendingProposal = undefined;
     session.status = approved ? 'ready' : 'cancelled';
+    if (!approved) {
+      await this.closeSessionGateway(session);
+    }
   }
 
-  public async *sendMessage(sessionId: string, message: string, answers: ClosedAnswer[]): AsyncIterable<AgentEvent> {
-    const session = this.sessions.get(sessionId);
+  public async close(): Promise<void> {
+    const sessions = this.sessions.values();
+    for (const session of sessions) {
+      session.activeAbort?.abort();
+      session.status = 'cancelled';
+    }
+    await Promise.all(sessions.map((session) => this.closeSessionGateway(session)));
+  }
+
+  public async *sendMessage(sessionId: string, ownerId: string, bearerToken: string, message: string, answers: ClosedAnswer[]): AsyncIterable<AgentEvent> {
+    const session = this.getSession(sessionId, ownerId, bearerToken);
     if (session.status === 'running' || session.status === 'approval_required' || session.status === 'cancelled') {
       throw new Error(`The session cannot accept a message while ${session.status}.`);
     }
@@ -101,7 +123,7 @@ export class AuthoringAgent {
     let input: ModelInput[] = [{ type: 'user', content: `${answerContext}${message}` }];
 
     try {
-      while (true) {
+      for (;;) {
         if (session.turns >= session.maxTurns || session.tokens >= session.tokenLimit) {
           session.status = 'ready';
           yield { type: 'error', code: 'budget_exceeded', message: 'The authoring budget was exhausted.' };
@@ -154,7 +176,7 @@ export class AuthoringAgent {
 
           const tool = requiredTool(session.tools, call.name);
           yield { type: 'tool_call', name: tool.name };
-          const result = await this.gateway.callTool(tool, call.arguments, abort.signal);
+          const result = await session.gateway.callTool(tool, call.arguments, abort.signal);
           const questions = extractQuestions(result);
           if (questions.length > 0) {
             session.pendingQuestions = questions;
@@ -176,6 +198,29 @@ export class AuthoringAgent {
     } finally {
       session.activeAbort = undefined;
     }
+  }
+
+  private getSession(sessionId: string, ownerId: string, bearerToken: string): AgentSession {
+    const session = this.sessions.get(sessionId, ownerId);
+    session.gateway.setBearerToken(bearerToken);
+    return session;
+  }
+
+  private closeSessionGateway(session: AgentSession): Promise<void> {
+    session.gatewayClosePromise ??= session.gateway.close();
+    return session.gatewayClosePromise;
+  }
+}
+
+async function closeFailedGateway(gateway: McpGateway, primaryError: unknown): Promise<void> {
+  try {
+    await gateway.close();
+  } catch (closeError) {
+    throw new AggregateError(
+      [primaryError, closeError],
+      'Agent session initialization and MCP cleanup both failed.',
+      { cause: closeError },
+    );
   }
 }
 

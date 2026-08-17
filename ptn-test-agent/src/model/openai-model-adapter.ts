@@ -1,6 +1,5 @@
 import OpenAI from 'openai';
 import type { ResponseInput, Tool } from 'openai/resources/responses/responses';
-import { StepProposalSchema } from '../contracts.js';
 import type { ModelAdapter, ModelEvent, ModelInput, ModelTool, ModelTurnRequest } from './model-adapter.js';
 
 const ProposeStepToolName = 'propose_authoring_step';
@@ -76,16 +75,12 @@ function proposalTool(): Tool {
     type: 'function',
     name: ProposeStepToolName,
     description: 'Propose exactly one grounded authoring step for explicit user approval. Never emit final Arazzo YAML.',
-    parameters: zodProposalJsonSchema(),
+    parameters: proposalJsonSchema(),
     strict: true,
   };
 }
 
-function zodProposalJsonSchema(): Record<string, unknown> {
-  return zodToJsonSchema(StepProposalSchema);
-}
-
-function zodToJsonSchema(_schema: typeof StepProposalSchema): Record<string, unknown> {
+function proposalJsonSchema(): Record<string, unknown> {
   return {
     type: 'object',
     additionalProperties: false,
