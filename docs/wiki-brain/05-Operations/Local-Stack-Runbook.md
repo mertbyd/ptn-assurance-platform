@@ -37,6 +37,41 @@ Test Module host     https://localhost:44366   yalniz bearer dogrular (resource 
 **Sıra değişmez:** önce Authenticator (şemayı ve client'ları o kurar), sonra Test Module.
 Ters sırada Test Module açılır ama ilk ayar/izin isteğinde 500 verir.
 
+> [!WARNING] **İki host aynı veritabanına bakmak zorundadır.**
+> Checked-in varsayılanlar bunu sağlamaz: Authenticator tool'u kendi `appsettings.json`'ında
+> `Database=Authenticator` (`root`), Test Module ise `Database=ptn_test_module` (`postgres`)
+> yazar. Farklı DB'lerde çalışırlarsa Authenticator `abp` şemasını **kendi** veritabanında kurar,
+> Test Module da onu kendi veritabanında bulamaz — belirti tam olarak budur: host açılır,
+> `/health` 200 döner, ilk ayar/izin isteğinde 500 gelir.
+>
+> Authenticator hostunu paylaşılan DB'ye bağlayın (tool kendi dosyasını taşıdığı için **ortam
+> değişkeniyle** ezin; iki anahtar da gerekir):
+>
+> ```bash
+> ConnectionStrings__Default="Host=localhost;Port=5432;Database=ptn_test_module;Username=postgres;Password=postgres;"
+> ConnectionStrings__Authenticator="Host=localhost;Port=5432;Database=ptn_test_module;Username=postgres;Password=postgres;"
+> ```
+
+### Migration sırası — şemaları kim kurar
+
+Her paketin migration'ını **kendi hostu** uygular (RULE-0002). Tek veritabanına sırayla:
+
+| # | Çalıştırılan | Kuracağı şema | Bayrak |
+|---|---|---|---|
+| 1 | Authenticator hostu (tool) | `abp`, `auth`, OpenIddict tabloları | `Database__AutoMigrate=true` |
+| 2 | `checkers/api-contract` ince hostu | `checker` | `Database__AutoMigrate=true` |
+| 3 | `checkers/database-comparison` ince hostu | `lookup`, `connection`, `definition`, `run`, `comparison` … | `Database__AutoMigrate=true` |
+| 4 | Test Module composition hostu | `test_lookup`, `test_catalog`, `test_run` | `Database:AutoMigrate` (checked-in `true`) |
+
+Her adımda **aynı** `ConnectionStrings__Default` verilir; aksi hâlde şemalar farklı veritabanlarına
+dağılır.
+
+> [!NOTE] **Açık:** [[04-Architecture/Auth-Consumption-Model|ARCH-AUTH-CONSUMPTION]] checker ve
+> Notification/Emailing tablolarını "Test Module composition migrator"ın uygulayacağını söyler.
+> Öyle bir migrator **yoktur**; composition hostu yalnız kendi `TestModuleDbContext`'ini migrate
+> eder. Yukarıdaki 2–3. adımlar bu boşluğun bugünkü karşılığıdır. Migrator yazılana kadar bu
+> sıra elle yürütülür.
+
 ---
 
 ## 1. Önkoşullar
@@ -196,6 +231,8 @@ Semptom: token geçerli ama uç **403** dönüyorsa eksik olan token değil, gra
 |---|---|---|
 | Host açılışta `Host environment is not configured for shared ABP schema` | `Database:EnsureSharedAbpSchema` yok/false | §4 |
 | `/health` 200 ama ayar/izin ucu 500 | Authenticator migration'ları uygulanmamış | önce Authenticator'ı çalıştırın |
+| `abp` şeması Test Module'ün DB'sinde yok, Authenticator'ınkinde var | iki host farklı veritabanına bağlı | §0 uyarısı: ikisine de aynı `ConnectionStrings__Default` |
+| `42P01: relation "checker.…" does not exist` | checker migration'ı hiç uygulanmamış | §0 migration sırası, adım 2–3 |
 | Token `400 invalid_client` | client seed'i yok — issuer'a config verilmemiş | §2 |
 | Token `400 unsupported_grant_type` | `client_credentials` denendi | §2.1, `password` kullanın |
 | Uç `401` | `Authority` ≠ discovery `issuer` (ör. 44314 ↔ 44323) | §4 |
