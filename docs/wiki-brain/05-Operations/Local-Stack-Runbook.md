@@ -31,7 +31,7 @@ PostgreSQL 5432
         └── test_*.*         <- sahibi Test Module
 
 Authenticator host   https://localhost:44323   kimlik + token uretir
-Test Module host     https://localhost:44380   yalniz bearer dogrular (resource server)
+Test Module host     https://localhost:44366   yalniz bearer dogrular (resource server)
 ```
 
 **Sıra değişmez:** önce Authenticator (şemayı ve client'ları o kurar), sonra Test Module.
@@ -209,8 +209,8 @@ Semptom: token geçerli ama uç **403** dönüyorsa eksik olan token değil, gra
 
 ```bash
 curl -k https://localhost:44323/.well-known/openid-configuration   # issuer dogru mu
-curl -k https://localhost:44380/health                             # 200 Healthy
-curl -k -H "Authorization: Bearer <token>" https://localhost:44380/mcp   # 401 degil
+curl -k https://localhost:44366/health                             # 200 Healthy
+curl -k -H "Authorization: Bearer <token>" https://localhost:44366/mcp   # 401 degil
 ```
 
 Üçü de geçtiyse yığın ayaktadır. `/mcp` hâlâ 401 veriyorsa sorun token'ın kendisindedir:
