@@ -71,6 +71,11 @@ production'da Redis acilir ve data protection anahtarlari Redis'te saklanir.
 dotnet run --project host/Ptn.TestModule.HttpApi.Host
 ```
 
+Bu host tek basina yeterli degildir: paylasilan `abp` semasini ve token'i uretecek Authenticator
+hostu once calismalidir. Iki hostun sirasi, issuer ayarlari, token alma komutu ve
+belirti-sebep-cozum tablosu icin `docs/wiki-brain/05-Operations/Local-Stack-Runbook.md`
+(GUIDE-0007) okunur.
+
 ## Bilinen acik
 
 `Pintern.SaaS.Notifications.Domain` paketi `SystemStandards.Abp.Authorization` 1.0.0'a bagimlidir
