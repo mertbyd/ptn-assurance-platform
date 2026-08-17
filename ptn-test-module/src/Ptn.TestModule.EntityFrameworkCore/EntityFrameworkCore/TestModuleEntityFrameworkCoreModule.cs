@@ -93,7 +93,7 @@ public class TestModuleEntityFrameworkCoreModule : AbpModule
         }
     }
 
-    // Sahip olunan semayi kurar ve istenirse yalniz Test Module lookup verisini uretir.
+    // Sahip olunan semayi kurar ve istenirse yalniz Test Module lookup verisi ile ajan izinlerini uretir.
     private static async Task MigrateAndSeedAsync(IServiceProvider serviceProvider, bool seedOnStartup)
     {
         await serviceProvider
@@ -101,12 +101,20 @@ public class TestModuleEntityFrameworkCoreModule : AbpModule
             .Database
             .MigrateAsync();
 
-        if (seedOnStartup)
+        if (!seedOnStartup)
         {
-            await serviceProvider
-                .GetRequiredService<TestModuleLookupDataSeedContributor>()
-                .SeedAsync(new DataSeedContext());
+            return;
         }
+
+        await serviceProvider
+            .GetRequiredService<TestModuleLookupDataSeedContributor>()
+            .SeedAsync(new DataSeedContext());
+
+        /* Ajan izinleri paylasilan abp.AbpPermissionGrants tablosuna yazilir; tabloyu Authenticator
+         * migration'i kurar, grant'i ise izinleri tanimlayan bu host verir (RULE-0002, ADR-0013). */
+        await serviceProvider
+            .GetRequiredService<AgentClientPermissionDataSeedContributor>()
+            .SeedAsync(new DataSeedContext());
     }
 
     // Sema adlari ortam bazli ezilebilir; ezme yoksa Domain.Shared varsayilanlari korunur.

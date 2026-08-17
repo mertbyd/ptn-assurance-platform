@@ -21,6 +21,10 @@ public static class TestModuleConfigurationKeys
     public const string DatabaseSeedOnStartup = "Database:SeedOnStartup";
     public const string EnsureSharedAbpSchema = "Database:EnsureSharedAbpSchema";
 
+    public const string AgentClientRegistrations = "AgentClients:Registrations";
+    public const string AgentClientId = "ClientId";
+    public const string AgentClientPermissions = "Permissions";
+
     public const string AspNetCoreEnvironmentVariable = "ASPNETCORE_ENVIRONMENT";
     public const string AppSettingsFileName = "appsettings.json";
     public const string AppSettingsSecretsFileName = "appsettings.secrets.json";

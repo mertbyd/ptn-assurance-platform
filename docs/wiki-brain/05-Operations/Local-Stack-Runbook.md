@@ -90,11 +90,12 @@ dotnet run --project host/Pintern.Authenticator.HttpApi.Host
 | `DeveloperApiClient:ClientId` | public | `authorization_code`, `refresh_token`, `pkce` zorunlu |
 | `FirstPartyClient:ClientId` | confidential | **`password`**, `refresh_token` |
 
-> [!WARNING] `client_credentials` **seed edilmiyor**.
-> Discovery belgesindeki `client_credentials` sunucunun yeteneğidir, client'ın izni değil.
-> Paketin IL'inde `gt:client_credentials` dizesi hiç geçmez. Makine token'ı istiyorsanız
-> Authenticator deposunda ayrı bir client seed'i gerekir; bu depodan çözülemez.
-> Paket README'sindeki "password grant kapalı" cümlesi 2.0.0 seed'iyle çelişir; **kod kazanır**.
+> [!WARNING] `2.0.0` sürümünde `client_credentials` **seed edilmiyordu**.
+> Discovery belgesindeki `client_credentials` sunucunun yeteneğidir, client'ın izni değil;
+> `2.0.0` IL'inde `gt:client_credentials` dizesi hiç geçmez. **`2.1.0` ile kapandı**:
+> `ResourceServers:Registrations` listesine giren her kayıt kendi scope + audience'ını alır,
+> `MachineClientId` verilirse yalnız `client_credentials` ve o tek scope'u taşıyan confidential
+> makine istemcisi seed edilir. Ayrıntı: Authenticator deposunun README'si.
 
 ### 2.2 Tek scope sınırı
 
@@ -164,10 +165,26 @@ Model tarafında ikinci bir "Id → id" düzeltmesi **yazılmaz**; o iş bu ayar
 bütün izinleri verir (`SeedAllSidePermissionsAsync`). `TestModule.*` izinleri Test Module
 hostunda tanımlıdır, dolayısıyla bu seed onları **kapsamaz**.
 
-Grant'lar paylaşılan `abp.AbpPermissionGrants` tablosunda durur; Test Module hostu
-`AbpPermissionManagement` Application/EFCore/HttpApi modüllerini compose eder, yani grant
-yazma yüzeyi bu hosttadır. *(Uçtan uca doğrulanmadı: grant yazan ucun kendi yetki kapısının
-bu kompozisyonda hangi izni istediği ölçülmedi.)*
+Makine istemcisinin token'ında kullanıcı yoktur; ABP yetkiyi `ClientPermissionValueProvider`
+(`"C"`) ile **`client_id` üzerinden** okur. Grant'ı bu host yazar — izinleri tanımlayan taraf
+burasıdır. `appsettings.json`:
+
+```json
+"AgentClients": {
+  "Registrations": [
+    {
+      "ClientId": "TestModule_Agent",
+      "Permissions": [ "TestModule.Bridge.Ground", "TestModule.Scenarios.Create", "TestModule.Scenarios.Update" ]
+    }
+  ]
+}
+```
+
+`Database:SeedOnStartup` açıkken host bu grant'ları `abp.AbpPermissionGrants` tablosuna
+idempotent yazar. Liste yalnız **bu modülün** izinlerini kabul eder: yabancı ya da hatalı
+yazılmış bir izin adı host'u açılışta durdurur, çünkü sessizce yazılmayan bir grant sonradan
+sebebi anlaşılmayan 403 olarak döner. Onay gibi ayrıcalıklı izinleri (`Scenarios.Approve`)
+listeye koymayın; ajanın yetkisi listeye ne yazdığınız kadardır.
 
 Semptom: token geçerli ama uç **403** dönüyorsa eksik olan token değil, grant'tır.
 
