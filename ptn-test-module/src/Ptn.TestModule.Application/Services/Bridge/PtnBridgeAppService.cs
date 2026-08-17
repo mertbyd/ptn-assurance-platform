@@ -165,7 +165,7 @@ public class PtnBridgeAppService : TestModuleAppService, IPtnBridgeAppService
         var request = Mapper.Map(input);
         var pack = await _profilePackFileManager.LoadAsync(input.ProfileKey, cancellationToken);
         var fingerprint = await _schemaKnowledgeAppService.GetSchemaFingerprintAsync(input.ConnectionId, cancellationToken);
-        var candidate = _groundingManager.CreatePublicationCandidate(request);
+        var candidate = _groundingManager.CreatePublicationCandidate(request, pack.ContentFingerprint);
         var evidence = candidate is null
             ? null
             : await _compilationPort.CompileAsync(

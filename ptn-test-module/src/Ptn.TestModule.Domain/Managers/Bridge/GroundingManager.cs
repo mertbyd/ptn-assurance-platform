@@ -14,6 +14,7 @@ using Ptn.TestModule.Models.Bridge.Database;
 using Ptn.TestModule.Models.Bridge.Api;
 using Ptn.TestModule.Models.Catalog;
 using Ptn.TestModule.Models.Compilation;
+using Volo.Abp;
 
 namespace Ptn.TestModule.Managers.Bridge;
 
@@ -143,14 +144,22 @@ public class GroundingManager : TestModuleDomainService
         DbSchemaName = binding.DbSchemaName,
         TableName = binding.TableName
     };
-    // Validate girdisinde derlenebilir kaynak kaniti varsa ortak yayin adayi kurar.
-    public ScenarioPublicationCandidate? CreatePublicationCandidate(ValidateRequest request)
+    /* Validate girdisinde derlenebilir kaynak kaniti varsa ortak yayin adayi kurar. Profil muhrunu
+     * istemci degil sunucu belirler: yayin kapisi malzeme butunlugunu bu deger uzerinden olcer, dolayisiyla
+     * istemcinin gonderdigi bir hash kapiyi kendi lehine acardi. Spec muhru de ayni sebeple sunucuda
+     * baglanir (ADR-0020). */
+    public ScenarioPublicationCandidate? CreatePublicationCandidate(
+        ValidateRequest request,
+        string profileFingerprint)
     {
         ArgumentNullException.ThrowIfNull(request);
+        ArgumentException.ThrowIfNullOrWhiteSpace(profileFingerprint);
         if (string.IsNullOrWhiteSpace(request.SourceDocument) || request.MaterialSeal is null)
         {
             return null;
         }
+
+        EnsureProfileFingerprintMatches(request.MaterialSeal.ProfileFingerprint, profileFingerprint);
         return new ScenarioPublicationCandidate
         {
             SourceDocument = request.SourceDocument,
@@ -159,8 +168,22 @@ public class GroundingManager : TestModuleDomainService
             SpecFingerprint = request.MaterialSeal.SpecFingerprint,
             DbConnectionId = request.MaterialSeal.DbConnectionId,
             DbSchemaFingerprint = request.MaterialSeal.DbSchemaFingerprint,
-            ProfileFingerprint = request.MaterialSeal.ProfileFingerprint
+            ProfileFingerprint = profileFingerprint
         };
+    }
+
+    // Istemci profil muhru tasidiysa sunucudaki aktif icerikle ayni bayta baglanmasini sart kosar.
+    private static void EnsureProfileFingerprintMatches(string? provided, string active)
+    {
+        if (string.IsNullOrWhiteSpace(provided))
+        {
+            return;
+        }
+
+        if (!string.Equals(provided.Trim(), active, StringComparison.Ordinal))
+        {
+            throw new BusinessException(TestModuleBridgeErrorCodes.ProfileFingerprintMismatch);
+        }
     }
     // Mevcut yayin gate kararini Bridge'in ozet-once ve aciklanabilir sonucuna cevirir.
     public ValidationResult Validate(

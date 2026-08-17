@@ -2,6 +2,7 @@ using System;
 using Ptn.TestModule.Constants.Bridge;
 using Ptn.TestModule.Constants.Bridge.Vocabulary;
 using Ptn.TestModule.Constants.Catalog.Lookups;
+using Ptn.TestModule.ExceptionCodes.Bridge;
 using Ptn.TestModule.Managers.Bridge;
 using Ptn.TestModule.Managers.Catalog;
 using Ptn.TestModule.Models.Bridge;
@@ -11,6 +12,7 @@ using Ptn.TestModule.Models.Bridge.Footprint;
 using Ptn.TestModule.Models.Catalog;
 using Ptn.TestModule.Models.Compilation;
 using Shouldly;
+using Volo.Abp;
 using Xunit;
 
 namespace Ptn.TestModule.Bridge;
@@ -88,7 +90,7 @@ public class GroundingManagerTests
         var manager = CreateManager();
         var request = CreateValidateRequest(includeSource: false);
 
-        var candidate = manager.CreatePublicationCandidate(request);
+        var candidate = manager.CreatePublicationCandidate(request, Hash('d'));
         var result = manager.Validate(
             request, CreatePack(), "schema-fingerprint", null, null);
 
@@ -104,7 +106,7 @@ public class GroundingManagerTests
     {
         var manager = CreateManager();
         var request = CreateValidateRequest();
-        var candidate = manager.CreatePublicationCandidate(request)!;
+        var candidate = manager.CreatePublicationCandidate(request, Hash('d'))!;
         var evidence = CreatePublicationEvidence();
         var decision = new ScenarioPublicationGateManager().Evaluate(candidate, evidence);
 
@@ -124,7 +126,7 @@ public class GroundingManagerTests
     {
         var manager = CreateManager();
         var request = CreateValidateRequest();
-        var candidate = manager.CreatePublicationCandidate(request)!;
+        var candidate = manager.CreatePublicationCandidate(request, Hash('d'))!;
         var evidence = CreatePublicationEvidence(areAssertionsDerivable: false);
         var decision = new ScenarioPublicationGateManager().Evaluate(candidate, evidence);
 
@@ -134,6 +136,32 @@ public class GroundingManagerTests
         result.IsPublishable.ShouldBeFalse();
         result.DecisionCode.ShouldBe(PtnVerdictCodes.RuledOut);
         result.FailedGateCodes.ShouldBe([ScenarioGateCodes.Derivability]);
+    }
+
+    // Istemci muhur tasimasa da yayin adayi sunucudaki aktif profil icerigine baglanmalidir.
+    [Fact]
+    public void Should_seal_the_candidate_with_the_server_profile_fingerprint()
+    {
+        var manager = CreateManager();
+        var request = CreateValidateRequest();
+        request.MaterialSeal!.ProfileFingerprint = null;
+
+        var candidate = manager.CreatePublicationCandidate(request, Hash('d'))!;
+
+        candidate.ProfileFingerprint.ShouldBe(Hash('d'));
+    }
+
+    // Istemcinin tasidigi muhur sunucudakinden farkliysa yayin adayi kurulmadan reddedilmelidir.
+    [Fact]
+    public void Should_reject_a_client_profile_fingerprint_that_differs_from_the_server()
+    {
+        var manager = CreateManager();
+        var request = CreateValidateRequest();
+
+        var exception = Should.Throw<BusinessException>(
+            () => manager.CreatePublicationCandidate(request, Hash('e')));
+
+        exception.Code.ShouldBe(TestModuleBridgeErrorCodes.ProfileFingerprintMismatch);
     }
 
     // Gercek test bagimliliklariyla GroundingManager sahipligini kurar.
