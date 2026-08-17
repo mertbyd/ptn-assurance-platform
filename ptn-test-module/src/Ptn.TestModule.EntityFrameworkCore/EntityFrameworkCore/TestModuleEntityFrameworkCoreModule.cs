@@ -110,10 +110,11 @@ public class TestModuleEntityFrameworkCoreModule : AbpModule
             .GetRequiredService<TestModuleLookupDataSeedContributor>()
             .SeedAsync(new DataSeedContext());
 
-        /* Ajan izinleri paylasilan abp.AbpPermissionGrants tablosuna yazilir; tabloyu Authenticator
-         * migration'i kurar, grant'i ise izinleri tanimlayan bu host verir (RULE-0002, ADR-0013). */
+        /* Makine istemcisi ve yonetici rolu izinleri paylasilan abp.AbpPermissionGrants tablosuna yazilir;
+         * tabloyu Authenticator migration'i kurar, grant'i ise izinleri tanimlayan bu host verir
+         * (RULE-0002, ADR-0013). */
         await serviceProvider
-            .GetRequiredService<AgentClientPermissionDataSeedContributor>()
+            .GetRequiredService<PermissionGrantDataSeedContributor>()
             .SeedAsync(new DataSeedContext());
     }
 

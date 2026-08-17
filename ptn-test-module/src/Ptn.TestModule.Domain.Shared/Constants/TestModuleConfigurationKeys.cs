@@ -23,7 +23,9 @@ public static class TestModuleConfigurationKeys
 
     public const string AgentClientRegistrations = "AgentClients:Registrations";
     public const string AgentClientId = "ClientId";
-    public const string AgentClientPermissions = "Permissions";
+    public const string RolePermissionRegistrations = "RolePermissions:Registrations";
+    public const string RolePermissionRoleName = "RoleName";
+    public const string GrantedPermissions = "Permissions";
 
     public const string AspNetCoreEnvironmentVariable = "ASPNETCORE_ENVIRONMENT";
     public const string AppSettingsFileName = "appsettings.json";
