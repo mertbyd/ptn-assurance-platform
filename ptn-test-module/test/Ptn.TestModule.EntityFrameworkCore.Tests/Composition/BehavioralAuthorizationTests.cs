@@ -3,8 +3,12 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Ptn.TestModule.Dtos.Bridge;
+using Ptn.TestModule.Dtos.Catalog;
+using Ptn.TestModule.Dtos.Runs;
 using Ptn.TestModule.Permissions;
 using Ptn.TestModule.Services.Bridge;
+using Ptn.TestModule.Services.Catalog;
+using Ptn.TestModule.Services.Runs;
 using Shouldly;
 using Volo.Abp.Authorization;
 using Volo.Abp.Security.Claims;
@@ -64,6 +68,70 @@ public class BehavioralAuthorizationTests : TestModuleTestBase<TestModuleIsolate
             {
                 exception.ShouldNotBeOfType<AbpAuthorizationException>();
             }
+        }
+    }
+
+    // Senaryo katalogu okumasi da davranissal kapiya baglidir; yetkisiz kimlik veri gormemelidir.
+    [Fact]
+    public async Task Scenario_catalog_should_reject_an_identity_without_its_permission()
+    {
+        var scenarioAppService = GetRequiredService<ITestScenarioAppService>();
+
+        using (_currentPrincipalAccessor.Change(new ClaimsPrincipal(new ClaimsIdentity())))
+        {
+            var exception = await Record.ExceptionAsync(
+                () => scenarioAppService.GetListAsync(new TestScenarioListInput()));
+
+            exception.ShouldBeOfType<AbpAuthorizationException>();
+        }
+    }
+
+    // Dogru permission tasiyan kimlik senaryo kapisindan gecmelidir.
+    [Fact]
+    public async Task Scenario_catalog_should_pass_the_gate_for_the_matching_permission()
+    {
+        var scenarioAppService = GetRequiredService<ITestScenarioAppService>();
+        var identity = new ClaimsIdentity();
+        identity.AddClaim(new Claim("TestPermission", TestModulePermissions.Scenarios.Default));
+
+        using (_currentPrincipalAccessor.Change(new ClaimsPrincipal(identity)))
+        {
+            var exception = await Record.ExceptionAsync(
+                () => scenarioAppService.GetListAsync(new TestScenarioListInput()));
+
+            exception?.ShouldNotBeOfType<AbpAuthorizationException>();
+        }
+    }
+
+    // Kosum okumasi da davranissal kapiya baglidir; yetkisiz kimlik kosum listesi gormemelidir.
+    [Fact]
+    public async Task Run_listing_should_reject_an_identity_without_its_permission()
+    {
+        var runAppService = GetRequiredService<ITestRunAppService>();
+
+        using (_currentPrincipalAccessor.Change(new ClaimsPrincipal(new ClaimsIdentity())))
+        {
+            var exception = await Record.ExceptionAsync(
+                () => runAppService.GetListAsync(new TestRunListInput()));
+
+            exception.ShouldBeOfType<AbpAuthorizationException>();
+        }
+    }
+
+    // Yalniz View permission'i tasiyan kimlik kosum listesi kapisindan gecmelidir.
+    [Fact]
+    public async Task Run_listing_should_pass_the_gate_for_the_view_permission()
+    {
+        var runAppService = GetRequiredService<ITestRunAppService>();
+        var identity = new ClaimsIdentity();
+        identity.AddClaim(new Claim("TestPermission", TestModulePermissions.Runs.View));
+
+        using (_currentPrincipalAccessor.Change(new ClaimsPrincipal(identity)))
+        {
+            var exception = await Record.ExceptionAsync(
+                () => runAppService.GetListAsync(new TestRunListInput()));
+
+            exception?.ShouldNotBeOfType<AbpAuthorizationException>();
         }
     }
 
