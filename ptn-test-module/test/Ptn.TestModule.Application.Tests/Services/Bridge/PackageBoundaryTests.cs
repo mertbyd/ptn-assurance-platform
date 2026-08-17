@@ -43,6 +43,22 @@ public class PackageBoundaryTests
         content.ShouldNotContain("<CheckNexusVersion>");
     }
 
+    /* Emailing HTTP yuzeyinin compose edilmedigini dogrular. Paketin EmailController'i ve
+     * EmailAppService.SendAsync'i yetki kontrolu tasimadigi icin compose edildiginde
+     * POST /api/emailing/emails kimlik dogrulamasiz gonderime acilir. */
+    [Fact]
+    public void Emailing_http_surface_should_not_be_composed_into_the_host()
+    {
+        var hostModule = File.ReadAllText(Path.Combine(
+            FindModuleRoot().FullName,
+            "host",
+            "Ptn.TestModule.HttpApi.Host",
+            "TestModuleHttpApiHostModule.cs"));
+
+        hostModule.ShouldNotContain("typeof(EmailingHttpApiModule)");
+        hostModule.ShouldContain("typeof(EmailingApplicationModule)");
+    }
+
     // MCP SDK'sinin yalniz composition hostta kaldigini ve model istemci paketinin eklenmedigini dogrular.
     [Fact]
     public void Mcp_protocol_should_stay_in_the_host_without_a_model_client()

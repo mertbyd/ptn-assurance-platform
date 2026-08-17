@@ -58,8 +58,13 @@ namespace Ptn.TestModule;
     typeof(DatabaseCheckerModule),
     typeof(CheckNexusVaultModule),
     typeof(NotificationsHttpApiModule),
+    /* Emailing yetenegi tip olarak alinir, HTTP yuzeyi compose EDILMEZ (ADR-0013 deseni).
+     * Sebep olculdu: paketin EmailController'i ve arkasindaki EmailAppService.SendAsync'i hicbir
+     * [Authorize] ya da CheckPolicy tasimiyor; bu host onlari compose ettiginde
+     * POST /api/emailing/emails kimlik dogrulamasiz e-posta gonderimine acilir. Sablon ve provider
+     * controller'lari yetkili olsa da ayni modulden gelir. Paket yetkili bir gonderim ucu
+     * yayimladiginda HttpApi modulu geri eklenir. */
     typeof(EmailingApplicationModule),
-    typeof(EmailingHttpApiModule),
     typeof(EmailingInfrastructureModule),
     typeof(AbpAspNetCoreMultiTenancyModule),
     typeof(AbpAspNetCoreAuthenticationJwtBearerModule),
